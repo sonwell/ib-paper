@@ -1,0 +1,180 @@
+%%%%%%%%%%%%%%%%%%%%%%% file template.tex %%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% This is a general template file for the LaTeX package SVJour3
+% for Springer journals.          Springer Heidelberg 2010/09/16
+%
+% Copy it to a new file with a new name and use it as the basis
+% for your article. Delete % signs as needed.
+%
+% This template includes a few options for different layouts and
+% content for various journals. Please consult a previous issue of
+% your journal as needed.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% First comes an example EPS file -- just ignore it and
+% proceed on the \documentclass line
+% your LaTeX will extract the file if required
+\begin{filecontents*}{example.eps}
+%!PS-Adobe-3.0 EPSF-3.0
+%%BoundingBox: 19 19 221 221
+%%CreationDate: Mon Sep 29 1997
+%%Creator: programmed by hand (JK)
+%%EndComments
+gsave
+newpath
+  20 20 moveto
+  20 220 lineto
+  220 220 lineto
+  220 20 lineto
+closepath
+2 setlinewidth
+gsave
+  .4 setgray fill
+grestore
+stroke
+grestore
+\end{filecontents*}
+%
+\RequirePackage{fix-cm}
+%
+%\documentclass{svjour3}                     % onecolumn (standard format)
+\documentclass[smallcondensed]{svjour3}     % onecolumn (ditto)
+%\documentclass[smallextended]{svjour3}       % onecolumn (second format)
+%\documentclass[twocolumn]{svjour3}          % twocolumn
+%
+\smartqed  % flush right qed marks, e.g. at end of proof
+%
+%\usepackage{mathptmx}      % use Times fonts if available on your TeX system
+%
+% insert here the call for the packages your document requires
+%\usepackage{latexsym}
+%
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{listings}
+\usepackage{pgfplots}
+\usepackage{graphicx}
+\usepackage{calc}
+\usepackage{mathtools}
+\usepackage{color}
+\usepackage[inline]{enumitem}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{float}
+\usepackage{xfrac}
+\usepackage{hyperref}
+\usepackage[capitalize, noabbrev]{cleveref}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{xspace}
+\usepackage{manfnt}
+
+\definecolor{tol/contrast/blue}{RGB}{0,68,136}
+\definecolor{tol/contrast/red}{RGB}{187,85,102}
+\definecolor{tol/contrast/yellow}{RGB}{221,170,51}
+
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+\allowdisplaybreaks
+\newcommand{\p}{\theta}
+\renewcommand{\vec}[1]{\boldsymbol{#1}}
+\newcommand{\laplacian}{\Delta}
+\newcommand{\cross}{\wedge}
+\newcommand{\grad}{\nabla}
+\renewcommand{\div}{\grad\cdot}
+\renewcommand{\d}{\relax\ifnum\lastnodetype>0 \mskip\thinmuskip\fi\textnormal{d}}
+\renewcommand{\L}{\mathcal{E}}
+
+\pgfplotsset{compat=newest}
+\usetikzlibrary{patterns,shapes,backgrounds,calc}
+\usepgfplotslibrary{fillbetween}
+
+\makeatletter
+\tikzset{circle split part fill/.style  args={#1,#2}{%
+ alias=tmp@name, % Jake's idea !!
+  postaction={%
+    insert path={
+     \pgfextra{%
+     \pgfpointdiff{\pgfpointanchor{\pgf@node@name}{center}}%
+                  {\pgfpointanchor{\pgf@node@name}{east}}%
+     \pgfmathsetmacro\insiderad{\pgf@x}
+      \fill[color=#1] (\pgf@node@name.base) ([xshift=-\pgflinewidth]\pgf@node@name.east) arc
+                          (0:180:\insiderad-\pgflinewidth)--cycle;
+      \fill[color=#2] (\pgf@node@name.base) ([xshift=\pgflinewidth]\pgf@node@name.west)  arc
+                           (180:360:\insiderad-\pgflinewidth)--cycle;            %  \end{scope}
+         }}}}}
+\def\cl@chapter{\@elt {theorem}}
+\makeatother
+
+%
+% please place your own definitions here and don't use \def but
+% \newcommand{}{}
+%
+% Insert the name of "your journal" with
+% \journalname{myjournal}
+$if(journal)$\journalname{$journal$}$endif$
+%
+\begin{document}
+
+\title{$title$$if(thanks)$\thanks{$thanks$}$endif$}
+$if(subtitle)$
+\subtitle{$subtitle$}
+$endif$
+
+$if(running-title)$\titlerunning{$runningtitle$}$endif$
+
+$if(authors)$
+\author{$for(authors)$$authors.name$$seq$\and $endfor$}
+$endif$
+
+$if(running-author)$\authorrunning{$running-author$}$endif$
+%\authorrunning{Short form of author list} % if too long for running head
+
+$if(authors)$
+\institute{%
+${ for(authors) }
+${ it:institution() }${ sep }\and
+${ endfor }
+}
+$endif$
+
+\date{Received: date / Accepted: date}
+% The correct dates will be entered by the editor
+
+
+\maketitle
+
+\begin{abstract}
+$abstract$
+$if(keywords)$\keywords{$for(keywords)$$keywords$$sep$\and $endfor$}$endif$
+$if(pacs)$\PACS{$for(pacs)$$pacs$$sep$\and $endfor$}$endif$
+% \subclass{MSC code1 \and MSC code2 \and more}
+\end{abstract}
+
+$body$
+
+
+$if(acknowledgements)$
+\begin{acknowledgements}
+$acknowledgements$
+\end{acknowledgements}
+$endif$
+
+
+% Authors must disclose all relationships or interests that 
+% could have direct or potential influence or impart bias on 
+% the work: 
+%
+
+$if(conflict)$
+\section*{Conflict of interest}
+$conflict$
+$endif$
+
+
+\bibliographystyle{spmpsci}      % mathematics and physical sciences
+\end{document}
+% end of file template.tex
+

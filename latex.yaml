@@ -1,0 +1,27 @@
+from: markdown
+to: latex
+
+#standalone: true
+#self-contained: false
+
+# Note that these take files, not their contents:
+resource-path: ["."]
+
+filters:
+- pandoc-crossref
+#- pandoc-citeproc
+
+data-dir: "."
+
+verbosity: ERROR
+log-file: pandoc.json
+
+pdf-engine: xelatex
+pdf-engine-opts:
+ - "-shell-escape"
+
+tab-stop: 4
+preserve-tabs: false
+
+incremental: false
+slide-level: 2

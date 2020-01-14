@@ -1,0 +1,10 @@
+  $it.abbreviation$ \at
+  $it.institution$$if(it.telephone)$\\$else$$if(it.fax)$\\$else$$if(it.email)$\\$endif$$endif$$endif$$if(it.telephone)$
+  Tel.: $it.telephone$
+$else$%
+$endif$$if(it.fax)$\\$else$$if(it.email)$\\$endif$$endif$$if(it.fax)$
+  Fax: $it.fax$%
+$else$%
+$endif$$if(it.email)$\\$endif$$if(it.email)$
+  \email{$it.email$}$else$%
+$endif$
