@@ -1,8 +1,17 @@
 from: markdown
-to: latex
+to: pdf
 
 #standalone: true
 #self-contained: false
+input-files:
+    - front-matter.md
+    - introduction.md
+    - methods.md
+    - results.md
+    - discussion.md
+    - conclusion.md
+
+output-file: ib-paper.pdf
 
 # Note that these take files, not their contents:
 resource-path: ["."]
