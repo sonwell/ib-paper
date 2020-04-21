@@ -1,616 +1,288 @@
 # Methods {#sec:methods}
-The matrix $\mathcal{S}^\dagger$ in [@eq:interp-disc] is sparse, with
-$n_\gamma$ rows, $n_\omega$ columns, and a fixed number of potentially nonzero
-entries per row. This matrix is used in interpolating the fluid velocity from
-the Eulerian grid to the Lagrangian grid. Interpolation is therefore a single
-scaled sparse matrix-vector multiplication. Having a fixed number of entries
-per row is beneficial for parallelization. By assigning a thread to each row,
-each thread computes a sparse dot product, scales by $h^d$, and writes to the
-corresponding component of the output vector. Each thread does approximately
-the same amount of work because the number of nonzero entries per row is
-uniform among the rows. We use this idea to parallelize interpolation, but
-avoid explicitly constructing the matrix.
+Below, we describe a method for evaluating
+\begin{align}
+    \label{eq:scalar-interp}
+    E(\vec{X}) &= \int_\Omega \delta_h(\vec{x}-\vec{X})e(\vec{x}) \d\omega \quad \text{and}\\
+    \label{eq:scalar-spread}
+    \ell(\vec{x}) &= \int_\Gamma \delta_h(\vec{x}-\vec{X})L(\vec{X}) \d\gamma
+\end{align}
+for scalar-valued functions $e: \Omega\to\mathbb{R}$ and $L:\Gamma\to\mathbb{R}$.
+For vector-valued functions, such as $\vec{u}$ and $\vec{F}$, the algorithm
+can be applied to each component individually. For some grids, it may be
+possible to process each component concurrently. We consider this possibility
+at the end of the section.
 
-The difficulty comes from _spreading_ the cell forces from the Lagrangian grid
-to the Eulerian grid. The values of $\delta_h$ in [@eq:spread-disc] comprise
-a matrix, $S$, with $n_\omega$ rows, $n_\gamma$ columns, a fixed number
-of entries per column. Unlike having an equal number of nonzero entries per
-row, this is not easily parallelizable without constructing part or all of the
-matrix. Instead, we seek submatrices $S_1$, $S_2$, \ldots, $S_m$ such that
+## The Structure of $\mathcal{S}$ and $\mathcal{S}^\dagger$
+Let $\Omega_h$ be a regular grid on $\Omega$ with grid spacing $h$. Define
+$\vec{g} \in [0,\,1)^d$ to be the fixed vector such that a grid point $\vec{x}$
+can be decomposed as $\vec{x}=h(\vec{i}+\vec{g})$, where $\vec{i}$ has integer
+components. Moreover, let $\Gamma_h$ be a discretization of the interface
+$\Gamma$. For illustration purposes, we can think of $\Gamma_h$ as a collection
+of arbitrary points in $\Omega$. We refer to points in $\Omega_h$ as (Eulerian)
+grid ponts, and points in $\Gamma_h$ as Lagrangian points.
+
+[Equations @eq:scalar-interp;@eq:scalar-spread] are discretized on $\Omega_h$
+and $\Gamma_h$, respectively, to yield
+\begin{align}
+    \label{eq:disc-interp}
+    E(\vec{X}_j) &= \sum_i \delta_h(\vec{x}_i-\vec{X}_j)e(\vec{x}_i) h^d \quad \text{and} \\
+    \label{eq:disc-spread}
+    \ell(\vec{x}_i) &= \sum_j \delta_h(\vec{x}_i-\vec{X}_j)L(\vec{X}_j) \d A.
+\end{align}
+Each of the above equations look like a matrix-vector multiplication, so we 
+will define $\mathcal{S}=(\delta_h(\vec{x}_i-\vec{X}_j))$, where the subscript
+$i$ indicates the row and subscript $j$ indicates the column. Collecting the
+values of $e(\vec{x})$ at each Eulerian grid point and of $L(\vec{X})$ at
+each Lagrangian point, we rewrite [equations @eq:disc-interp;@eq:disc-spread]
+as
+\begin{align}
+    \label{eq:matrix-interp}
+    \vec{E} &= \mathcal{S}^\dagger\vec{e} \quad\text{and} \\
+    \label{eq:matrix-spread}
+    \vec{\ell} &= \mathcal{S}\vec{L},
+\end{align}
+respectively. For this reason, we call $\mathcal{S}$ the \emph{spread matrix},
+and its transpose, $\mathcal{S}^\dagger$, the \emph{interpolation matrix}.
+
+As we have said, $\delta_h$ is the tensor product of scaled, one-dimensional
+kernels, $h^{-1}\phi(h^{-1}x)$. Let $\mathrm{supp}\mskip\thinmuskip\phi$
+denote the support of $\phi$ and define
+\begin{equation}
+    s[\phi] = |\mathrm{supp}\mskip\thinmuskip\phi\cap\mathbb{Z}|-1
+\end{equation}
+to be the size of the support in meshwidths. For brevity, we write $s=s[\phi]$.
+For any $\vec{X}\in\Omega$, there are at most $s^d$ grid points
+$\vec{x}\in\Omega_h$ for which $\delta_h(\vec{x}-\vec{X})$ is nonzero.
+
+Let $\vec{y}\in\Omega$ be an arbitrary point and consider the set of grid
+points for which $\delta_h(\vec{x}-\vec{y})$ and $\vec{x}\in\Omega_h$. Denote
+this set of grid points $\Sigma(\vec{y})$, called the \emph{support points}
+of $\vec{y}$. The pre-image $\Sigma^{-1}(\Sigma(\vec{y}))$ is a subset of
+$\Omega$ containing at most one grid point. For $\vec{y}$ sufficiently far away
+from any boundary, $\Sigma^{-1}(\Sigma(\vec{y}))$ is an $h \times h$ ($d=2$) or
+$h \times h \times h$ ($d=3$) subset of $\Omega$. For points near a boundary,
+the region may be smaller. Collectively, these regions cover $\Omega$, so we
+consider them to be the \emph{de facto} grid cells. For those grid cells that
+do not contain a grid point, we extend $\Omega_h$, in a regular way, with ghost
+points. Call this extension $\bar{\Omega}_h$. Now, any $h \times h$ or
+$h \times h \times h$ extended grid cell that entirely contains a grid cell
+also contains exactly one grid point in $\bar{\Omega}_h$, including grid cells
+near a boundary. We can identify an $\vec{y}\in\Omega$ with a grid point
+$\vec{x}\in\bar{\Omega}_h$ if they are in the same extended grid cell, and
+since $\vec{x}=h(\vec{i}=\vec{g})$, we identify a grid cell by the integers
+$\vec{i}$. Finally, we define $\lfloor\cdot\rceil:\Omega\to\mathbb{Z}$ such
+that $\lfloor\vec{y}\rceil = \vec{i}$.
+
+We now turn our attention to the evaluation of $\delta_h(\vec{x}-\vec{X})$. We
+assume $\vec{x}\in\Omega_h$ and write
+\begin{equation}
+    \label{eq:delta-defs}
+    \begin{aligned}
+        \delta_h(\vec{x}-\vec{X})
+        &= \delta_h(\vec{x}-h(\lfloor\vec{X}\rceil+\vec{g}) + h(\lfloor\vec{X}\rceil+\vec{g}) - \vec{X}) \\
+        &= \delta_h(h\vec{\sigma} - \Delta\vec{X}) \\
+        &= \prod_{i=1}^d h^{-1}\phi((\vec{\sigma} - h^{-1}\Delta\vec{X})\cdot\vec{c}_i).
+    \end{aligned}
+\end{equation}
+where $\Delta\vec{X}$ is the displacement of $\vec{X}$ from its associated grid
+point, $\vec{\sigma} = \lfloor\vec{x}\rceil-\lfloor\vec{X}\rceil$ since
+$\vec{x} = h(\lfloor\vec{x}\rceil+\vec{g})$, and $\vec{c}_i$ is the $i$^th^
+canonical basis vector. We refer to $\vec{\sigma}$ as a \emph{shift}. Shifts
+that result in a possibly nonzero value of $\delta_h$ are known \emph{a priori}
+based on $\phi$, and usually range from $-\lfloor s/2\rfloor$ to
+$\lfloor(s-1)/2\rfloor$ in each component. We can therefore choose an order for
+the shifts $\{\vec{\sigma}_i\}_{i=1}^{s^d}$. We denote the $i^\text{th}$ shift
+$\vec{\sigma}_i$.
+
+We need one more ingredient to construct $\mathcal{S}$. Let $\vec{x}_k$ be the
+be the $k$^th^ grid point, such that, e.g., $e_k = e(\vec{x}_k)$ is the $k$^th^
+entry of $\vec{e}$. The grid point $\vec{x}_k$ can be decomposed into
+$h(\vec{i}+\vec{g})$ for some $\vec{i}$ with integer components. Define the
+grid indexing function $\#:\mathbb{Z}^d\to\mathbb{Z}\cup\{\epsilon\}$ such that
+$\#(\lfloor\vec{x}_k\rceil) = \#(\vec{i}) = k$ for all grid points and
+$\#(\vec{i}')=\epsilon$ if $h(\vec{i}'+\vec{g}) \not\in \Omega$.
+
+We are now ready to construct $\mathcal{S}$. Consider a Lagrangian point
+$\vec{X}_j$ that is in the same grid cell as grid point
+$\vec{x}_k=h(\lfloor\vec{X}_j\rceil+\vec{g})$. The $j$^th^ column of
+$\mathcal{S}$ is zero except for up to $s^d$ values where for
+$i=1,\,\ldots,\,s^d$, if $\#(\lfloor\vec{X}_j\rceil+\vec{\sigma}_i)\neq\epsilon$,
+\begin{equation}
+    \label{eq:s-columnwise}
+    \mathcal{S}_{i,\#(\lfloor\vec{X}_j\rceil + \vec{\sigma}_i)} = \delta_h(h\vec{\sigma}_i-\vec{X}_j+\vec{x}_k).
+\end{equation}
+
+## Parallelization of Interpolation
+From the above, we can see that $\mathcal{S}$ has approximately equal number
+of nonzero entries per column. This means, that the interpolation matrix,
+$\mathcal{S}^\dagger$, has approximately equal number of nonzero entries per row.
+This property is beneficial for parallelization. Consider the $j$^th^ row of
+$\mathcal{S}^\dagger$, which corresponds to interpolating to Lagrangian point
+$\vec{X}_j$ using the values at its support points. There are at most $s^d$
+values in that row, which correspond to the shifts that give a potentially
+nonzero value for $\delta_h$. Compute $\vec{x} = h(\lfloor\vec{X}_j\rceil+\vec{g})$.
+Then $\Delta\vec{X} = \vec{X}_j-\vec{x}$. Now, since the shifts $\{\vec{\sigma}_i\}$
+are known beforehand, we can compute $\delta_h(\vec{\sigma}_i-\Delta\vec{X})$
+and, if $\#(\vec{\sigma}_i+\lfloor\vec{x}\rceil) \neq\epsilon$, we accumulate
+products
 \begin{equation*}
-    \mathcal{S}\vec{F} = S_1\vec{F}_1 + S_2\vec{F}_2 + \cdots + S_m\vec{F}
+    E_j = \sum_{i=1}^{s^d}\delta_h(\vec{\sigma}_i+\Delta\vec{X})e_{\#(\vec{\sigma}_i+\lfloor\vec{x}\rceil)}.
 \end{equation*}
-and the products $S_i\vec{F}_i$, $i=1,\,2,\,\ldots,\,m$ can be computed
-efficiently in parallel.
 
-## Preliminaries
-Let $\Omega^h$ be a fixed, regular grid such that any grid point can be written
-$\vec{x} = h(\vec{i}+\vec{g})$ for $\vec{g} \in [0, 1)^d$ and
-$\vec{i}\in\mathbb{Z}^d$. Let $\square_{\vec{i}}$ denote the grid cell with
-opposite corners at $h(\vec{i}+\vec{g})$ and $h(\vec{i}+\vec{1}+\vec{g})$.
+Assigning one thread per Lagrangian point (i.e., one thread per row), this
+calculation can be performed in parallel, and since the $j$^th^ thread writes
+to the $j$^th^ entry of $\vec{E}$, there are no write contentions. Because the
+number of products is approximately the same for each row, each thread does
+approximately the same amount of work. On architectures that enforce thread
+synchrony, such as GPUs, this means that we do not incur a penalty from having
+threads wait for other threads to finish.
 
-## Parallelization schemes {#sec:parallel}
-Consider a point $\vec{X}_j\in\Gamma^h$. Let $K=\{1,\,\ldots,\,n_k\}$ be an
-enumeration of the support points for $\vec{X}_j$. Let $i = i(j,\,k)$ be the
-index of the $k$^th^ support point for $\vec{X}_j$, namely $\vec{x}_i$.
-The function $\vec{\nu}$ is defined as in [@sec:optim].
+Since each thread computes the appropriate $\delta_h$-weights for its own row,
+it is unnecessary to construct $\mathcal{S}^\dagger$ explicitly. Other than
+allocating memory for $\vec{E}$, all of the work for this algorithm is parallel,
+so we expect to see near-perfect scaling and a theoretical runtime of
+$\mathcal{O}(n_\gamma/p)$, where $p$ is the number of threads.
 
-\begin{algorithm}[thb]
-    \begin{algorithmic}
-        \STATE $\vec{U} \leftarrow \vec{0}$
-        \FORALL {$\vec{X}_j\in\Gamma^h$ \textbf{parallel}}
-        \STATE $\vec{w} \leftarrow \vec{\nu}(\vec{X}_j)$
-        \FORALL {$k \in K$}
-        \STATE $\ell \leftarrow i(j,\,k)$
-        \IF {$\vec{x}_\ell \in \Omega$}
-        \STATE $U_j \leftarrow U_j + h^dw_ku_\ell$
-        \ENDIF
-        \ENDFOR
-        \ENDFOR
-    \end{algorithmic}
-    \caption{Parallel fluid velocity interpolation}
-    \label{lst:interpolation}
-\end{algorithm}
+## Parallelization of Spread
+The difficulty arises in attempting to parallelize the spread operation.
+Row-wise parallelization of $\mathcal{S}\vec{L}$ yields threads doing vastly
+different amounts of work -- many no work at all -- and incurring the penalty
+of having threads wait for other threads to finish before being able to
+continue. Moreover, this parallelization would scale according to the size of
+the Eulerian grid rather than the number of Lagrangian points.
 
-[@lst:interpolation] is a straightforward parallelization of [@eq:interp-disc]
-which computes the fluid velocity at each of the Lagrangian points. The outer
-loop loops over the Lagrangian points in parallel, and for each, updates the
-velocity at the Lagrangian point with each of the contributions of its support
-point. Omitting **parallel** from the outer loop reduces this algorithm into
-its serial counterpart.
+Instead, we wish to partition the work so that every thread does a similar
+amount of work, it scales well, and depends minimally on the size of the
+background grid. We can think of this as finding matrices $\mathcal{S}_1$,
+$\mathcal{S}_2$, \dots, $\mathcal{S}_m$ and vectors $\vec{L}_1$, $\vec{L}_2$,
+\dots, $\vec{L}_m$ such that
+\begin{equation*}
+    \vec{\ell} = \mathcal{S}\vec{L} = \mathcal{S}_1\vec{L}_1 + \mathcal{S}_2\vec{L}_2 + \cdots + \mathcal{S}_m\vec{L}_m.
+\end{equation*}
+Here, $m$ is the number of serial operations or \emph{sweeps} needed to
+completely compute $\mathcal{S}\vec{L}$. The products $\mathcal{S}_i\vec{L}_i$
+are accumulated serially, but we aim to construct the matrices
+$\{\mathcal{S}_i\}$ in a way that allows for efficient parallel computation of
+each individual product.
 
-It is a simple matter to compute the Eulerian force density in a serial
-context. The algorithm looks similar to [@lst:interpolation], replacing the
-parallel **for** loop with a serial one, and the indices of the input and
-output vectors (in the case of spreading, $\vec{F}\circ\vec{A}$ and $\vec{f}$,
-respectively) would be swapped. Naïve attempts to parallelize over the
-Lagrangian points, as we did in [@lst:interpolation], can miscalculate the
-Eulerian forces if the support points for two different Lagrangian points
-overlap, which is often the case. Parallelizing instead the loop over $K$ is
-useful only up to $n_k$ threads, and would require thread synchronization
-for every Lagrangian point. Neither of these are satisfactory solutions.
+Consider two points in different grid cells, $\vec{x}_1$ and $\vec{x}_2$. Since
+these points are in different grid cells, the support points
+$h(\lfloor\vec{x}_1\rceil+\vec{g}+\vec{\sigma}_i)$ of $\vec{x}_1$ and 
+$h(\lfloor\vec{x}_2\rceil+\vec{g}+\vec{\sigma}_i)$ of $\vec{x}_2$, assuming
+they exist, are distinct for $i=1,\,\ldots,\,s^d$. Thus, for any set
+$\{\vec{X}_j\}$ of Lagrangian points, each in different grid cells, the values
+\begin{equation*}
+    \delta_h(h(\lfloor\vec{X}_j\rceil + \vec{g}+\vec{\sigma}_i)-\vec{X}_j)L_j,
+\end{equation*}
+for $\#(\lfloor\vec{X}_j\rceil+\vec{\sigma}_i)\neq\epsilon$, can be computed
+and written in parallel for fixed $i$, because the values of
+$\#(\lfloor\vec{X}_j\rceil+\vec{\sigma}_i)$, when not equal to $\epsilon$, are
+distinct, and gives the index of the output entry of $\vec{\ell}$.
+Repeating for $i=1,\,\ldots,\,s^d$, we compute all of $\vec{\ell}$.
 
-To properly compute the Eulerian force density in parallel, we seek a set of
-submatrices $S_1$, $S_2$, \dots, $S_m$, where $S = S_1 + S_2 + \ldots + S_m$,
-such that for submatrix $S_s$, there is a permutation matrix, $P_s$, for which
-$(S_sP_s)P_s^{-1}(\vec{F}\circ\vec{A})$ is easy to compute in parallel. By
-that, we mean that we can compute the pattern of nonzero entries in any row, or
-set of rows, of $S_sP_s$ with little to no information about other rows.
+Consider now a set of Lagrangian points $\{\vec{X}_j\}$ all in the same grid
+cell. For fixed $i$, the values $\#(\lfloor\vec{X}_j\rceil+\vec{\sigma}_i)$ are
+identical for all $j$, and would therefore contend with one another if
+attempting to write values in parallel and independently. In this case, we
+can use the well-know parallel reduce algorithm to accumulate values in
+parallel and ultimately use a single thread to write the value to $\vec{\ell}$.
 
-The variable $s$ keeps track of the _sweep_, which is a stage of the algorithm
-during which threads are working in parallel and at the end of which the
-threads must be synchronized. Ideally, we would like as few sweeps as
-possible, so that the threads spend as much time working in parallel as
-possible. We also want each thread to perform approximately equal work, so
-that one overburdened thread does not hold up synchronization. The number of
-sweeps is $m$, the number of submatrics. Unfortunately, we don't necessarily
-know _a priori_ where the Lagrangian points are, so we may need to use
-a heuristic approach to construct the submatrices.
+Generally, we do not expect to have either of these situations. In fact, it is
+recommended in the IB literature that, for a connected interface, there be
+1--2 ($d=2$) or 1--4 ($d=3$) Lagrangian points in each occupied grid cell. We
+can combine the two ideas above using the so-called parallel segmented reduce
+algorithm. Given a list of \emph{keys} and a list of \emph{values}, the
+algorithm sums (or \emph{reduces}) consecutive values if their corresponding
+keys match. The output is a list of non-repeating keys (though they may not be
+unique within the list) and a generally shorter list of values.
 
-## Domain Decomposition Methods
-A heuristic approach presented by [@McQueen:1997kw] partitions the Eulerian
-grid into columns of points. Lagrangian points in columns that are $4h$ apart
-will never have overlapping support points. There are $4^{d-1}$ sets of columns
-that are all $4h$ apart, and each set contains up to $\lceil 4^{1-d}n_\omega \rceil$
-columns. Lagrangian points are organized into linked lists according to which
-column they are in. For $s=1,\,\ldots,\,4^{d-1}$, each thread is assigned
-a column (or more) from the $s$^th^ set of columns and the values for each
-support point of each Lagrangian point in that column are computed and written.
-That is, the submatrix $S_s$ is constructed by taking only the columns of $S$
-corresponding to Lagrangian points in the $s$^th^ set of columns.
+If we ensure that Lagrangian points in the same grid cell have the same key
+and are listed consecutively, we can use the segmented reduce algorithm to
+accumulate values for support point corresponding to a fixed shift
+$\vec{\sigma}$ for all Lagrangian points at once. Repeating this for each
+shift, we will have completely computed $\vec{\ell}$. To achieve this ordering
+of Lagrangian points, we introduce the key-value sort, which, given a list
+of keys and values, will sort the values according to the keys. The output is
+a sorted list of keys and a permuted list of values. If we choose the values to
+be the list from 0 to $n_\gamma-1$, the resulting values define a permutation
+matrix $P$. This permuted list is analogous to the linked-list structure of
+[@McQueen:...], but performs better on architectures where computational units
+are not independent. Unlike [@McQueen:...], we reconstruct our lists every
+timestep instead of using an update. An update can be done by partitioning
+Lagrangian points into those that have stayed in their grid cell and those that
+have left, sorting by key the indices of just the points that have left their
+cell, and then merging them back into the main list. However, the worst-case
+runtime of the update is the same as simply reconstructing the list every
+timestep, but has the added cost of computing a partition and merging lists.
 
-\begin{figure}[tbh]
-    \centering
-    \begin{tikzpicture}[
-        scale=2,
-        declare function={
-            ex(\t) = 3 + cos(10) * 2.1 * cos(\t) - sin(10) * 0.8 * sin(\t);
-            ey(\t) = 2 + cos(10) * 0.8 * sin(\t) + sin(10) * 2.1 * cos(\t);
-        }
-    ]
+Lastly, we need suitable way to generate keys. A function $\mathfrak{K}$ that
+generates keys should be 1-to-1 with grid cells. In other words, $\mathfrak{K}$
+should be bijective with grid points in $\bar{\Omega}_h$. For this reason, it
+is often useful to formulate $\mathfrak{K}$ as a function of $\mathbb{Z}^d$ and
+so $\mathfrak{K}(\lfloor\vec{X}\rceil)$ gives the key for a Lagrangian point
+$\vec{X}$. However, bijectivity alone will, in general, invalidate $\#$ as an
+otherwise good choice for $\mathfrak{K}$. However, since $\mathfrak{K}$ is
+bijective, $\mathfrak{K}$ is invertible, so any Lagrangian point with key $k$
+has grid index $\#(\mathfrak{K}^{-1}(k))$, if it exists. It is also desirable
+that $\mathfrak{K}$ be independent of the shift $\vec{\sigma}$. If these
+conditions are met and the keys have a partial order, we can compute a key for
+each Lagrangian point, apply the key-value sort once, and then compute values
+and use segmented reduce once per shift.
 
-    \draw[color=black!20, fill] (1.5, 0.25) rectangle (2.0, 3.25);
-    \draw[color=black!20, fill] (3.5, 0.25) rectangle (4.0, 3.25);
-    \draw[color=black!20, fill] (5.5, 0.25) rectangle (5.75, 3.25);
-    \draw[step=0.5] (0.25, 0.25) grid (5.75, 3.25);
+The corresponding matrices $\mathcal{S}_i$ each have at most one nonzero entry
+per column. Using key-value sort to define a permutation matrix $P$ allows us
+to write
+\begin{equation}
+    \label{eq:submatrix}
+    \mathcal{S}_i\vec{L}_i = (\mathcal{S}_i'P)(P^\dagger\vec{L}),
+\end{equation}
+where $\vec{L}_i=P^\dagger\vec{L}$ for $i=1,\,\ldots,\,s^d$, and the matrix
+$\mathcal{S}_i'$ is the same size as $\mathcal{S}$, but is constructed by
+copying only the value in each column corresponding to shift $\vec{\sigma}_i$.
+The matrix $\mathcal{S}_i=\mathcal{S}_i'P$ can be characterized as having
+a sparse block structure where each block is a single dense row of values, each
+row contains at most one block, and no two blocks have a column in common. The
+new block structure allows for easier parallelization, which the segmented
+reduce algorithm performs handily. Again, we have computed $\vec{\ell}$ without
+keeping more than a single entry of $\mathcal{S}$ in memory per thread at a
+time.
 
-    \node[scale=0.8, shape=circle, color=tol/contrast/blue, fill] at (1.0, 0.5) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/blue, fill] at (1.5, 0.5) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/blue, fill] at (2.0, 0.5) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/blue, fill] at (2.5, 0.5) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/blue, fill] at (1.0, 1.0) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/blue, fill] at (1.5, 1.0) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/blue, fill] at (2.0, 1.0) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/blue, fill] at (2.5, 1.0) {};
-    \node[scale=0.5, line width=0, shape=circle split, circle split part fill={tol/contrast/red,tol/contrast/blue}] at (1.0, 1.5) {};
-    \node[scale=0.5, line width=0, shape=circle split, circle split part fill={tol/contrast/red,tol/contrast/blue}] at (1.5, 1.5) {};
-    \node[scale=0.5, line width=0, shape=circle split, circle split part fill={tol/contrast/red,tol/contrast/blue}] at (2.0, 1.5) {};
-    \node[scale=0.5, line width=0, shape=circle split, circle split part fill={tol/contrast/red,tol/contrast/blue}] at (2.5, 1.5) {};
-    \node[scale=0.5, line width=0, shape=circle split, circle split part fill={tol/contrast/red,tol/contrast/blue}] at (1.0, 2.0) {};
-    \node[scale=0.5, line width=0, shape=circle split, circle split part fill={tol/contrast/red,tol/contrast/blue}] at (1.5, 2.0) {};
-    \node[scale=0.5, line width=0, shape=circle split, circle split part fill={tol/contrast/red,tol/contrast/blue}] at (2.0, 2.0) {};
-    \node[scale=0.5, line width=0, shape=circle split, circle split part fill={tol/contrast/red,tol/contrast/blue}] at (2.5, 2.0) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/red, fill] at (1.0, 2.5) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/red, fill] at (1.5, 2.5) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/red, fill] at (2.0, 2.5) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/red, fill] at (2.5, 2.5) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/red, fill] at (1.0, 3.0) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/red, fill] at (1.5, 3.0) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/red, fill] at (2.0, 3.0) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/red, fill] at (2.5, 3.0) {};
+## Optimizations
+As described above, the algorithms uses $s^d$ sweeps to compute $\vec{\ell}$.
+However, for each sweep, any thread will perform identically the same
+operations. We can therefore consider computing multiple values of $\delta_h$
+for some fixed set of shifts, and the corresponding grid indices. Since
+$\mathfrak{K}$ is independent of the shift, we need compute it only once, and
+we can use $P$ for any set of shifts. To avoid write contentions, we need as
+many output vectors as shifts in the set. To each shift, we assign an output
+vector and we write all values for that shift to the corresponding output
+vector.
 
-    \node[scale=0.8, shape=circle, color=tol/contrast/yellow, fill] at (3.0, 0.5) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/yellow, fill] at (3.5, 0.5) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/yellow, fill] at (4.0, 0.5) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/yellow, fill] at (4.5, 0.5) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/yellow, fill] at (3.0, 1.0) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/yellow, fill] at (3.5, 1.0) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/yellow, fill] at (4.0, 1.0) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/yellow, fill] at (4.5, 1.0) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/yellow, fill] at (3.0, 1.5) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/yellow, fill] at (3.5, 1.5) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/yellow, fill] at (4.0, 1.5) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/yellow, fill] at (4.5, 1.5) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/yellow, fill] at (3.0, 2.0) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/yellow, fill] at (3.5, 2.0) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/yellow, fill] at (4.0, 2.0) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/yellow, fill] at (4.5, 2.0) {};
+In other words, we can imagine computing $t$ values at once. We then expect to 
+have $w=\lceil s^d/t\rceil$ sweeps and we compute
+\begin{equation}
+    \label{eq:fused-sweeps}
+    \begin{alignedat}{5}
+        \mathcal{S}\vec{L} 
+        &= (\mathcal{S}_1P^\dagger\vec{L} + &\cdots& + \mathcal{S}_wP^\dagger\vec{L})
+        &+& \cdots
+        &+& (\mathcal{S}_{(t-1)w+1}P^\dagger\vec{L} + &\cdots& + \mathcal{S}_{s^d}P^\dagger\vec{L}) \\
+        &=& \vec{\ell}_1 &&+& \cdots &+&& \vec{\ell}_t, &
+    \end{alignedat}
+\end{equation}
+where in the first sweep, the first product in each set of parentheses is
+stored in the corresponding output vector $\vec{\ell}_i$; in the second sweep,
+the second product is stored in the corresponding output vector; and so on,
+until all of the products have been computed. Finally, we accumulate values,
+$\vec{\ell} = \vec{\ell}_1 + \cdots + \vec{\ell}_t$. The only requirement for
+this optimization is that there is enough memory to hold all of the output
+vectors. Choosing values of $t$ that divide $s^d$ and are around 10 seem to
+give good results.
 
-    \draw[very thick] plot[domain=-180:180, variable=\x, samples=100] ({ex(\x)}, {ey(\x)});
-    \draw[thin, black, fill=tol/contrast/red] plot[only marks, mark=square*] coordinates {
-        ({ex(123.03253921294208)}, {ey(123.03253921294208)})
-    };
-    \draw[thin, black, fill=tol/contrast/blue] plot[only marks, mark=square*] coordinates {
-        ({ex(225.60289396961724)}, {ey(225.60289396961724)})
-        ({ex(236.9674607870579)}, {ey(236.9674607870579)})
-    };
-    \draw[thin, black, fill=tol/contrast/yellow] plot[only marks, mark=square*] coordinates {
-        ({ex(283.4525276213703)}, {ey(283.4525276213703)})
-        ({ex(292.8699014257434)}, {ey(292.8699014257434)})
-    };
-    \draw[thin, black, fill=white] plot[only marks, mark=square*] coordinates {
-        ({ex(16.902383319583745)}, {ey(16.902383319583745)})
-        ({ex(32.4225566445974)}, {ey(32.4225566445974)})
-        ({ex(45.60289396961725)}, {ey(45.60289396961725)})
-        ({ex(56.967460787057895)}, {ey(56.967460787057895)})
-        ({ex(67.13009857425658)}, {ey(67.13009857425658)})
-        ({ex(76.54747237862972)}, {ey(76.54747237862972)})
-        ({ex(85.5588196210609)}, {ey(85.5588196210609)})
-        ({ex(94.44118037893911)}, {ey(94.44118037893911)})
-        ({ex(103.4525276213703)}, {ey(103.4525276213703)})
-        ({ex(112.86990142574342)}, {ey(112.86990142574342)})
-        %({ex(123.03253921294208)}, {ey(123.03253921294208)})
-        ({ex(134.39710603038273)}, {ey(134.39710603038273)})
-        ({ex(147.57744335540258)}, {ey(147.57744335540258)})
-        ({ex(163.09761668041625)}, {ey(163.09761668041625)})
-        ({ex(180.0)}, {ey(180.0)})
-        ({ex(196.90238331958375)}, {ey(196.90238331958375)})
-        ({ex(212.4225566445974)}, {ey(212.4225566445974)})
-        %({ex(225.60289396961724)}, {ey(225.60289396961724)})
-        %({ex(236.9674607870579)}, {ey(236.9674607870579)})
-        ({ex(247.13009857425658)}, {ey(247.13009857425658)})
-        ({ex(256.5474723786297)}, {ey(256.5474723786297)})
-        ({ex(265.55881962106093)}, {ey(265.55881962106093)})
-        ({ex(274.4411803789391)}, {ey(274.4411803789391)})
-        %({ex(283.4525276213703)}, {ey(283.4525276213703)})
-        %({ex(292.8699014257434)}, {ey(292.8699014257434)})
-        ({ex(303.0325392129421)}, {ey(303.0325392129421)})
-        ({ex(314.3971060303827)}, {ey(314.3971060303827)})
-        ({ex(327.5774433554026)}, {ey(327.5774433554026)})
-        ({ex(343.09761668041625)}, {ey(343.09761668041625)})
-        ({ex(360.0)}, {ey(360.0)})
-    };
-    \end{tikzpicture}
-    \caption{%
-        A portion of $\Omega$ containing $\Gamma$ (thick black curve). The
-        Lagrangian points $\Gamma^h$ are represented by squares. All Lagrangian
-        points that lie in the grey region are processed in a single sweep.
-        Lagrangian points in different grey columns do not have overlapping
-        support points, while Lagrangian points in the same column may have
-        overlapping support points. If only one thread writes per column,
-        there are no write contentions. The circular support points' colors
-        indicate the corresponding square Lagrangian point(s). The red/blue
-        semicircles indicate overlap between the support points of the red and
-        blue Lagrangian points.
-    }
-    \label{fig:pib-columns}
-\end{figure}
-
-Let $\vec{X}_1,\,\ldots,\,\vec{X}_{30}$ be the 30 Lagrangian points illustrated
-in [@fig:pib-columns], starting on the far right and moving along the object
-counterclockwise. To each column, assign a unique sort index. The location of
-each Lagrangian point will be identified by the sort index of the column that
-contains it. Careful indexing will order the Lagrangian points by column and
-then by sweep. This ordering defined the permutation matrices $\{P_s\}$. Define
-a function $\sigma(\vec{X})$ which computes the sort index of the column
-containing $\vec{X}$. In [@fig:pib-columns], there are 12 columns of grid
-cells. Three of them are highlighted in grey, and the Lagrangian points in the
-grey region will be processed in the same sweep. Assign the left-most column
-a sort index of 1, the column $4h$ to the right sort index 2, and the column
-$4h$ to the right of that has sort index 3. There is no next column $4h$ to the
-right, so we return to the 2^nd^ column from the left and assign it a sort
-index of 4. In this fashion, we assign sort indices to each of the columns; the
-three grey columns will have sort indices 10, 11, and 12, and will be processed
-in sweep $s = 4$. The matrix $S_4P_4$ has no nonzero entries in its first 25
-columns, corresponding to the 25 Lagrangian points processed in sweeps 1--3,
-and then five columns of 16 (possibly) nonzero values each. These columns
-correspond to some permutation of the 12^th^, 19^th^, and 20^th^ columns of
-$S$, followed by some permutation of the 25^th^ and 26^th^ columns of $S$.
-
-\begin{algorithm}[tbh]
-    \begin{algorithmic}
-        \STATE $\vec{f} \leftarrow \vec{0}$
-        \FORALL {$\vec{X}_j\in\Gamma^h$ \textbf{parallel}}
-        \STATE \texttt{index}$_j \leftarrow j$
-        \STATE \texttt{sort}$_j \leftarrow \sigma(\vec{X}_j)$
-        \ENDFOR
-        \STATE \texttt{sort-by-key}(\texttt{sort}, \texttt{index})
-        \STATE \texttt{start}$\ \leftarrow  1$
-        \FOR {$s=1,\,\ldots,\,m$}
-        \STATE \texttt{end}$\ \leftarrow\ $\texttt{binary-search}($\lceil 4^{1-d}n_\omega \rceil s + 1$, \texttt{sort}, \texttt{start}, $n_\gamma+1$)
-        \FORALL {$p\in\texttt{compact}(\texttt{sort},\,\texttt{start},\,\texttt{end})$ \textbf{parallel}}
-        \STATE $\texttt{head} =\ $\texttt{binary-search}($p$, \texttt{sort}, \texttt{start}, \texttt{end})
-        \WHILE {$\texttt{sort}_\texttt{head} = p$}
-        \STATE $j \leftarrow\ $\texttt{index}$_\texttt{head}$
-        \STATE $\Delta\vec{f} \leftarrow F_jA_j\vec{\nu}(\vec{X}_j)$
-        \FOR {$k \in K$}
-        \STATE $\ell = i(j,\,k)$
-        \IF {$\vec{x}_\ell \in \Omega$}
-        \STATE $f_\ell \leftarrow f_\ell + \Delta f_k$
-        \ENDIF
-        \ENDFOR
-        \STATE $\texttt{head} \leftarrow \texttt{head} + 1$
-        \ENDWHILE
-        \ENDFOR
-        \STATE \texttt{start} $\leftarrow$ \texttt{end}
-        \ENDFOR
-    \end{algorithmic}
-    \caption{Columnwise force spreading with pruning}
-    \label{lst:column-parallel}
-\end{algorithm}
-
-Using the sort index as a key to sort the points, points in the same column are
-grouped together, and columns associated with a particular sweep are also
-grouped together. After sorting, binary search tells us where a sweep begins,
-and each thread can perform binary search to find where its associated
-column begins. Thus, we can replace the linked list construction with two
-arrays (one for points/point indices, and the other the sort index) and use the
-well-studied key-value sort for list maintenance in addition to computing the
-permutation matrices $\{P_s\}$. The resulting algorithm is listed in
-[@lst:column-parallel] where the function `compact` returns, unaltered, its
-first argument. Again, we employ the function $\nu(\vec{X})$, which organizes
-the values of $\delta_h$ at each support point of $\vec{X}$ into a vector.
-
-The introduction of a sorting step with $\mathcal{O}(n_\gamma\log n_\gamma)$ 
-complexity seems counterproductive to parallelizing an $\mathcal{O}(n_\gamma)$
-serial algorithm, but for any fixed the number of grid points, the complexity
-of radix sort in this context is $\mathcal{O}(n_\gamma)$. A possible
-improvement mimics the list maintenance of [@McQueen:1997kw] by using the sort
-only initially. At each time step, (1) compute new sort indices for all of the
-Lagrangian points, (2) partition the points predicated on the sort index
-changing, (3) sort only the points with a changed sort index, and (4) merge the
-(sorted) point partitions and sort indices. However, this has the same
-$\mathcal{O}(n_\gamma)$ complexity.
-
-We can optimize further based on the array-based construction. Having found the
-bounds for columns involved in a single sweep, we can then find just the unique
-columns within the sub-array. The result gives us the sort indices of only the
-nonempty columns of grid cells and the number of nonempty columns of grid
-cells. Then, threads are assigned only to nonempty columns. This can improve
-load balancing when empty columns are possible. For this algorithm, the
-function `compact` in [@lst:column-parallel] returns the unique entries in its
-first argument between indices indicated by the 2^nd^ and 3^rd^ arguments,
-respectively. Since `sort` is already sorted, this is a simple task. For each
-sweep, $S_sP_s$ has not changed, but we have effectively reduced the work to
-a sparse matrix-vector multiply with a sparse matrix that contains no or very
-few empty rows. In other words, we avoid having threads attempt to process
-an empty column of grid cells (e.g., the first and last columns in
-[@fig:pib-columns]), during which the thread would idle while other
-threads process nonempty columns of grid cells.
-
-\begin{figure}[tbh]
-    \centering
-    \begin{tikzpicture}[
-        scale=2,
-        declare function={
-            ex(\t) = 3 + cos(10) * 2.1 * cos(\t) - sin(10) * 0.8 * sin(\t);
-            ey(\t) = 2 + cos(10) * 0.8 * sin(\t) + sin(10) * 2.1 * cos(\t);
-        }
-    ]
-    \draw[color=black!20, fill] (1.5, 1) rectangle (2.0, 1.5);
-    \draw[color=black!20, fill] (1.5, 3) rectangle (2.0, 3.25);
-    \draw[color=black!20, fill] (3.5, 1) rectangle (4.0, 1.5);
-    \draw[color=black!20, fill] (3.5, 3) rectangle (4.0, 3.25);
-    \draw[color=black!20, fill] (5.5, 1) rectangle (5.75, 1.5);
-    \draw[color=black!20, fill] (5.5, 3) rectangle (5.75, 3.25);
-    \draw[step=0.5] (0.25, 0.25) grid (5.75, 3.25);
-
-    \node[scale=0.8, shape=circle, color=tol/contrast/blue, fill] at (1.0, 0.5) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/blue, fill] at (1.5, 0.5) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/blue, fill] at (2.0, 0.5) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/blue, fill] at (2.5, 0.5) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/blue, fill] at (1.0, 1.0) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/blue, fill] at (1.5, 1.0) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/blue, fill] at (2.0, 1.0) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/blue, fill] at (2.5, 1.0) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/blue, fill] at (1.0, 1.5) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/blue, fill] at (1.5, 1.5) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/blue, fill] at (2.0, 1.5) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/blue, fill] at (2.5, 1.5) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/blue, fill] at (1.0, 2.0) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/blue, fill] at (1.5, 2.0) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/blue, fill] at (2.0, 2.0) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/blue, fill] at (2.5, 2.0) {};
-
-    \node[scale=0.8, shape=circle, color=tol/contrast/yellow, fill] at (3.0, 0.5) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/yellow, fill] at (3.5, 0.5) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/yellow, fill] at (4.0, 0.5) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/yellow, fill] at (4.5, 0.5) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/yellow, fill] at (3.0, 1.0) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/yellow, fill] at (3.5, 1.0) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/yellow, fill] at (4.0, 1.0) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/yellow, fill] at (4.5, 1.0) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/yellow, fill] at (3.0, 1.5) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/yellow, fill] at (3.5, 1.5) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/yellow, fill] at (4.0, 1.5) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/yellow, fill] at (4.5, 1.5) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/yellow, fill] at (3.0, 2.0) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/yellow, fill] at (3.5, 2.0) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/yellow, fill] at (4.0, 2.0) {};
-    \node[scale=0.8, shape=circle, color=tol/contrast/yellow, fill] at (4.5, 2.0) {};
-
-    \draw[very thick] plot[domain=-180:180, variable=\x, samples=100] ({ex(\x)}, {ey(\x)});
-    \draw[thin, black, fill=tol/contrast/blue] plot[only marks, mark=square*] coordinates {
-        ({ex(225.60289396961724)}, {ey(225.60289396961724)})
-        ({ex(236.9674607870579)}, {ey(236.9674607870579)})
-    };
-    \draw[thin, black, fill=tol/contrast/yellow] plot[only marks, mark=square*] coordinates {
-        ({ex(283.4525276213703)}, {ey(283.4525276213703)})
-        ({ex(292.8699014257434)}, {ey(292.8699014257434)})
-    };
-    \draw[thin, black, fill=white] plot[only marks, mark=square*] coordinates {
-        ({ex(16.902383319583745)}, {ey(16.902383319583745)})
-        ({ex(32.4225566445974)}, {ey(32.4225566445974)})
-        ({ex(45.60289396961725)}, {ey(45.60289396961725)})
-        ({ex(56.967460787057895)}, {ey(56.967460787057895)})
-        ({ex(67.13009857425658)}, {ey(67.13009857425658)})
-        ({ex(76.54747237862972)}, {ey(76.54747237862972)})
-        ({ex(85.5588196210609)}, {ey(85.5588196210609)})
-        ({ex(94.44118037893911)}, {ey(94.44118037893911)})
-        ({ex(103.4525276213703)}, {ey(103.4525276213703)})
-        ({ex(112.86990142574342)}, {ey(112.86990142574342)})
-        ({ex(123.03253921294208)}, {ey(123.03253921294208)})
-        ({ex(134.39710603038273)}, {ey(134.39710603038273)})
-        ({ex(147.57744335540258)}, {ey(147.57744335540258)})
-        ({ex(163.09761668041625)}, {ey(163.09761668041625)})
-        ({ex(180.0)}, {ey(180.0)})
-        ({ex(196.90238331958375)}, {ey(196.90238331958375)})
-        ({ex(212.4225566445974)}, {ey(212.4225566445974)})
-        %({ex(225.60289396961724)}, {ey(225.60289396961724)})
-        %({ex(236.9674607870579)}, {ey(236.9674607870579)})
-        ({ex(247.13009857425658)}, {ey(247.13009857425658)})
-        ({ex(256.5474723786297)}, {ey(256.5474723786297)})
-        ({ex(265.55881962106093)}, {ey(265.55881962106093)})
-        ({ex(274.4411803789391)}, {ey(274.4411803789391)})
-        %({ex(283.4525276213703)}, {ey(283.4525276213703)})
-        %({ex(292.8699014257434)}, {ey(292.8699014257434)})
-        ({ex(303.0325392129421)}, {ey(303.0325392129421)})
-        ({ex(314.3971060303827)}, {ey(314.3971060303827)})
-        ({ex(327.5774433554026)}, {ey(327.5774433554026)})
-        ({ex(343.09761668041625)}, {ey(343.09761668041625)})
-        ({ex(360.0)}, {ey(360.0)})
-    };
-    
-    \end{tikzpicture}
-    \caption{%
-        A portion of $\Omega$ containing $\Gamma$ (thick black curve). The
-        Lagrangian points $\Gamma^h$ are represented by squares. All Lagrangian
-        points that lie in the grey region are processed in a single sweep.
-        Lagrangian points in different grey cells do not have overlapping
-        support points, while Lagrangian points in the same cell will all have
-        identical support points. If only one thread writes per cell, there
-        are no write contentions. The circular support points' colors indicate
-        the corresponding square Lagrangian point(s).
-    }
-    \label{fig:pib-cells}
-\end{figure}
-
-An extension of this idea is to refine the partition to as fine as possible.
-That is, the Eulerian grid can be divided into $m=n_k$ sets of at most
-$\lceil n_\omega/n_k \rceil$ grid cells that are $2Rh$ apart in each direction.
-Each grid cell is assigned a unique sort index that orders Lagrangian points by
-cell and then by sweep. In sweep $s$, any Lagrangian points in different cells
-within the $s$^th^ set of cells will have non-overlapping support points, while
-Lagrangian points in the same cell will have the same support points. An
-example of this is illustrated in [@fig:pib-cells]. This modification requires
-$4^d$ sweeps, but pruning empty grid cells, the work is nearly equal for all
-threads, and no thread has no work to do. With one thread per cell in
-a sweep, we can compute the support points indices ($i(j,\,k)$) before entering
-the **while** loop in [@lst:column-parallel], since they will be the same for
-each Lagrangian point in that cell. Other than to precompute the support point
-indices, we do not need to change [@lst:column-parallel]; simply change the
-matrices $S_s$ to contain only the columns of $S$ corresponding to Lagrangian
-points contained in the $s$^th^ set of grid cells and modify the sort-indexing
-function $\sigma$ to give unique indices to each grid cell.
-
-\begin{figure}[tbh]
-    \centering
-    \begin{tikzpicture}[
-        scale=2,
-        declare function={
-            ex(\t) = 3 + cos(10) * 2.1 * cos(\t) - sin(10) * 0.8 * sin(\t);
-            ey(\t) = 2 + cos(10) * 0.8 * sin(\t) + sin(10) * 2.1 * cos(\t);
-        }
-    ]
-    \draw[step=0.5] (0.25, 0.25) grid (5.75, 3.25);
-
-    \draw[very thick] plot[domain=-180:180, variable=\x, samples=100] ({3 + 0.98480775301 * 2.1 * cos(\x) - 0.17364817766 * 0.8 * sin(\x)}, {2 + 0.98480775301 * 0.8 * sin(\x) + 0.17364817766 * 2.1 * cos(\x)});
-    \foreach \t in {
-        16.902383319583745,
-        32.4225566445974,
-        45.60289396961725,
-        56.967460787057895,
-        67.13009857425658,
-        76.54747237862972,
-        85.5588196210609,
-        94.44118037893911,
-        103.4525276213703,
-        112.86990142574342,
-        123.03253921294208,
-        134.39710603038273,
-        147.57744335540258,
-        163.09761668041625,
-        180.0,
-        196.90238331958375,
-        212.4225566445974,
-        225.60289396961724,
-        236.9674607870579,
-        247.13009857425658,
-        256.5474723786297,
-        265.55881962106093,
-        274.4411803789391,
-        283.4525276213703,
-        292.8699014257434,
-        303.0325392129421,
-        314.3971060303827,
-        327.5774433554026,
-        343.09761668041625,
-        360.0
-    } {%
-        \draw[very thick, color=tol/contrast/red] ({ex(\t)}, {ey(\t)}) -- %node[draw, black, fill=white] at 
-        ({3 + 0.5 * floor(2 * (ex(\t) - 3))}, {2 + 0.5 * floor(2 * (ey(\t) - 2))}) node[fill, circle, scale=0.5] {}
-        ;
-    }
-
-    \draw[thin, black, fill=white] plot[only marks, mark=square*] coordinates {
-        ({ex(16.902383319583745)}, {ey(16.902383319583745)})
-        ({ex(32.4225566445974)}, {ey(32.4225566445974)})
-        ({ex(45.60289396961725)}, {ey(45.60289396961725)})
-        ({ex(56.967460787057895)}, {ey(56.967460787057895)})
-        ({ex(67.13009857425658)}, {ey(67.13009857425658)})
-        ({ex(76.54747237862972)}, {ey(76.54747237862972)})
-        ({ex(85.5588196210609)}, {ey(85.5588196210609)})
-        ({ex(94.44118037893911)}, {ey(94.44118037893911)})
-        ({ex(103.4525276213703)}, {ey(103.4525276213703)})
-        ({ex(112.86990142574342)}, {ey(112.86990142574342)})
-        ({ex(123.03253921294208)}, {ey(123.03253921294208)})
-        ({ex(134.39710603038273)}, {ey(134.39710603038273)})
-        ({ex(147.57744335540258)}, {ey(147.57744335540258)})
-        ({ex(163.09761668041625)}, {ey(163.09761668041625)})
-        ({ex(180.0)}, {ey(180.0)})
-        ({ex(196.90238331958375)}, {ey(196.90238331958375)})
-        ({ex(212.4225566445974)}, {ey(212.4225566445974)})
-        ({ex(225.60289396961724)}, {ey(225.60289396961724)})
-        ({ex(236.9674607870579)}, {ey(236.9674607870579)})
-        ({ex(247.13009857425658)}, {ey(247.13009857425658)})
-        ({ex(256.5474723786297)}, {ey(256.5474723786297)})
-        ({ex(265.55881962106093)}, {ey(265.55881962106093)})
-        ({ex(274.4411803789391)}, {ey(274.4411803789391)})
-        ({ex(283.4525276213703)}, {ey(283.4525276213703)})
-        ({ex(292.8699014257434)}, {ey(292.8699014257434)})
-        ({ex(303.0325392129421)}, {ey(303.0325392129421)})
-        ({ex(314.3971060303827)}, {ey(314.3971060303827)})
-        ({ex(327.5774433554026)}, {ey(327.5774433554026)})
-        ({ex(343.09761668041625)}, {ey(343.09761668041625)})
-        ({ex(360.0)}, {ey(360.0)})
-    };
-   
-    \end{tikzpicture}
-    \caption{%
-        For each Lagrangian point, we process a single support point per sweep;
-        in this case, the grid point at the lower left corner of the cell the
-        Lagrangian point occupies. The index of the support point will be
-        different for Lagrangian points in different grid cells, and all
-        Lagrangian points in a single grid cell will have the same support
-        point index. Using one thread per (nonempty) grid cell for writes,
-        there are no write contentions.
-    }
-    \label{fig:pib-support}
-\end{figure}
-
-## A load-balanced partitioning
-Until now, we have decomposed the domain into segments to avoid overlapping
-support points between these segments. This has led to the potential need for
-pruning when segments contain no Lagrangian points. Even with pruning, there
-is no guarantee that threads will perform similar amounts of work. However,
-ignoring boundaries, we know that each Lagrangian point has $n_k$ (possibly
-zero) $\delta_h$ values to compute. Consider using a sweep to compute one of
-the $\delta_h$ values. [@fig:pib-support] illustrates a sweep in which for each
-Lagrangian point, $\delta_h$ is evaluated at the support point at the lower
-left corner of the grid cell containing the Lagrangian point. We store these
-values in a temporary buffer.
-
-
-\begin{algorithm}[tbh]
-    \begin{algorithmic}
-        \REQUIRE $K = K_1 \cup K_2 \cup \cdots \cup K_n$
-        \STATE $\vec{f} \leftarrow \vec{0}$
-        \FORALL {$\vec{X}_j\in \Gamma^h$ \textbf{parallel}}
-        \STATE \texttt{index}$_j \leftarrow j$
-        \STATE \texttt{sort}$_j \leftarrow \sigma(\vec{X}_j)$
-        \ENDFOR
-        \STATE \texttt{sort-by-key}(\texttt{sort}, \texttt{index})
-        \FOR {$s = 1,\,\ldots,\,n$}
-        \FORALL {$k \in K_s$}
-        \STATE $\vec{f}^{\ k} \leftarrow \vec{0}$
-        \ENDFOR
-        \FORALL {$\vec{X}_j \in \Gamma^h$ \textbf{parallel}}
-        \STATE $\ell \leftarrow \texttt{index}_j$
-        \STATE \texttt{buffer}$_j \leftarrow F_\ell A_\ell\vec{\nu}(\vec{X}_\ell,\,s)$
-        \ENDFOR
-        \STATE $\texttt{keys},\,\texttt{values} \leftarrow \texttt{reduce-by-key}(\texttt{sort},\,\texttt{buffer})$
-        \FORALL {\texttt{key}, \texttt{value} in \texttt{keys}, \texttt{values} \textbf{parallel}}
-        \FORALL {$k \in K_s$}
-        \STATE $\ell \leftarrow \texttt{grid-index}(\texttt{key},\,k)$
-        \IF {$\vec{x}_\ell \in \Omega$}
-        \STATE $f^{\ k}_\ell \leftarrow f^{\ k}_\ell + \texttt{value}$
-        \ENDIF
-        \ENDFOR
-        \ENDFOR
-        \FORALL {$k \in K_s$}
-        \STATE $\vec{f} \leftarrow \vec{f} + \vec{f}^{\ k}$
-        \ENDFOR
-        \ENDFOR
-    \end{algorithmic}
-    \caption{Sweep-fused support-point-wise force spreading}
-    \label{lst:lagrange-parallel}
-\end{algorithm}
-
-To each grid cell, we assign a unique sort index, e.g., the index of the grid
-cell in lexicographical ordering. By sorting the Lagrangian points according
-to the sort index of the grid cell that contains it, the indices of the support
-point for each sweep are also grouped, though not necessarily ordered. The
-$\delta_h$ values can then be accumulated using a \emph{segmented reduce}
-routine, which sums consecutive values given some predicate; in this case, that
-the values have the same associated sort index. This algorithm is listed in
-[@lst:lagrange-parallel]. We satisfy the requirement that $K$ be partitioned
-by letting $K_s = \{s\}$, so that $n = n_k$ in the algorithm.
-
-The function `grid-index` in [@lst:lagrange-parallel] performs a similar
-role as the function $i$ in the previous sections. Since all Lagrangian points
-in the same grid cell will have the same sort index, so will a theoretical
-point at the bottom left corner of the cell. These points will all have the
-same support points, so we identify these points with the sort index of this
-theoretical point. For a Lagrangian point $\vec{X}_j$ with sort index
-`key`, $\texttt{grid-index}(\texttt{key},\,k) \equiv i(j,\,k)$.
-
-One thing to notice that differs from [@lst:column-parallel] is that we have
-eliminated the \textbf{while} loop, which prevented us from proper load
-balancing. The work done in the two parallel \textbf{for} loops can be divided
-evenly among the threads, and the functions `sort-by-key` and
-`reduce-by-key` can also be parallelized effectively.
-
-In each sweep, we compute one $\delta_h$ value per Lagrangian point. Since
-`sort` is supplied to `reduce-by-key` each sweep, the values will be
-accumulated according to the same pattern, and `keys` will be identical each
-sweep, containing only the unique sort indices among all of the Lagrangian
-points. For each `key` in `keys`, we write one value to $\vec{f}$. Thus, each
-sweep performs identical work, up to permutations in threads. One benefit of
-each sweep performing the same work is that we can fuse some of the sweeps and
-simply write to separate buffers for each support point. While it may be
-tempting to fuse all of the sweeps into one, for large numbers of Lagrangian
-points, this can lead to heavy memory pressure and can hurt performance. It
-seems that, depending on the device, fusing 1--8 sweeps may be optimal.
-This variation is listed in [@lst:lagrange-parallel] with the partition
-$\{K_s\}$ chosen to have a maximum number of entries, depending on the device,
-and perhaps other properties that aid in minimizing calls to $\varphi$.
+So far, we have assumed that vector-valued quantities are discretized on
+staggered grids. On a uniform grid, where each component of a vector-valued
+quantity is discretized at the same spatial coordinate, the grid cells are
+identical for each component. In that case, each component will give the same
+sort key and values will be written to output entries with the same index, so
+we can compute sort keys and perform the sort once, and re-use the resulting
+$P$ for each component, all of which can be computed by the same thread.

@@ -153,20 +153,3 @@ the fluid velocities and force densities are represented by one vector per
 component. We will use the notation $\{\vec{u}\}$ and $\{\vec{f}\}$ for the
 set of vectors containing fluid velocities and Eulerian force densities,
 respectively.
-
-## A survey of parallel architectures {#sec:arch}
-The algorithm described below aims to be device agnostic. To that end, the
-algorithm ought to behave nicely on devices with strict limitations on
-parallelization, like graphical processing units (GPUs). GPUs use a
-single-instruction, multiple thread (SIMT) execution model in which a group of
-threads execute the same instruction on different data, in parallel.
-
-* Branch divergence hurts performance
-* Can't do two independent things at the same time
-* Time taken is the time it takes for the slowest thread to finish (hence a
-  need for load balancing)
-* SIMT can be mimicked to some extent on CPUs
-
-Henceforth, we will use the term _thread_ to refer to a single computational
-unit (e.g., thread, processor, &c.) under the restrictions outlined above with
-the caveat that parallel primitives may be optimized for a specific devices.
