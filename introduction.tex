@@ -1,0 +1,22 @@
+\section{Introduction}
+
+Many problems in biophysics involve the interaction of an incompressible fluid
+and an immersed elastic interface. The solution to these problems can be
+approximated using the immersed boundary (IB) method, which was developed by
+Peskin to simulate blood flow through the heart [@Peskin:1972wa]. This method
+couples the equations governing fluid velocity and those governing elastic
+forces via operations we will refer to as \textit{interpolation} and
+\textit{spreading}. We treat solving the fluid equations and computing elastic
+forces as an implementation detail; we assume that they are parallelizable and
+limit our focus to the interpolation and spreading operations.
+
+McQueen and Peskin present a domain decomposition scheme to parallelize these
+operations on the Cray C-90 computer with a modest number of vector processors
+[@McQueen:1997kw]. Unfortunately, the trend in computing is to use \emph{more}
+processors rather than \emph{faster} processors. They also illustrate the need
+for a fast interpolation and spreading -- even parallelized, they spend roughly
+half of the wall clock time spreading and interpolating. Here, we introduce
+a novel parallelization scheme for the interpolation and spreading operations.
+We compare this to the method of Peskin and McQueen and a variant of their
+ideas on a massively parallel general purpose graphical processing unit
+(GPGPU).

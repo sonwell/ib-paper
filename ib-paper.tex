@@ -114,31 +114,29 @@ grestore
 %
 % Insert the name of "your journal" with
 % \journalname{myjournal}
-$if(journal)$\journalname{$journal$}$endif$
+\journalname{Journal of Scientific Computing}
 %
 \begin{document}
 
-\title{$title$$if(thanks)$\thanks{$thanks$}$endif$}
-$if(subtitle)$
-\subtitle{$subtitle$}
-$endif$
+\title{%
+    A fine-grained parallelization of the immersed boundary method
+    %\thanks{$thanks$}
+}
 
-$if(running-title)$\titlerunning{$runningtitle$}$endif$
+%\subtitle{}
+%\titlerunning{}
 
-$if(authors)$
-\author{$for(authors)$$authors.name$$seq$\and $endfor$}
-$endif$
+\author{Andrew Kassen \and Varun Shankar \and Aaron Fogelson}
 
-$if(running-author)$\authorrunning{$running-author$}$endif$
+\authorrunning{}
 %\authorrunning{Short form of author list} % if too long for running head
 
-$if(authors)$
 \institute{%
-${ for(authors) }
-${ it:institution() }${ sep }\and
-${ endfor }
+    A. Kassen \at Department of Mathematics \newline University of Utah \and
+    V. Shankar \at School of Computing \newline University of Utah \and
+    A. Fogelson \at Department of Mathematics \newline University of Utah \newline
+    \email{fogelson@math.utah.edu}
 }
-$endif$
 
 \date{Received: date / Accepted: date}
 % The correct dates will be entered by the editor
@@ -147,20 +145,25 @@ $endif$
 \maketitle
 
 \begin{abstract}
-$abstract$
-$if(keywords)$\keywords{$for(keywords)$$keywords$$sep$\and $endfor$}$endif$
-$if(pacs)$\PACS{$for(pacs)$$pacs$$sep$\and $endfor$}$endif$
+    This note describes a parallel implementation of the immersed
+    boundary method which relies on the well-studied parallel primitives
+    key-value sort and segmented reduce. This makes the algorithms feasible for
+    use on general purpose graphical processing units in addition to most other
+    architectures. This is compared to existing parallelization methods.
+
+% \keywords{}
+% \PACS{}
 % \subclass{MSC code1 \and MSC code2 \and more}
 \end{abstract}
 
-$body$
+\input{introduction}
+\input{methods}
+\input{results}
+\input{discussion}
+\input{conclusion}
 
-
-$if(acknowledgements)$
-\begin{acknowledgements}
-$acknowledgements$
-\end{acknowledgements}
-$endif$
+%\begin{acknowledgements}
+%\end{acknowledgements}
 
 
 % Authors must disclose all relationships or interests that 
@@ -168,10 +171,7 @@ $endif$
 % the work: 
 %
 
-$if(conflict)$
-\section*{Conflict of interest}
-$conflict$
-$endif$
+%\section*{Conflict of interest}
 
 
 \bibliographystyle{spmpsci}      % mathematics and physical sciences

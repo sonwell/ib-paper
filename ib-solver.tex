@@ -1,0 +1,94 @@
+\subsection{Spatial discretization}
+
+The equations [@eq:...] are discretized on staggered, regular grids with grid
+spacing $h$. The components of vector-valued quantities are discretized on the
+center of the corresponding cell face. That is, for example, if
+$\vec{a} = (a_1,\,a_2,\,a_3)$ are the three components of a vector-valued
+quantity for some grid cell with lower corner $h(i,\,j,\,k)$, then $a_1$
+lives at $h(i,\,j+0.5,\,k+0.5)$, $a_2$ at $h(i+0.5,\,j,\,k+0.5)$, and $a_3$ at
+$h(i+0.5,\,j+0.5,\,k)$. Scalar quantities are discretized at cell centers,
+e.g., $h(i+0.5,\,j+0.5,\,k+0.5)$.
+
+The central difference operator $D^i$, which differentiates with respect to
+the $i^\text{th}$ coordinate, in the absence of solid boundaries, is defined as
+\begin{equation}
+    D_ig(\vec{x}) = \frac{g(\vec{x}+h\vec{e}_i/2) + g(\vec{x}+h\vec{e}_i/2)}{h}.
+\end{equation}
+In the presence of solid boundaries, a linear interpolant is used to fill a
+ghost value. The divergence operator applied to a vector-valued function
+$\vec{a}$ on the staggered grid, $\grad_h\cdot\vec{a} = D_ia^i$, where Einstein
+summation notation is assumed and $i$ ranges from 1 to $d$, results in
+a scalar-valued quantity at the cell center. The gradient operator applied to
+scalar-valued quantity $b$ at the cell center yields the vector
+$\grad_hb = \vec{e}^jD_jb$ on the staggered grid.
+
+Define the central averaging operator, $A^i$, which averages in the
+$i^\text{th}$ coordinate direction and in the absence of boundaries, as
+\begin{equation}
+    A_i = \frac{g(\vec{x}+h\vec{e}_i)+g(\vec{x}-h\vec{e}_i)}{2}.
+\end{equation}
+In the presence of boundaries, we use the value at the ghost cell. By taking
+products of averaged components of $\vec{u}$, we compute advection in
+conservation form as
+\begin{equation}
+    \vec{H}(\vec{u}) := \vec{e}_iD_j((\delta^{im}A_mu^j)(\delta^{jn}A_nu^i)).
+\end{equation}
+
+The viscous terms are computed as $\mu\Delta_h\vec{u}$, where $\Delta_h$ is the
+standard 5- or 7-point Laplacian. In the absence of solid boundaries, this
+is identical to  $\Delta_h = \grad_h\cdot\grad_h$. Otherwise, we use the value
+at the ghost cell for stencils that extend past a solid boundary.
+
+\subsection{Temporal discretization}
+
+We time-step using the 2$^\text{nd}$ order implicit-explicit Runge-Kutta method
+as described in [@Peskin:...] and projection method PmIII from [@Brown:...].
+This leads to the system of equations
+\begin{align}
+    \left(\tilde{I}-\frac{\lambda}2\Delta_h\right)\delta\vec{w}
+    &= \alpha\lambda\left[\Delta_h\vec{u}^n + B_h \vec{w}_b^{n+\sfrac12}\right] + \tilde{I}\left(\rho^{-1}\vec{f} - \vec{H}(\vec{u}^{n+\alpha-\sfrac12})\right) \\
+    \vec{w} &= \vec{u}^n + \delta\vec{w} \\
+    k\Delta_h\phi &= \grad_h\cdot\vec{w} \\
+    \vec{u}^{n+\alpha} &= \vec{u}^\ast - k\grad_h\phi,
+\end{align}
+where $k$ is the timestep, $\lambda = k\mu/\rho$, $B_h$ is an appropriate
+boundary operator for the discrete Laplacian, $\vec{w}_b$ are boundary data for
+$\vec{w}$, and $\alpha$ is the fraction of the timestep for the current stage
+of the timestepping method: $\alpha=\sfrac12$ or 1. The quantity $\phi$ acts as
+a pseudo-pressure, and the pressure can be recovered via
+$p=\phi-(\mu/\rho)\grad_h\cdot\vec{w}$.
+
+The modified identity matrix, $\tilde{I}$, corrects errors in using the
+standard discrete Laplacian on a staggered grid, where the stencil may extend
+beyond the boundary of the domain. This requires a ghost point, to which we
+have assigned a value using a linear interpolant. Under certain circumstances,
+this works perfectly fine, but in general, the resulting approximation to the
+Laplacian is 0$^\text{th}$ order, but differs by a constant factor. Let that
+factor be denoted $1-\epsilon_h$. For stencils that straddle the boundary, we
+modify the momentum equation so that we are instead solving
+\begin{equation}
+    (1-\epsilon_h)\rho(\vec{u}_t + \grad\cdot(\vec{u}\otimes\vec{u})) = (1-\epsilon_h)\left[\mu\Delta\vec{u} + \vec{f}\right].
+\end{equation}
+This requires no additional modification to the Laplacian, but after
+discretization, yields a factor in front of the intermediate velocity update
+$\delta\vec{w}$ and the force density and advection terms. Under reasonable
+assumptions, the resulting linear system is symmetric positive definite, and
+is suitable for use with preconditioned conjugate gradients. One can view this
+as using a quadratic interpolant near the boundaries and scaling the
+corresponding rows to ensure symmetry of the linear system. The resulting
+systems are identical.
+
+To solve the Helmholtz system $\tilde{I}-\sfrac12\lambda\Delta_h$, we use
+conjugate gradients preconditioned with Chebyshev iteration. Chebyshev
+iteration requires only that the matrix be positive (negative) semi-definite,
+and uses only matrix-vector multiplication and vector scaling, it is
+parallelizable if those two operations are. Vector scaling is trivially
+parallelilzable, and for certain matrix formats, such as compressed sparse row,
+matrix-vector multiplication is parallelizable as well.
+
+Chebyshev iteration can also be modified for use as a smoother/relaxer for
+multigrid. Its efficacy is comparable or better to that of successive
+over-relaxation (SOR), but the parallelism of Chebyshev iteration far exceeds
+that of SOR. To solve the Poisson problem for $\phi$, we employ multigrid with
+a Chebyshev smoother as a preconditioner for conjugate gradients.
+

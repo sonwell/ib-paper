@@ -1,4 +1,11 @@
-# Methods {#sec:methods}
+\section{Methods}
+\input{intro-ib}
+\input{ib-solver}
+\input{intro-rbf}
+\input{forces}
+
+\subsection{Parallelization of interaction operators}
+
 Below, we describe a method for evaluating
 \begin{align}
     \label{eq:scalar-interp}
@@ -12,7 +19,8 @@ can be applied to each component individually. For some grids, it may be
 possible to process each component concurrently. We consider this possibility
 at the end of the section.
 
-## The Structure of $\mathcal{S}$ and $\mathcal{S}^\dagger$
+\subsection{The structure of $\mathcal{S}$ and $\mathcal{S}^\dagger$}
+
 Let $\Omega_h$ be a regular grid on $\Omega$ with grid spacing $h$. Define
 $\vec{g} \in [0,\,1)^d$ to be the fixed vector such that a grid point $\vec{x}$
 can be decomposed as $\vec{x}=h(\vec{i}+\vec{g})$, where $\vec{i}$ has integer
@@ -86,7 +94,7 @@ assume $\vec{x}\in\Omega_h$ and write
 \end{equation}
 where $\Delta\vec{X}$ is the displacement of $\vec{X}$ from its associated grid
 point, $\vec{\sigma} = \lfloor\vec{x}\rceil-\lfloor\vec{X}\rceil$ since
-$\vec{x} = h(\lfloor\vec{x}\rceil+\vec{g})$, and $\vec{c}_i$ is the $i$^th^
+$\vec{x} = h(\lfloor\vec{x}\rceil+\vec{g})$, and $\vec{c}_i$ is the $i^\text{th}$
 canonical basis vector. We refer to $\vec{\sigma}$ as a \emph{shift}. Shifts
 that result in a possibly nonzero value of $\delta_h$ are known \emph{a priori}
 based on $\phi$, and usually range from $-\lfloor s/2\rfloor$ to
@@ -95,7 +103,7 @@ the shifts $\{\vec{\sigma}_i\}_{i=1}^{s^d}$. We denote the $i^\text{th}$ shift
 $\vec{\sigma}_i$.
 
 We need one more ingredient to construct $\mathcal{S}$. Let $\vec{x}_k$ be the
-be the $k$^th^ grid point, such that, e.g., $e_k = e(\vec{x}_k)$ is the $k$^th^
+be the $k^\text{th}$ grid point, such that, e.g., $e_k = e(\vec{x}_k)$ is the $k^\text{th}$
 entry of $\vec{e}$. The grid point $\vec{x}_k$ can be decomposed into
 $h(\vec{i}+\vec{g})$ for some $\vec{i}$ with integer components. Define the
 grid indexing function $\#:\mathbb{Z}^d\to\mathbb{Z}\cup\{\epsilon\}$ such that
@@ -104,7 +112,7 @@ $\#(\vec{i}')=\epsilon$ if $h(\vec{i}'+\vec{g}) \not\in \Omega$.
 
 We are now ready to construct $\mathcal{S}$. Consider a Lagrangian point
 $\vec{X}_j$ that is in the same grid cell as grid point
-$\vec{x}_k=h(\lfloor\vec{X}_j\rceil+\vec{g})$. The $j$^th^ column of
+$\vec{x}_k=h(\lfloor\vec{X}_j\rceil+\vec{g})$. The $j^\text{th}$ column of
 $\mathcal{S}$ is zero except for up to $s^d$ values where for
 $i=1,\,\ldots,\,s^d$, if $\#(\lfloor\vec{X}_j\rceil+\vec{\sigma}_i)\neq\epsilon$,
 \begin{equation}
@@ -112,11 +120,11 @@ $i=1,\,\ldots,\,s^d$, if $\#(\lfloor\vec{X}_j\rceil+\vec{\sigma}_i)\neq\epsilon$
     \mathcal{S}_{i,\#(\lfloor\vec{X}_j\rceil + \vec{\sigma}_i)} = \delta_h(h\vec{\sigma}_i-\vec{X}_j+\vec{x}_k).
 \end{equation}
 
-## Parallelization of Interpolation
+\subsection{Parallelization of interpolation}
 From the above, we can see that $\mathcal{S}$ has approximately equal number
 of nonzero entries per column. This means, that the interpolation matrix,
 $\mathcal{S}^\dagger$, has approximately equal number of nonzero entries per row.
-This property is beneficial for parallelization. Consider the $j$^th^ row of
+This property is beneficial for parallelization. Consider the $j^\text{th}$ row of
 $\mathcal{S}^\dagger$, which corresponds to interpolating to Lagrangian point
 $\vec{X}_j$ using the values at its support points. There are at most $s^d$
 values in that row, which correspond to the shifts that give a potentially
@@ -130,8 +138,8 @@ products
 \end{equation*}
 
 Assigning one thread per Lagrangian point (i.e., one thread per row), this
-calculation can be performed in parallel, and since the $j$^th^ thread writes
-to the $j$^th^ entry of $\vec{E}$, there are no write contentions. Because the
+calculation can be performed in parallel, and since the $j^\text{th}$ thread writes
+to the $j^\text{th}$ entry of $\vec{E}$, there are no write contentions. Because the
 number of products is approximately the same for each row, each thread does
 approximately the same amount of work. On architectures that enforce thread
 synchrony, such as GPUs, this means that we do not incur a penalty from having
@@ -143,7 +151,7 @@ allocating memory for $\vec{E}$, all of the work for this algorithm is parallel,
 so we expect to see near-perfect scaling and a theoretical runtime of
 $\mathcal{O}(n_\gamma/p)$, where $p$ is the number of threads.
 
-## Parallelization of Spread
+\subsection{Parallelization of spread}
 The difficulty arises in attempting to parallelize the spread operation.
 Row-wise parallelization of $\mathcal{S}\vec{L}$ yields threads doing vastly
 different amounts of work -- many no work at all -- and incurring the penalty
@@ -247,7 +255,7 @@ reduce algorithm performs handily. Again, we have computed $\vec{\ell}$ without
 keeping more than a single entry of $\mathcal{S}$ in memory per thread at a
 time.
 
-## Optimizations
+\subsection{Optimizations}
 As described above, the algorithms uses $s^d$ sweeps to compute $\vec{\ell}$.
 However, for each sweep, any thread will perform identically the same
 operations. We can therefore consider computing multiple values of $\delta_h$

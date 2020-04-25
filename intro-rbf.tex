@@ -1,0 +1,112 @@
+\subsection{Surface geometry via radial basis function interpolation}
+
+Fix a set of distinct points $\{\vec{\theta}_i\}_{i=1}^{n_d}$ in parameter
+space. We refer to these $n_d$ points as \textit{data sites} and are used to
+construct an interpolant which will acts as the surface of a cell. To
+accomplish this, we track the coordinates in $\mathbb{R}^3$ of the point on the
+surface corresponding to each of the data sites.
+
+We can choose a set of distinct points in parameter space, called the
+\textit{sample sites}, which are possibly different from the data sites, at
+which to evaluate the interpolant and its derivatives, and ultimately to
+compute the Lagrangian force density. These points will be used to spread force
+density from the surface to the Eulerian grid, so we choose them to satisfy the
+IB method heuristic that the mesh size $h_s$ satisfies $h_s \lesssim h/2$,
+where $h$ is the Eulerian grid size.
+
+The surface interpolant is constructed from a linear combination of radial
+basis functions and another polynomial basis. While generally, these basis
+functions may not be true polynomials, we will refer to them as such for 
+simplicity of illustration. Details ... [@Shankar:...].
+
+Let $\vec{X}_k$ be the coordinates of the point on the cell surface
+corresponding to data site $\vec{\theta}_k$. The interpolant should recover
+these coordinates exactly, for each data site. In other words, we want
+\begin{equation}
+    \vec{X}_k = \sum_{i=1}^{n_d} b_i\varphi(d(\vec{\theta}_k,\,\vec{\theta}_i)) + \sum_{j=1}^{n_p} c_jp_j(\vec{\theta}_k),
+\end{equation}
+where $\varphi$ is called the \textit{basic function}, $d$ is a suitable metric
+for the object under study, and $n_p$ is the number of elements in the set of
+polynomial basis functions $\{p_j\}_{j=1}^{n_p}$. For certain choices of
+$\varphi$, $n+p\ge 1$ may be required [@Wendland:...;@Fasshauer:...]. For an
+individual component of $\vec{X}$ at each data site, this yields $n_d$
+conditions in $n_d+n_p$ variables. To uniquely determine the interpolant, we
+require further that the polynomial basis recover polynomial data:
+\begin{equation}
+    0 = \sum_{i=1}^{n_d} b_ip_j(\vec{\theta}_i).
+\end{equation}
+Collectively, these conditions can be written
+\begin{equation}
+    \label{eq:rbf-interpolant}
+    \left[\begin{array}{cc}\Phi & P \\ P^T & 0\end{array}\right]
+    \left[\begin{array}{c}\vec{b}\\\vec{c}\end{array}\right] =
+    \left[\begin{array}{c}\vec{X}\\\vec{0}\end{array}\right].
+\end{equation}
+Assuming that the system is uniquely determined, we have constructed our
+interpolant.
+
+Let $\mathcal{L}$ be a linear operator for which $\Psi=(\mathcal{L}\varphi(d(\vec{\theta},\,\vec{\theta}_i)))$,
+for $i=1,\,\ldots,\,n_d$, and $Q=(\mathcal{L}p_j(\vec{\theta}))$, for $j=1,\,\ldots,\,n_p$,
+can be computed analytically. For the purposes of computing Lagrangian force
+density, of particular interest are the identity (or "evaluation") operator,
+and the various first and second partial derivative operators. With
+a sufficiently smooth choice of $\varphi$, we can approximate $\mathcal{L}\vec{X}(\vec{\theta})$
+at an arbitrary point in parameter space by applying the operator $\mathcal{L}$
+to the interpolant and evaluating the result. That is,
+\begin{equation}
+    \mathcal{L}\vec{X}(\vec{\theta})
+    \approx \sum_{i=1}^{n_d} b_i\mathcal{L}\varphi(d(\vec{\theta},\,\vec{\theta}_i))
+    + \sum_{j=1}^{n_p} c_j\mathcal{L}p_j(\vec{\theta})
+\end{equation}
+by linearity. But the coefficients $\vec{b}$ and $\vec{c}$ are determined by
+the interpolant [@eq:rbf-interpolant], so
+\begin{align}
+    \mathcal{L}\vec{X}(\vec{\theta})
+    &= \left[\begin{array}{cc}\Psi&Q\end{array}\right]
+    \left[\begin{array}{cc}\Phi&P\\P^T&0\end{array}\right]
+    \left[\begin{array}{c}\vec{X}\\\vec{0}\end{array}\right] \\
+    &= \left[\begin{array}{cc}L&\ast\end{array}\right]
+    \left[\begin{array}{c}\vec{X}\\\vec{0}\end{array}\right],
+\end{align}
+where $L\vec{X}$ is now the discrete analogue to $\mathcal{L}\vec{X}(\vec{\theta})$,
+i.e., the operator that applies $\mathcal{L}$ and evaluates at $\vec{\theta}$.
+The $n_p$ columns represented by $\ast$ are usually ignored, as they are
+always multiplied by a vector of zeros and therefore do not contribute.
+
+We also require integration weights, which act as surface patch areas in
+computing surface forces from a surface force density. In many cases, the
+integral
+\begin{equation}
+    I_\varphi(\vec{\theta}') = \int_\Gamma \varphi(d(\vec{\theta},\,\vec{\theta}'))\mskip\thinmuskip\mathrm{d}\hat{\vec{X}}(\vec{\theta})
+\end{equation}
+may not be known for topological archetype $\Gamma$. But
+following the work of [@Narcowitz:...], for certain surfaces,
+$I_\varphi(\vec{\theta}')$ is independent of $\vec{\theta}'$ and is therefore
+constant. Assuming $I_\varphi = \text{constant}$ and
+\begin{equation}
+    I_1 = \int_\Gamma \mathrm{d}\hat{\vec{X}}(\vec{\theta})
+\end{equation}
+is known, we can compute integration weights $\hat{\vec{a}}$ for $\Gamma$ via
+\begin{equation}
+    \left[\begin{array}{cc}\Phi &\vec{1} \\ \vec{1}^T & 0\end{array}\right]
+    \left[\begin{array}{c}\hat{\vec{a}}\\-I_\varphi\end{array}\right] =
+    \left[\begin{array}{c}\vec{0}\\I_1\end{array}\right].
+\end{equation}
+A side effect of solving this system is that we obtain an approximation to
+the constant $I_\varphi$.
+
+To compute integration weights for a shape $\vec{X}(\vec{\theta})$, which is
+topologically equivalent to $\hat{\Gamma}$, we compute the
+Jacobian for $\hat{\Gamma}$ and the cell,
+\begin{equation}
+    \hat{V}=\left|\frac{\partial\hat{\vec{X}}}{\partial\theta^i}\right| \quad \text{and} \quad
+    V=\left|\frac{\partial\vec{X}}{\partial\theta^i}\right|.
+\end{equation}
+Since $\hat{\Gamma}$ is known, we can compute $\hat{V}$ analytically. The
+expression $a_k/\hat{V}(\vec{\theta}_k)$ gives the integration weight in
+parameter space and can be computed without any information about the cell,
+except that the cell and $\Gamma$ are topologically equivalent. From these
+weights and an interpolant for the cell, the expression
+$\mathrm{d}A_k=a_k V(\vec{\theta}_k)/\hat{V}(\vec{\theta}_k)$ gives the
+integration weight on the surface of the cell.
+

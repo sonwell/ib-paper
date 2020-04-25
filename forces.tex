@@ -1,0 +1,53 @@
+\subsection{Computation of Lagrangian forces}
+
+To compute forces for a cell, we follow the analysis of [@Maxian:...]. The
+constitutive laws of interest for our purposes are the Skalak tension law,
+\begin{equation}
+    W_\text{Sk} = \frac{G}{4}(I_1^2-2I_1+2I_2) + \frac{K}{4}I_2^2;
+\end{equation}
+the neo-Hookean tension model,
+\begin{equation}
+    W_\text{nH} = \frac{G}{2}\left(\frac{I_1+2}{\sqrt{I_2+1}}-1\right) + \frac{K}{2}\left(\sqrt{I_1+1}-1\right)^2;
+\end{equation}
+Hookean tether energy,
+\begin{equation}
+    W_\text{tether} = \frac{k}{2}\|\vec{X}-\vec{Z}\|^2;
+\end{equation}
+and the Canham-Helfrich bending energy,
+\begin{equation}
+    W_\text{CH} = \frac{\kappa}{2}(H-H_0)^2.
+\end{equation}
+In the above, $G$, $K$, and $\kappa$ are the shear, bulk, and bending moduli,
+respectively; $k$ is the spring constant; and $H_0$ is the preferred mean
+curvature of the surface.
+
+For each of these, we can compute analytically the force density by directly
+computing the first variation of the energy functional
+\begin{equation}
+    \mathcal{E}[\vec{X}] = \int_\Gamma W\mskip\thinmuskip\mathrm{d}\vec{X}.
+\end{equation}
+For the Skalak and neo-Hookean tension models, we can rewrite the energy
+functional in terms of the undeformed configurations, and write the force
+density as
+\begin{equation}
+    \vec{F} = \frac{1}{\sqrt{\hat{g}}}\frac{\partial}{\partial\theta^j}\left(\sqrt{\hat{g}}\left[\Phi \hat{g}^{ij} + I_2\Psi g^{ij}\right]\frac{\partial\vec{X}}{\partial\theta^i}\right),
+\end{equation}
+were $\hat{g}^{ij}$ and $\hat{g}$ are the inverse and determinant of the metric
+tensor
+\begin{equation}
+    g_{ij} = \frac{\partial\hat{\vec{X}}}{\partial\theta^i}\cdot\frac{\partial\hat{\vec{X}}}{\partial\theta^j},
+\end{equation}
+respectively. The inverse metric tensor $g^{ij}$ is the analogue of $\hat{g}^{ij}$
+for the deformed configuration. The material functions $\Phi$ and $\Psi$ are
+the partial derivatives of the constitutive law, $W$, with respect to $I_1$
+and $I_2$, respectively, and the bracketed terms are also known as the
+second Piola-Kirchhoff stress tensor. The tether energy yields the tether
+force density
+\begin{equation}
+    \vec{F}_\text{tether} = -k(\vec{X}-\hat{\vec{X}}),
+\end{equation}
+and the Canham-Helfrich bending energy yields the bending force density
+\begin{equation}
+\vec{F}_\text{tether} = -\kappa\left[\Delta_{\vec{\theta}}(H-H_0) + (H-H_0)(2H^2-\mathcal{R})\right]\vec{n},
+\end{equation}
+where, $\mathcal{R}$ is the scalar curvature of the deformed configuration.
