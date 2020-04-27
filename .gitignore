@@ -1,2 +1,7 @@
 pandoc.json
 *.pdf
+*.aux
+*.log
+*.fls
+*.out
+*.fdb_latexmk

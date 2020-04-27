@@ -1,4 +1,4 @@
-\subsection{Summary of the immersed boundary method}
+\section{Summary of the immersed boundary method}
 
 Consider a $d$-dimensional ($d=2$ or 3) rectangular domain $\Omega$, which is
 filled with a viscous incompressible fluid with constant viscosity $\mu$ and
@@ -47,7 +47,7 @@ right-hand side is the fluid velocity at $\vec{X}$; namely, $\dot{\vec{X}}
 = \vec{u}(\vec{X},\,t)$. [@eq:spreading] is called spreading, because while
 $\vec{F}$ has units of force per unit \emph{area} on $\Gamma$, $\vec{f}$ has
 units of force per unit \emph{volume} in $\Omega$. The force $\vec{F}\d\vec{X}$
-over area $\d\vec{X}$ is "spread" to the force $\vec{f}\d\vec{x}$ over volume
+over area $\d\vec{X}$ is ``spread'' to the force $\vec{f}\d\vec{x}$ over volume
 $\d\vec{x}$. 
 
 Each of the fluid equations is discretized on a regular grid of spacing $h$ so
@@ -110,9 +110,8 @@ A single step of the IB method proceeds roughly as follows:
     \item interpolate $\vec{u}^{n}$ to $\vec{X}^{n}$ to get $\vec{U}^{n+1}$, and
     \item update $\vec{X}^{n+1} = \vec{X} + k \vec{U}^{n+1}$.
 \end{enumerate}
-We group these steps into 6 major operations: (1) velocity interpolation;
-(2) cell update, which includes updating some geometric information; (3)
-Lagrangian force computation; (4) force spread; (5) velocity update; and (6)
-velocity field projection. The next section introduces some details for the
-various immersed structures used in our simulations. The remainder of this
-paper describes each of these operations in detail.
+We group these steps into 3 categories: the purely Eulerian
+(\texttt{e}) and (\texttt{f}); the purely Lagrangian (\texttt{b}), (\texttt{c}),
+and (\texttt{h}); and the Euler-Lagrange coupling (\texttt{a}), (\texttt{d}),
+and (\texttt{g}). The description of the methods are divided according to these
+categories.
