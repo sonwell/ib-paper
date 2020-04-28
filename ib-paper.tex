@@ -59,8 +59,6 @@ grestore
 \usepackage{mathtools}
 \usepackage{color}
 \usepackage[inline]{enumitem}
-\usepackage{algorithm}
-\usepackage{algorithmic}
 \usepackage{float}
 \usepackage{xfrac}
 \usepackage{hyperref}
@@ -69,15 +67,17 @@ grestore
 \usepackage{booktabs}
 \usepackage{xspace}
 \usepackage{manfnt}
+\usepackage{siunitx}
 
 \definecolor{tol/contrast/blue}{RGB}{0,68,136}
 \definecolor{tol/contrast/red}{RGB}{187,85,102}
 \definecolor{tol/contrast/yellow}{RGB}{221,170,51}
 
-\providecommand{\tightlist}{%
-  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
-
 \allowdisplaybreaks
+
+% please place your own definitions here and don't use \def but
+% \newcommand{}{}
+
 \newcommand{\p}{\theta}
 \renewcommand{\vec}[1]{\boldsymbol{#1}}
 \newcommand{\laplacian}{\Delta}
@@ -87,31 +87,6 @@ grestore
 \renewcommand{\d}{\relax\ifnum\lastnodetype>0 \mskip\thinmuskip\fi\textnormal{d}}
 \renewcommand{\L}{\mathcal{E}}
 
-\pgfplotsset{compat=newest}
-\usetikzlibrary{patterns,shapes,backgrounds,calc}
-\usepgfplotslibrary{fillbetween}
-
-\makeatletter
-\tikzset{circle split part fill/.style  args={#1,#2}{%
- alias=tmp@name, % Jake's idea !!
-  postaction={%
-    insert path={
-     \pgfextra{%
-     \pgfpointdiff{\pgfpointanchor{\pgf@node@name}{center}}%
-                  {\pgfpointanchor{\pgf@node@name}{east}}%
-     \pgfmathsetmacro\insiderad{\pgf@x}
-      \fill[color=#1] (\pgf@node@name.base) ([xshift=-\pgflinewidth]\pgf@node@name.east) arc
-                          (0:180:\insiderad-\pgflinewidth)--cycle;
-      \fill[color=#2] (\pgf@node@name.base) ([xshift=\pgflinewidth]\pgf@node@name.west)  arc
-                           (180:360:\insiderad-\pgflinewidth)--cycle;            %  \end{scope}
-         }}}}}
-\def\cl@chapter{\@elt {theorem}}
-\makeatother
-
-%
-% please place your own definitions here and don't use \def but
-% \newcommand{}{}
-%
 % Insert the name of "your journal" with
 % \journalname{myjournal}
 \journalname{Journal of Scientific Computing}

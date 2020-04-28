@@ -9,7 +9,7 @@ lives at $h(i,\,j+0.5,\,k+0.5)$, $a_2$ at $h(i+0.5,\,j,\,k+0.5)$, and $a_3$ at
 $h(i+0.5,\,j+0.5,\,k)$. Scalar quantities are discretized at cell centers,
 e.g., $h(i+0.5,\,j+0.5,\,k+0.5)$.
 
-The central difference operator $D^i$, which differentiates with respect to
+The central difference operator $D_i$, which differentiates with respect to
 the $i^\text{th}$ coordinate, in the absence of solid boundaries, is defined as
 \begin{equation}
     D_ig(\vec{x}) = \frac{g(\vec{x}+h\vec{e}_i/2) + g(\vec{x}+h\vec{e}_i/2)}{h}.
@@ -49,7 +49,7 @@ This leads to the system of equations
     &= \alpha\lambda\left[\Delta_h\vec{u}^n + B_h \vec{w}_b^{n+\sfrac12}\right] + \tilde{I}\left(\rho^{-1}\vec{f} - \vec{H}(\vec{u}^{n+\alpha-\sfrac12})\right) \\
     \vec{w} &= \vec{u}^n + \delta\vec{w} \\
     k\Delta_h\phi &= \grad_h\cdot\vec{w} \\
-    \vec{u}^{n+\alpha} &= \vec{u}^\ast - k\grad_h\phi,
+    \vec{u}^{n+\alpha} &= \vec{w} - k\grad_h\phi,
 \end{align}
 where $k$ is the timestep, $\lambda = k\mu/\rho$, $B_h$ is an appropriate
 boundary operator for the discrete Laplacian, $\vec{w}_b$ are boundary data for
@@ -77,18 +77,3 @@ is suitable for use with preconditioned conjugate gradients. One can view this
 as using a quadratic interpolant near the boundaries and scaling the
 corresponding rows to ensure symmetry of the linear system. The resulting
 systems are identical.
-
-To solve the Helmholtz system $\tilde{I}-\sfrac12\lambda\Delta_h$, we use
-conjugate gradients preconditioned with Chebyshev iteration. Chebyshev
-iteration requires only that the matrix be positive (negative) semi-definite,
-and uses only matrix-vector multiplication and vector scaling, it is
-parallelizable if those two operations are. Vector scaling is trivially
-parallelilzable, and for certain matrix formats, such as compressed sparse row,
-matrix-vector multiplication is parallelizable as well.
-
-Chebyshev iteration can also be modified for use as a smoother/relaxer for
-multigrid. Its efficacy is comparable or better to that of successive
-over-relaxation (SOR), but the parallelism of Chebyshev iteration far exceeds
-that of SOR. To solve the Poisson problem for $\phi$, we employ multigrid with
-a Chebyshev smoother as a preconditioner for conjugate gradients.
-

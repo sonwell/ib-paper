@@ -1,0 +1,41 @@
+\subsection{Weak scaling of interaction operations}
+
+\begin{table}
+    \begin{center}
+        \begingroup
+        \setlength{\tabcolsep}{9pt}
+        \renewcommand{\arraystretch}{1.5}
+        \begin{tabular}{ccccc}
+            $p$ & cells & \titletable{interpolate}{20000} & \titletable{forces}{10000} & \titletable{spread}{10000} \\ \hline
+            64  & 1     & $0.01079 \pm 0.00004$           & $0.00242 \pm 0.00002$      & $0.11881 \pm 0.00055$      \\
+            128 & 2     & $0.01165 \pm 0.00003$           & $0.00249 \pm 0.00002$      & $0.11219 \pm 0.00051$      \\
+            256 & 4     & $0.01171 \pm 0.00003$           & $0.00287 \pm 0.00003$      & $0.11214 \pm 0.00036$      \\
+            512 & 8     & $0.01199 \pm 0.00003$           & $0.00532 \pm 0.00008$      & $0.11354 \pm 0.00047$
+        \end{tabular}
+        \endgroup
+    \end{center}
+    \caption{%
+        Weak scaling results.
+    }
+\end{table}
+
+\begin{table}
+    \begin{center}
+        \begingroup
+        \setlength{\tabcolsep}{9pt}
+        \renewcommand{\arraystretch}{1.5}
+        \begin{tabular}{ccccc}
+            $p$  & $n$      & \titletable{interpolate}{20000} & \titletable{forces}{10000} & \titletable{spread}{10000} \\ \hline
+            128  & $2^{16}$ & $0.43930 \pm 0.00019$           & $0.00026 \pm 0.00031$      & $0.47632 \pm 0.00142$      \\
+            256  & $2^{17}$ & $0.44918 \pm 0.00056$           & $0.00024 \pm 0.00002$      & $0.46503 \pm 0.00026$      \\
+            512  & $2^{18}$ & $0.45072 \pm 0.00061$           & $0.00029 \pm 0.00001$      & $0.44533 \pm 0.00028$      \\
+            1024 & $2^{19}$ & $0.45442 \pm 0.00049$           & $0.00055 \pm 0.00000$      & $0.43561 \pm 0.00024$      \\
+        \end{tabular}
+        \endgroup
+    \end{center}
+    \caption{%
+        Results of $n$ randomly placed IB points in a 16 \si{\micro\meter}
+        $\times$ 16 \si{\micro\meter} $\times$ 16 \si{\micro\meter} periodic
+        domain.
+    }
+\end{table}

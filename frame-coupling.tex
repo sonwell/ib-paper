@@ -1,5 +1,18 @@
 \section{Eulerian-Lagrangian frame coupling}
 
+Below, we describe a method for evaluating
+\begin{align}
+    \label{eq:scalar-interp}
+    E(\vec{X}) &= \int_\Omega \delta_h(\vec{x}-\vec{X})e(\vec{x}) \d\omega \quad \text{and}\\
+    \label{eq:scalar-spread}
+    \ell(\vec{x}) &= \int_\Gamma \delta_h(\vec{x}-\vec{X})L(\vec{X}) \d\gamma
+\end{align}
+for scalar-valued functions $e: \Omega\to\mathbb{R}$ and $L:\Gamma\to\mathbb{R}$.
+For vector-valued functions, such as $\vec{u}$ and $\vec{F}$, the algorithm
+can be applied to each component individually. For some grids, it may be
+possible to process each component concurrently. We consider this possibility
+at the end of the section.
+
 \input{ib-discretization}
 \input{interp-parallel}
 \input{spread-parallel}

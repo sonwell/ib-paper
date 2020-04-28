@@ -1,0 +1,8 @@
+\subsection{Poisson solver}
+
+Chebyshev iteration can also be modified for use as a smoother/relaxer for
+multigrid. Its efficacy is comparable or better to that of successive
+over-relaxation (SOR), but the parallelism of Chebyshev iteration far exceeds
+that of SOR. To solve the Poisson problem for $\phi$, we employ multigrid with
+a Chebyshev smoother as a preconditioner for conjugate gradients.
+

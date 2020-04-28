@@ -1,0 +1,144 @@
+\subsection{Parallelization of spread}
+
+The difficulty arises in attempting to parallelize the spread operation.
+Row-wise parallelization of $\mathcal{S}\vec{L}$ yields threads doing vastly
+different amounts of work -- many no work at all -- and incurring the penalty
+of having threads wait for other threads to finish before being able to
+continue. Moreover, this parallelization would scale according to the size of
+the Eulerian grid rather than the number of Lagrangian points.
+
+Instead, we wish to partition the work so that every thread does a similar
+amount of work, it scales well, and depends minimally on the size of the
+background grid. We can think of this as finding matrices $\mathcal{S}_1$,
+$\mathcal{S}_2$, \dots, $\mathcal{S}_m$ and vectors $\vec{L}_1$, $\vec{L}_2$,
+\dots, $\vec{L}_m$ such that
+\begin{equation*}
+    \vec{\ell} = \mathcal{S}\vec{L} = \mathcal{S}_1\vec{L}_1 + \mathcal{S}_2\vec{L}_2 + \cdots + \mathcal{S}_m\vec{L}_m.
+\end{equation*}
+Here, $m$ is the number of serial operations or \emph{sweeps} needed to
+completely compute $\mathcal{S}\vec{L}$. The products $\mathcal{S}_i\vec{L}_i$
+are accumulated serially, but we aim to construct the matrices
+$\{\mathcal{S}_i\}$ in a way that allows for efficient parallel computation of
+each individual product.
+
+Consider two points in different grid cells, $\vec{x}_1$ and $\vec{x}_2$. Since
+these points are in different grid cells, the support points
+$h(\lfloor\vec{x}_1\rceil+\vec{g}+\vec{\sigma}_i)$ of $\vec{x}_1$ and 
+$h(\lfloor\vec{x}_2\rceil+\vec{g}+\vec{\sigma}_i)$ of $\vec{x}_2$, assuming
+they exist, are distinct for $i=1,\,\ldots,\,s^d$. Thus, for any set
+$\{\vec{X}_j\}$ of Lagrangian points, each in different grid cells, the values
+\begin{equation*}
+    \delta_h(h(\lfloor\vec{X}_j\rceil + \vec{g}+\vec{\sigma}_i)-\vec{X}_j)L_j,
+\end{equation*}
+for $\#(\lfloor\vec{X}_j\rceil+\vec{\sigma}_i)\neq\epsilon$, can be computed
+and written in parallel for fixed $i$, because the values of
+$\#(\lfloor\vec{X}_j\rceil+\vec{\sigma}_i)$, when not equal to $\epsilon$, are
+distinct, and gives the index of the output entry of $\vec{\ell}$.
+Repeating for $i=1,\,\ldots,\,s^d$, we compute all of $\vec{\ell}$.
+
+Consider now a set of Lagrangian points $\{\vec{X}_j\}$ all in the same grid
+cell. For fixed $i$, the values $\#(\lfloor\vec{X}_j\rceil+\vec{\sigma}_i)$ are
+identical for all $j$, and would therefore contend with one another if
+attempting to write values in parallel and independently. In this case, we
+can use the well-know parallel reduce algorithm to accumulate values in
+parallel and ultimately use a single thread to write the value to $\vec{\ell}$.
+
+Generally, we do not expect to have either of these situations. In fact, it is
+recommended in the IB literature that, for a connected interface, there be
+1--2 ($d=2$) or 1--4 ($d=3$) Lagrangian points in each occupied grid cell. We
+can combine the two ideas above using the so-called parallel segmented reduce
+algorithm. Given a list of \emph{keys} and a list of \emph{values}, the
+algorithm sums (or \emph{reduces}) consecutive values if their corresponding
+keys match. The output is a list of non-repeating keys (though they may not be
+unique within the list) and a generally shorter list of values.
+
+If we ensure that Lagrangian points in the same grid cell have the same key
+and are listed consecutively, we can use the segmented reduce algorithm to
+accumulate values for support point corresponding to a fixed shift
+$\vec{\sigma}$ for all Lagrangian points at once. Repeating this for each
+shift, we will have completely computed $\vec{\ell}$. To achieve this ordering
+of Lagrangian points, we introduce the key-value sort, which, given a list
+of keys and values, will sort the values according to the keys. The output is
+a sorted list of keys and a permuted list of values. If we choose the values to
+be the list from 0 to $n_\gamma-1$, the resulting values define a permutation
+matrix $P$. This permuted list is analogous to the linked-list structure of
+[@McQueen:...], but performs better on architectures where computational units
+are not independent. Unlike [@McQueen:...], we reconstruct our lists every
+timestep instead of using an update. An update can be done by partitioning
+Lagrangian points into those that have stayed in their grid cell and those that
+have left, sorting by key the indices of just the points that have left their
+cell, and then merging them back into the main list. However, the worst-case
+runtime of the update is the same as simply reconstructing the list every
+timestep, but has the added cost of computing a partition and merging lists.
+
+Lastly, we need suitable way to generate keys. A function $\mathfrak{K}$ that
+generates keys should be 1-to-1 with grid cells. In other words, $\mathfrak{K}$
+should be bijective with grid points in $\bar{\Omega}_h$. For this reason, it
+is often useful to formulate $\mathfrak{K}$ as a function of $\mathbb{Z}^d$ and
+so $\mathfrak{K}(\lfloor\vec{X}\rceil)$ gives the key for a Lagrangian point
+$\vec{X}$. However, bijectivity alone will, in general, invalidate $\#$ as an
+otherwise good choice for $\mathfrak{K}$. However, since $\mathfrak{K}$ is
+bijective, $\mathfrak{K}$ is invertible, so any Lagrangian point with key $k$
+has grid index $\#(\mathfrak{K}^{-1}(k))$, if it exists. It is also desirable
+that $\mathfrak{K}$ be independent of the shift $\vec{\sigma}$. If these
+conditions are met and the keys have a partial order, we can compute a key for
+each Lagrangian point, apply the key-value sort once, and then compute values
+and use segmented reduce once per shift.
+
+The corresponding matrices $\mathcal{S}_i$ each have at most one nonzero entry
+per column. Using key-value sort to define a permutation matrix $P$ allows us
+to write
+\begin{equation}
+    \label{eq:submatrix}
+    \mathcal{S}_i\vec{L}_i = (\mathcal{S}_i'P)(P^\dagger\vec{L}),
+\end{equation}
+where $\vec{L}_i=P^\dagger\vec{L}$ for $i=1,\,\ldots,\,s^d$, and the matrix
+$\mathcal{S}_i'$ is the same size as $\mathcal{S}$, but is constructed by
+copying only the value in each column corresponding to shift $\vec{\sigma}_i$.
+The matrix $\mathcal{S}_i=\mathcal{S}_i'P$ can be characterized as having
+a sparse block structure where each block is a single dense row of values, each
+row contains at most one block, and no two blocks have a column in common. The
+new block structure allows for easier parallelization, which the segmented
+reduce algorithm performs handily. Again, we have computed $\vec{\ell}$ without
+keeping more than a single entry of $\mathcal{S}$ in memory per thread at a
+time.
+
+\subsection{Optimizations}
+As described above, the algorithms uses $s^d$ sweeps to compute $\vec{\ell}$.
+However, for each sweep, any thread will perform identically the same
+operations. We can therefore consider computing multiple values of $\delta_h$
+for some fixed set of shifts, and the corresponding grid indices. Since
+$\mathfrak{K}$ is independent of the shift, we need compute it only once, and
+we can use $P$ for any set of shifts. To avoid write contentions, we need as
+many output vectors as shifts in the set. To each shift, we assign an output
+vector and we write all values for that shift to the corresponding output
+vector.
+
+In other words, we can imagine computing $t$ values at once. We then expect to 
+have $w=\lceil s^d/t\rceil$ sweeps and we compute
+\begin{equation}
+    \label{eq:fused-sweeps}
+    \begin{alignedat}{5}
+        \mathcal{S}\vec{L} 
+        &= (\mathcal{S}_1P^\dagger\vec{L} + &\cdots& + \mathcal{S}_wP^\dagger\vec{L})
+        &+& \cdots
+        &+& (\mathcal{S}_{(t-1)w+1}P^\dagger\vec{L} + &\cdots& + \mathcal{S}_{s^d}P^\dagger\vec{L}) \\
+        &=& \vec{\ell}_1 &&+& \cdots &+&& \vec{\ell}_t, &
+    \end{alignedat}
+\end{equation}
+where in the first sweep, the first product in each set of parentheses is
+stored in the corresponding output vector $\vec{\ell}_i$; in the second sweep,
+the second product is stored in the corresponding output vector; and so on,
+until all of the products have been computed. Finally, we accumulate values,
+$\vec{\ell} = \vec{\ell}_1 + \cdots + \vec{\ell}_t$. The only requirement for
+this optimization is that there is enough memory to hold all of the output
+vectors. Choosing values of $t$ that divide $s^d$ and are around 10 seem to
+give good results.
+
+So far, we have assumed that vector-valued quantities are discretized on
+staggered grids. On a uniform grid, where each component of a vector-valued
+quantity is discretized at the same spatial coordinate, the grid cells are
+identical for each component. In that case, each component will give the same
+sort key and values will be written to output entries with the same index, so
+we can compute sort keys and perform the sort once, and re-use the resulting
+$P$ for each component, all of which can be computed by the same thread.

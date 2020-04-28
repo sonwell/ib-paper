@@ -1,0 +1,59 @@
+\subsection{Strong scaling of interaction operations}
+\newcommand{\titletable}[2]{\begin{tabular}{@{}c@{}}{#1}\\\scalebox{0.75}{$N={#2}$}\end{tabular}}
+
+\begin{table}
+    \begin{center}
+        \begingroup
+        \setlength{\tabcolsep}{9pt}
+        \renewcommand{\arraystretch}{1.5}
+        \begin{tabular}{ccccc}
+            $p$  & cells & \titletable{interpolate}{20000} & \titletable{forces}{10000} & \titletable{spread}{10000} \\ \hline
+            1    & 1     & $0.47633 \pm 0.00024$           & $0.00243 \pm 0.00002$      & $4.58460 \pm 0.00821$      \\
+            2    & 1     & $0.26608 \pm 0.00146$           & $0.00241 \pm 0.00002$      & $2.59113 \pm 0.00567$      \\
+            4    & 1     & $0.14505 \pm 0.00080$           & $0.00242 \pm 0.00002$      & $1.44780 \pm 0.00353$      \\
+            8    & 1     & $0.07593 \pm 0.00031$           & $0.00241 \pm 0.00002$      & $0.76037 \pm 0.00229$      \\
+            16   & 1     & $0.04010 \pm 0.00009$           & $0.00242 \pm 0.00002$      & $0.40348 \pm 0.00137$      \\
+            32   & 1     & $0.02037 \pm 0.00007$           & $0.00242 \pm 0.00002$      & $0.22602 \pm 0.00105$      \\
+            64   & 1     & $0.01080 \pm 0.00004$           & $0.00241 \pm 0.00002$      & $0.11888 \pm 0.00055$      \\
+            128  & 1     & $0.00586 \pm 0.00002$           & $0.00243 \pm 0.00002$      & $0.06535 \pm 0.00023$      \\
+            256  & 1     & $0.00341 \pm 0.00002$           & $0.00241 \pm 0.00002$      & $0.03912 \pm 0.00012$      \\
+            512  & 1     & $0.00179 \pm 0.00001$           & $0.00243 \pm 0.00002$      & $0.02649 \pm 0.00014$      \\
+            1024 & 1     & $0.00093 \pm 0.00001$           & $0.00241 \pm 0.00002$      & $0.01924 \pm 0.00011$      \\
+            2048 & 1     & $0.00094 \pm 0.00001$           & $0.00243 \pm 0.00002$      & $0.01627 \pm 0.00012$      \\
+            4096 & 1     & $0.00093 \pm 0.00001$           & $0.00241 \pm 0.00002$      & $0.01455 \pm 0.00009$      \\
+            8192 & 1     & $0.00094 \pm 0.00001$           & $0.00243 \pm 0.00002$      & $0.01413 \pm 0.00010$
+        \end{tabular}
+        \endgroup
+    \end{center}
+    \caption{%
+        Results of strong scaling tests for IB spread and interpolate.
+        Computation time for Lagrangian forces are also reported for comparison.
+        Reported values are in seconds.
+    }
+\end{table}
+
+
+
+\begin{table}
+    \begin{center}
+        \begingroup
+        \setlength{\tabcolsep}{9pt}
+        \renewcommand{\arraystretch}{1.5}
+        \begin{tabular}{ccccc}
+            $p$   & cells & \titletable{interpolate}{20000} & \titletable{forces}{10000} & \titletable{spread}{10000} \\ \hline
+            64    & 4     & $0.04150 \pm 0.00013$           & $0.00289 \pm 0.00010$      & $0.40148 \pm 0.00146$      \\
+            128   & 4     & $0.02251 \pm 0.00003$           & $0.00286 \pm 0.00003$      & $0.20628 \pm 0.00060$      \\
+            256   & 4     & $0.01172 \pm 0.00002$           & $0.00286 \pm 0.00003$      & $0.11208 \pm 0.00031$      \\
+            512   & 4     & $0.00603 \pm 0.00002$           & $0.00286 \pm 0.00003$      & $0.06313 \pm 0.00014$      \\
+            1024  & 4     & $0.00349 \pm 0.00002$           & $0.00286 \pm 0.00003$      & $0.03931 \pm 0.00011$      \\
+            2048  & 4     & $0.00181 \pm 0.00001$           & $0.00286 \pm 0.00003$      & $0.02785 \pm 0.00011$      \\
+            4096  & 4     & $0.00103 \pm 0.00001$           & $0.00288 \pm 0.00002$      & $0.02168 \pm 0.00009$
+        \end{tabular}
+        \endgroup
+    \end{center}
+    \caption{%
+        Results of strong scaling tests for IB spread and interpolate.
+        Computation time for Lagrangian forces are also reported for comparison.
+        Reported values are in seconds.
+    }
+\end{table}
