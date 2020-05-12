@@ -1,7 +1,161 @@
-\section{Results}
+\clearpage
+
+\bgroup
+\color{red}
+What I am envisioning for the methods section(s):
+\begin{itemize}
+    \item Preliminary definitions of symbols, expansion on things in the
+        introduction, etc.
+    \item Info about fluid solver, interface modelling.
+    \item Introduce the single-threaded algorithms above.
+    \item Remarks on how these algorithms are theoretically $\Theta(|\interface_h|)$;
+        can we get a $\Theta(|\interface_h|/p)$ (or whatever) parallel algorithm?
+    \item McQueen \& Peskin can potentially do this for interfaces of codimension 1
+        on coarse enough grids, but have potentially no/poor parallelization for
+        e.g.\ flagella, which are codimension 2.
+    \item Introduce base algorithm, we suspect it's $\mathcal{O}(|\interface_h|/p)$ (see results),
+        it's fast, but in some cases, we can do better by computing several sweeps at a time.
+    \item Introduce variant(s), which improve speed, but depend on the Eulerian grid.
+        \begin{itemize}
+            \item on-the-fly (OTF) buffer allocation
+            \item buffer pre-allocation (PA)
+        \end{itemize}
+\end{itemize}
+
+
+\begin{algorithm}
+\caption{Single-threaded [parallel] interpolation}
+\label{algo:par-interp}
+\begin{algorithmic}
+\Procedure{interpolate}{$\interface_h,\,\domain_h,\,e(\vec{x})$}
+
+\For {$i = 1,\,\ldots,\,n_d$ [\textbf{parallel}]}
+    \State $\vec{x} \gets h(\lfloor\vec{X}_i\rceil+\vec{g})$\Comment{$\vec{X}_i\in\interface_h$, $\vec{x}\in\domain_h$}
+    \State $\Delta\vec{x} \gets \vec{x}-\vec{X}_i$
+    \For {$j = 1,\,\ldots,\,s^d$}
+        \State $w \gets \delta_h(\Delta\vec{x}+h\vec{\sigma}_j)$
+        \State $E(\vec{X}_i) \gets E(\vec{X}_i) + w \cdot e(\vec{x}+h\vec{\sigma}_j)$
+    \EndFor
+\EndFor
+\State \textbf{return} $E(\interface_h)$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+\caption{Single-threaded spread}
+\label{algo:serial-spread}
+\begin{algorithmic}
+\Procedure{spread}{$\interface_h,\,\domain_h,\,L(\vec{X})$}
+\For {$i = 1,\,\ldots,\,n_s$}
+    \State $\vec{x} \gets h(\lfloor\vec{X}_i\rceil+\vec{g})$\Comment{$\vec{X}_i\in\interface_h$, $\vec{x}\in\domain_h$}
+    \State $\Delta\vec{x} \gets \vec{x}-\vec{X}_i$
+    \For {$j = 1,\,\ldots,\,s^d$}
+        \State $w \gets \delta_h(\Delta\vec{x}+h\vec{\sigma}_j)$
+        \State $\ell(\vec{x}+h\vec{\sigma}_j) \gets \ell(\vec{x}+h\vec{\sigma}_j) + w \cdot L(\vec{X}_i)$
+    \EndFor
+\EndFor
+\State \textbf{return} $\ell(\domain_h)$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+\caption{Parallel spread}
+\label{algo:par-spread}
+\begin{algorithmic}
+\Procedure{spread}{$\interface_h,\,\domain_h,\,L(\vec{X})$}
+\For {$i = 1,\,\ldots,\,n_s$ \textbf{parallel}}
+    \State $K_i \gets \mathfrak{K}(\lfloor\vec{X}_i\rceil)$
+    \State $P_i \gets i$
+\EndFor
+\State $q = \text{\textbf{count unique} }\{K_i\}$
+\State \textbf{sort} $\{P_i\}$ \textbf{by} $\{K_i\}$
+\For {$j = 1,\,\ldots,\,s^d$}
+    \For {$i = 1,\,\ldots,\,n_s$ \textbf{parallel}}
+        \State $p \gets P_i$
+        \State $\vec{x} \gets h(\lfloor\vec{X}_p\rceil+\vec{g})$\Comment{$\vec{X}_p\in\interface_h$, $\vec{x}\in\domain_h$}
+        \State $\Delta\vec{x} \gets \vec{x}-\vec{X}_i$
+        \State $w \gets \delta_h(\Delta\vec{x}+h\vec{\sigma}_j)$
+        \State $V_i \gets w \cdot L(\vec{X}_p)$
+    \EndFor
+    \State \textbf{reduce} $\{V_i\}$ \textbf{by} $\{K_i\}$
+    \For {$i = 1,\,\ldots,\,q$ \textbf{parallel}}
+        \State $\vec{x} = h(\mathfrak{K}^{-1}(K_i) + \vec{g})$
+        \State $\ell(\vec{x} + h\vec{\sigma}_j) \gets \ell(\vec{x} + h\vec{\sigma}_j) + V_i$
+    \EndFor
+\EndFor
+\State \textbf{return} $\ell(\domain_h)$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+\egroup
+
+\clearpage
+\section{Numerical results}
+
+For the tests described below, we consider a $16\um\times16\um\times16\um$
+triply periodic domain with an initial periodic shear flow,
+$\vec{u} = (0,\,0,\,\dot{\gamma}(y-8\um))$, with shear rate
+$\dot{\gamma} = 1000\si{\per\second}$, which has a jump at $y=0\um$ or
+$y=16\um$. A background force is added to maintain this jump and so that the
+initial flow is also the steady flow for the system, as in [@Fai:XXX].
+
+Serial and multicore CPU tests were performed on a single node with 48
+Intel\textsuperscript{\textregistered} Xeon\textsuperscript{\textregistered}
+CPU E5-2697 v2 2.70\si{\giga\hertz} processors and 256 GB of RAM running CentOS
+Linux release 7.7.1908 (x86\_64). Parallel CPU implementations use Intel's
+OpenMP library, \texttt{libiomp5}. GPU tests used the same node with an
+NVIDIA\textsuperscript{\textregistered} Tesla\textsuperscript{\textregistered}
+K80 ($2\times$GK210 GPU with 13 823.5\si{\mega\hertz} multiprocessors and 12
+GB of global memory each). Only one of the GK210 GPUs was used. The CPU code
+was written in C++17 and the GPU code was written in C++/CUDA and used version
+9.2 CUDA libraries. Both the CPU and GPU code were compiled using
+\texttt{clang} version 7.0.1.
+
+\subsection{Unstructured IB point results}
+
+We first consider a set of $n$ IB points randomly placed in the domain
+described above. The IB points are imagined to be tethered to their initial
+positions. The fluid solver is not invoked for these tests. Instead, at each
+timestep, interpolate the fluid velocity to each of the IB points and predict
+updated positions for the IB points. Compute a Hookean force with spring
+constant $0.01\si{dyn\per\centi\meter}$. Spread these forces to the fluid grid,
+but do not use them to update the fluid velocity. The forces are discarded in
+such a way that the force calculation is not optimized away. This ensures that
+the points do not settle into a steady position and the spread and interpolate
+operations receive new data each timestep. Finally, interpolate the velocity to
+each of the IB points again and update the position of the IB points. While the
+interpolated velocities are the same as those computed at the beginning of the
+timestep, this is done by analogy to the fluid solver, which interpolates fluid
+velocities twice and spreads forces once per timestep. The timestep used is
+$1\times 10^{-4}\si{\second}$.
+
+We use this test to compare the performance of the parallel algorithms to
+their serial counterparts and, for the spread variants, to each other.
+
+
+\input{grid-dependence}
+\input{serial-comparison}
+
+\subsection{Structured IB point results}
+
+In this section, we replace the randomly-placed IB points with points sampled
+on the surface of a red blood cell (RBC). For a grid spacing of $h=0.5\um$, we
+may use $n_d = 864$ data sites, which spaces points approximately $0.8h$ apart,
+and $n_s = 8832$ sample sites, which spaces points approximately $0.5h$ apart,
+per RBC. In other words, we interpolate the fluid velocity to 864 points per
+RBC while forces are computed at and spread from 8832 points per RBC. These
+points, and those for other grids, are generated by the \texttt{KernelNode}
+library. Here, we invoke the fluid solver, so that as the RBC deforms, the
+force it imparts on the fluid will affect the fluid velocity. The RBC is
+modeled as an elastic structure, obeying the Skalak constitutive law
+[@Skalak:XXX] with shear modulus $2.5\times10^{-3}\si{dyn\per\centi\meter}$ and
+bulk modulus $2.5\times10^{-1}\si{dyn\per\centi\meter}$. The timestep required
+for stability in this test is $k=1\times 10^{-7}\si{\second}$.
+
+We begin by confirming the convergence of the solution.
 
 \input{convergence-study}
 \input{strong-scaling}
 \input{weak-scaling}
-\input{grid-dependence}
-\input{step-breakdown}

@@ -1,1 +1,240 @@
-\subsection{Dependence on background grid}
+\subsubsection{Dependence on background grid}
+\bgroup\color{red}
+WTS that Algo 1 and 3 are independent of the background grid (algorithm has
+no explicit dependence on the grid). OTF and PA variants have vector add-like
+operation, so does have dependence on grid. What effect does that have on the
+speed of the algorithm?
+\egroup
+
+%The serial Algorithms \ref{algo:par-interp} and \ref{algo:serial-spread}
+%do not have any explicit dependence on the size of the background grid.
+%As written, Algorithm \ref{algo:par-spread} also does not explicitly
+%depend on the size of the grid. But, we have thus far treated the key-value
+%sort and segmented reduce steps as black boxes. Our implementation of the
+%algorithm relies on the \texttt{thrust} library for these pieces.
+%
+%For $w$-bit integer data types, \texttt{thrust} implements its sorts as radix
+%sort, which has theoretical work $\mathcal{O}(w n / p)$ per thread, where $n$
+%is the number of elements to be sorted and $p$ the number of threads. Because
+%linear algebra libraries such as BLAS and LAPACK and their sparse counterparts
+%typically rely on 32-bit signed integers for indexing, it is natural to choose
+%$w = 32$. This limits the number of grid points to $2^{32}$ that can be indexed
+%uniquely by a 32-bit integer, but until this limit is reached, the key-value
+%sort has a theoretical linear runtime in the number of IB points. Beyond
+%$2^{32}$ -- or, more likely, $2^{31}$ because of the sign bit -- grid points,
+%this runtime bound no longer holds. A larger data type, with a larger $w$ must
+%be used. In this way, there is implicit dependence on the grid within Algorithm
+%\ref{algo:par-spread}.
+%
+%Segmented reduce, on the other hand, has theoretical work $\mathcal{O}(n / p)$
+%regardless of the data type used for indexing. However, an implementation of
+%segemented reduce may be able to effectively leverage shared memory on the GPU,
+%or the cache, depending on how many IB points, on average, inhabit a grid cell.
+%As an example, for the extreme case where all of the IB points are located
+%within the same grid cell, segmented reduce proceeds as a regular reduce, which
+%leverages the memory hierarchy, and can therefore be extremely fast. On the
+%other hand, if each IB point inhabits its own grid cell, there is nothing for
+%the segmented reduce algorithm to do, so any time spent in this step is for
+%naught. The general segmented reduce algorithm works somewhere in between. The
+%typical heuristic for placing IB points dictates that inhabited grid cells have
+%1--4, for $d=2$, or 1--8, for $d=3$, IB points. The lower bound in each case
+%corresponds to each IB point inhabiting its own grid cell, whereas the upper
+%bound may use the memory hierarchy, so the efficacy of segmented reduce is
+%dependent upon their distribution and density in a complicated way. For any
+%fixed $n$ and Eulerian grid, there is some distribution of points that will
+%give the worst-case runtime. While we do not aim to find exactly what this
+%distribution is, we posit that, according to the theoretical work,  the runtime
+%does not deviate too much from the runtime for arbitrarily distributed points.
+
+
+\begin{table}
+    \label{tab:grid-timing}
+    \begin{center}
+    \bgroup
+    \renewcommand{\arraystretch}{1.7}
+    \begin{tabular}{ccccccc}
+                                                                                              \toprule
+                      &                          & \multicolumn{4}{c}{Grid refinement}   \\ \cline{3-6}
+        Device        & Algorithm                & 16      & 32      & 64      & 128     \\ \midrule
+        1$\times$CPU  & \ref{algo:par-interp}    & 1.29633 & 1.31373 & 1.30763 & 1.35101 \\
+                      & \ref{algo:serial-spread} & 1.33249 & 1.33621 & 1.33840 & 1.37281 \\ \midrule
+        16$\times$CPU & \ref{algo:par-interp}    & 0.09890 & 0.09928 & 0.09974 & 0.10624 \\
+                      & \ref{algo:par-spread}    & 0.23282 & 0.26431 & 0.25783 & 0.26590 \\
+                      & PA                       & 0.12803 & 0.14213 & 0.15215 & 0.20107 \\
+                      & OTF                      & 0.12965 & 0.14242 & 0.14766 & 0.21874 \\ \midrule
+        1$\times$GPU  & \ref{algo:par-interp}    & 0.01253 & 0.01317 & 0.01722 & 0.01816 \\
+                      & \ref{algo:par-spread}    & 0.03930 & 0.04020 & 0.04215 & 0.04755 \\
+                      & PA                       & 0.01715 & 0.02049 & 0.02370 & 0.03656 \\
+                      & OTF                      & 0.01804 & 0.02198 & 0.02873 & 0.07288 \\ \bottomrule
+    \end{tabular}
+    \egroup
+    \end{center}
+    \caption{%
+        Timing results for interpolation and spreading on different devices and
+        grid configurations. PA and OTF represent sweep-fused variations of
+        Algorithm \ref{algo:par-spread} where the work buffer is
+        allocated beforehand and on-the-fly, respectively. Grid refinement
+        is the number of grid points per $16\um$ in each dimension.
+    }
+\end{table}
+
+Table \ref{tab:grid-timing} lists timing results for this test case with
+$n=2^{16}$ IB points for different grid refinements and parallelization
+methods. The rows with device listed as $1\times$CPU show correspond to the
+serial algorithms. If they depend on the fluid grid, they do so only mildly. In
+fact, these deviations seem to be due to hardware-level differences in the
+integer multiplications and additions used in computing sort and grid indices.
+We therefore expect each of the algorithms to exhibit a mild variation in
+runtime for different grid refinements. A grid refinement of 16 corresponds to
+a grid spacing of $h=1\um$ and point density of 16 IB points per grid cell on
+average, and a grid refinement of 128 corresponds to $h=0.125\um$ a point
+density of 1 per every 32 grid cells, on average. The finest grid presented has
+$2^{21}$ grid cells, so each cell can be indexed uniquely by a 32-bit integer,
+so we expect the sort to obey the runtime bound presented above. For rows
+listing Algorithm \ref{algo:par-interp}, \ref{algo:serial-spread}, or
+\ref{algo:par-spread}, we expect any deviation from true grid independence to
+be primarily caused by the hardware, for Algorithm \ref{algo:par-spread}, from
+differences in point density.
+
+
+% TODO update numerators when serial code finishes
+
+
+\begin{figure}[h]
+\begin{tikzpicture}
+\begin{groupplot}[
+    group style={group name=dep, group size=2 by 1},
+    height=0.5\textwidth,
+    width=0.5\textwidth
+]
+\nextgroupplot[
+        xmin=12,
+        xmax=160,
+        xmode=log,
+        log basis x=2,
+        ymin=3,
+        ymax=24,
+        ymode=log,
+        log basis y=2,
+        log origin=infty,
+        ytick={2, 4, 8, 16},
+        width=0.5\textwidth,
+        height=0.5\textwidth,
+        axis lines=center,
+        xlabel={grid refinement},
+        ylabel={speedup},
+        xlabel near ticks,
+        ylabel near ticks
+    ]
+    
+    \addplot+[only marks, mark=diamond*, color=tol/vibrant/magenta, mark options={fill=tol/vibrant/magenta}] coordinates {%
+        (16 , {1.44570/0.09890})
+        (32 , {1.45665/0.09928})
+        (64 , {1.46783/0.09974})
+        (128, {1.51988/0.10624})
+    }; \label{plot:grid-dep-interp};
+    \addplot+[only marks, mark=square*, color=tol/vibrant/teal, mark options={fill=tol/vibrant/teal}] coordinates {%
+        (16 , {1.47196/0.23282})
+        (32 , {1.48014/0.26431})
+        (64 , {1.48519/0.25783})
+        (128, {1.53801/0.26590})
+    }; \label{plot:grid-dep-spread};
+    \addplot+[only marks, mark=*, color=tol/vibrant/orange, mark options={fill=tol/vibrant/orange}] coordinates {%
+        (16 , {1.47196/0.12803})
+        (32 , {1.48014/0.14213})
+        (64 , {1.48519/0.15215})
+        (128, {1.53801/0.20107})
+    }; \label{plot:grid-dep-pa};
+    \addplot+[only marks, mark=triangle*, color=tol/vibrant/blue, mark options={fill=tol/vibrant/blue}] coordinates {%
+        (16 , {1.47196/0.12965})
+        (32 , {1.48014/0.14242})
+        (64 , {1.48519/0.14766})
+        (128, {1.53801/0.21874})
+    }; \label{plot:grid-dep-otf};
+    \node [fill=white] at (rel axis cs: 0.075, 0.95) {(a)};
+\nextgroupplot[
+    xmin=12,
+    xmax=192,
+    xmode=log,
+    log basis x=2,
+    ymin=12,
+    ymax=160,
+    ymode=log,
+    log basis y=2,
+    log origin=infty,
+    ytick={16, 32, 64, 128},
+    width=0.5\textwidth,
+    height=0.5\textwidth,
+    axis lines=center,
+    xlabel={grid refinement},
+    xlabel near ticks,
+    ylabel near ticks
+]
+    \addplot+[only marks, mark=diamond*, color=tol/vibrant/magenta, mark options={fill=tol/vibrant/magenta}] coordinates {%
+        (16 , {1.44570/0.01253})
+        (32 , {1.45665/0.01317})
+        (64 , {1.46783/0.01722})
+        (128, {1.51988/0.01816})
+    };
+    \addplot+[only marks, mark=square*, color=tol/vibrant/teal, mark options={fill=tol/vibrant/teal}] coordinates {%
+        (16 , {1.47196/0.03930})
+        (32 , {1.48014/0.04020})
+        (64 , {1.48519/0.04215})
+        (128, {1.53801/0.04755})
+    };
+    \addplot+[only marks, mark=*, color=tol/vibrant/orange, mark options={fill=tol/vibrant/orange}] coordinates {%
+        (16 , {1.47196/0.01715})
+        (32 , {1.48014/0.02049})
+        (64 , {1.48519/0.02370})
+        (128, {1.53801/0.03656})
+    };
+    \addplot+[only marks, mark=triangle*, color=tol/vibrant/blue, mark options={fill=tol/vibrant/blue}] coordinates {%
+        (16 , {1.47196/0.01804})
+        (32 , {1.48014/0.02198})
+        (64 , {1.48519/0.02873})
+        (128, {1.53801/0.07288})
+    };
+    \node [fill=white] at (rel axis cs: 0.075, 0.95) {(b)};
+\end{groupplot}
+\path (dep c1r1.south west|-current bounding box.south)--
+coordinate(legendpos) (dep c2r1.south east|-current bounding box.south);
+\matrix[
+    matrix of nodes,
+    anchor=north,
+    inner sep=0.2em,
+    %draw
+  ]at([yshift=-1ex]legendpos)
+  {
+    \ref{plot:grid-dep-interp}& Algorithm \ref{algo:par-interp}&[5pt]
+    \ref{plot:grid-dep-spread}& Algorithm \ref{algo:par-spread}&[5pt]
+    \ref{plot:grid-dep-pa}& PA&[5pt]
+    \ref{plot:grid-dep-otf}& OTF\\};
+\end{tikzpicture}
+\caption{%
+    Speedup from parallel interpolation (Algorithm \ref{algo:par-interp})
+    and spread (Algorithm \ref{algo:par-spread} and its variants) compared
+    to their serial counterparts on $2^{16}$ randomly placed IB points for
+    different grid refinements on (a) 16 CPUs and (b) the GPU. PA represents
+    the sweep-fused variant that uses a pre-allocated buffer, and OTF
+    represents the sweep-fused variant that uses a buffer that is allocated
+    on-the-fly.
+}
+\label{fig:grid-dependence}
+\end{figure}
+
+The speedup for these parallelization schemes is illustrated in Figure
+\ref{fig:grid-dependence}. The speedup for Algorithms \ref{algo:par-interp} and
+\ref{algo:par-spread} are independent of the fluid grid, as expected. The
+sweep-fused variants, PA and OTF, have explicit dependence on the fluid grid,
+and the degradation of speedup is apparent for finer grids. For small problems
+with $128^3$ or fewer grid points, one gets better performance from the
+sweep-fused spread variants, with the exception of OTF on the GPU. For problems
+where the grid has $256^3$ or more grid points, Algorithm \ref{algo:par-spread}
+becomes the fastest choice for spread. Because our fluid solver fits in GPU
+memory only for fewer than $128^3$ grid points, for the remainder of this work
+we consider only a grid with a grid refinement of 64 ($h = 0.25\um$). We
+restrict ourselves to the OTF variant for spread to minimize the lifetime of
+the buffer used in spreading while still enjoying the benefit of using the
+buffer.
+
+{\color{red} segue}

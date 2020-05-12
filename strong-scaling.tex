@@ -1,59 +1,164 @@
-\subsection{Strong scaling of interaction operations}
-\newcommand{\titletable}[2]{\begin{tabular}{@{}c@{}}{#1}\\\scalebox{0.75}{$N={#2}$}\end{tabular}}
+\subsubsection{Strong scaling of interaction operations}
+\bgroup\color{red}
+WTS that for fixed problem and increasing number of threads, runtime decreases.
+\egroup
 
-\begin{table}
-    \begin{center}
-        \begingroup
-        \setlength{\tabcolsep}{9pt}
-        \renewcommand{\arraystretch}{1.5}
-        \begin{tabular}{ccccc}
-            $p$  & cells & \titletable{interpolate}{20000} & \titletable{forces}{10000} & \titletable{spread}{10000} \\ \hline
-            1    & 1     & $0.47633 \pm 0.00024$           & $0.00243 \pm 0.00002$      & $4.58460 \pm 0.00821$      \\
-            2    & 1     & $0.26608 \pm 0.00146$           & $0.00241 \pm 0.00002$      & $2.59113 \pm 0.00567$      \\
-            4    & 1     & $0.14505 \pm 0.00080$           & $0.00242 \pm 0.00002$      & $1.44780 \pm 0.00353$      \\
-            8    & 1     & $0.07593 \pm 0.00031$           & $0.00241 \pm 0.00002$      & $0.76037 \pm 0.00229$      \\
-            16   & 1     & $0.04010 \pm 0.00009$           & $0.00242 \pm 0.00002$      & $0.40348 \pm 0.00137$      \\
-            32   & 1     & $0.02037 \pm 0.00007$           & $0.00242 \pm 0.00002$      & $0.22602 \pm 0.00105$      \\
-            64   & 1     & $0.01080 \pm 0.00004$           & $0.00241 \pm 0.00002$      & $0.11888 \pm 0.00055$      \\
-            128  & 1     & $0.00586 \pm 0.00002$           & $0.00243 \pm 0.00002$      & $0.06535 \pm 0.00023$      \\
-            256  & 1     & $0.00341 \pm 0.00002$           & $0.00241 \pm 0.00002$      & $0.03912 \pm 0.00012$      \\
-            512  & 1     & $0.00179 \pm 0.00001$           & $0.00243 \pm 0.00002$      & $0.02649 \pm 0.00014$      \\
-            1024 & 1     & $0.00093 \pm 0.00001$           & $0.00241 \pm 0.00002$      & $0.01924 \pm 0.00011$      \\
-            2048 & 1     & $0.00094 \pm 0.00001$           & $0.00243 \pm 0.00002$      & $0.01627 \pm 0.00012$      \\
-            4096 & 1     & $0.00093 \pm 0.00001$           & $0.00241 \pm 0.00002$      & $0.01455 \pm 0.00009$      \\
-            8192 & 1     & $0.00094 \pm 0.00001$           & $0.00243 \pm 0.00002$      & $0.01413 \pm 0.00010$
-        \end{tabular}
-        \endgroup
-    \end{center}
-    \caption{%
-        Results of strong scaling tests for IB spread and interpolate.
-        Computation time for Lagrangian forces are also reported for comparison.
-        Reported values are in seconds.
-    }
-\end{table}
+%\begin{table}
+%    \begin{center}
+%        \begingroup
+%        \setlength{\tabcolsep}{9pt}
+%        \renewcommand{\arraystretch}{1.5}
+%        \begin{tabular}{ccccc}
+%            $p$  & cells & \titletable{interpolate}{20000} & \titletable{spread}{10000} \\ \hline
+%%            1    & 1     & $0.47633 \pm 0.00024$           & $4.58460 \pm 0.00821$      \\
+%%            2    & 1     & $0.26608 \pm 0.00146$           & $2.59113 \pm 0.00567$      \\
+%%            4    & 1     & $0.14505 \pm 0.00080$           & $1.44780 \pm 0.00353$      \\
+%%            8    & 1     & $0.07593 \pm 0.00031$           & $0.76037 \pm 0.00229$      \\
+%%            16   & 1     & $0.04010 \pm 0.00009$           & $0.40348 \pm 0.00137$      \\
+%%            32   & 1     & $0.02037 \pm 0.00007$           & $0.22602 \pm 0.00105$      \\
+%            64   & 1     & $0.01080 \pm 0.00004$           & $0.11888 \pm 0.00055$      \\
+%            128  & 1     & $0.00586 \pm 0.00002$           & $0.06535 \pm 0.00023$      \\
+%            256  & 1     & $0.00341 \pm 0.00002$           & $0.03912 \pm 0.00012$      \\
+%            512  & 1     & $0.00179 \pm 0.00001$           & $0.02649 \pm 0.00014$      \\
+%            1024 & 1     & $0.00093 \pm 0.00001$           & $0.01924 \pm 0.00011$      \\
+%            2048 & 1     & $0.00094 \pm 0.00001$           & $0.01627 \pm 0.00012$      \\
+%            4096 & 1     & $0.00093 \pm 0.00001$           & $0.01455 \pm 0.00009$%      \\
+%%            8192 & 1     & $0.00094 \pm 0.00001$           & $0.01413 \pm 0.00010$
+%        \end{tabular}
+%        \endgroup
+%    \end{center}
+%    \caption{%
+%        Results of strong scaling tests for IB spread and interpolate.
+%        Reported values are in seconds.
+%    }
+%\end{table}
+
+\begin{figure}[ht]
+\begin{tikzpicture}
+\begin{groupplot}[
+    group style={group name=rbc-strong, group size=2 by 1},
+    height=0.5\textwidth,
+    width=0.5\textwidth
+]
+\nextgroupplot[
+        xmode=log,
+        xmin=64,
+        xmax=6144,
+        log basis x=2,
+        ymode=log,
+        ymax=64,
+        log basis y=2,
+        log origin=infty,
+        width=0.5\textwidth,
+        height=0.5\textwidth,
+        axis lines=center,
+        xlabel={threads},
+        ylabel={speedup},
+        xlabel near ticks,
+        ylabel near ticks,
+        legend style={at={(0.8, 0.2)}, anchor=center},
+        legend cell align={left}
+]
+    \addplot+[only marks, mark=diamond*, color=tol/vibrant/magenta, mark options={fill=tol/vibrant/magenta}] coordinates {%
+        (64  , {0.01080/0.01080})
+        (128 , {0.01080/0.00586})
+        (256 , {0.01080/0.00341})
+        (512 , {0.01080/0.00179})
+        (1024, {0.01080/0.00093})
+        (2048, {0.01080/0.00094})
+        (4096, {0.01080/0.00093})
+    }; \label{plot:rbc-interp}
+    \addplot+[only marks, mark=*, color=tol/vibrant/teal, mark options={fill=tol/vibrant/teal}] coordinates {%
+        (64  , {0.11888/0.11888})
+        (128 , {0.11888/0.06535})
+        (256 , {0.11888/0.03912})
+        (512 , {0.11888/0.02649})
+        (1024, {0.11888/0.01924})
+        (2048, {0.11888/0.01627})
+        (4096, {0.11888/0.01455})
+    }; \label{plot:rbc-spread}
+    \node [fill=white] at (rel axis cs: 0.075, 0.95) {(a)};
+\nextgroupplot[
+        xmode=log,
+        xmin=64,
+        xmax=6144,
+        log basis x=2,
+        ymode=log,
+        ymax=64,
+        log basis y=2,
+        log origin=infty,
+        width=0.5\textwidth,
+        height=0.5\textwidth,
+        axis lines=center,
+        xlabel={threads},
+        xlabel near ticks,
+        ylabel near ticks,
+        legend style={at={(0.8, 0.2)}, anchor=center},
+        legend cell align={left}
+    ]
+    \addplot+[only marks, mark=diamond*, color=tol/vibrant/magenta, mark options={fill=tol/vibrant/magenta}] coordinates {%
+        (64  , {0.04150/0.04150})
+        (128 , {0.04150/0.02251})
+        (256 , {0.04150/0.01172})
+        (512 , {0.04150/0.00603})
+        (1024, {0.04150/0.00349})
+        (2048, {0.04150/0.00181})
+        (4096, {0.04150/0.00103})
+    };
+    \addplot+[only marks, mark=*, color=tol/vibrant/teal, mark options={fill=tol/vibrant/teal}] coordinates {%
+        (64  , {0.40148/0.40148})
+        (128 , {0.40148/0.20628})
+        (256 , {0.40148/0.11208})
+        (512 , {0.40148/0.06313})
+        (1024, {0.40148/0.03931})
+        (2048, {0.40148/0.02785})
+        (4096, {0.40148/0.02168})
+    };
+    \node [fill=white] at (rel axis cs: 0.075, 0.95) {(b)};
+\end{groupplot}
+\path (rbc-strong c1r1.south west|-current bounding box.south)--
+coordinate(legendpos) (rbc-strong c2r1.south east|-current bounding box.south);
+\matrix[
+    matrix of nodes,
+    anchor=north,
+    inner sep=0.2em,
+    %draw
+  ]at([yshift=-1ex]legendpos)
+  {
+    \ref{plot:rbc-interp}& interpolate&[5pt]
+    \ref{plot:rbc-spread}& spread \\};
+\end{tikzpicture}
+\caption{%
+    Speedup from parallel interpolation (Algorithm \ref{algo:par-interp})
+    and spread (OTF variant of Algorithm \ref{algo:par-spread}) with increasing
+    numbers of threads compared to 64 threads on the GPU for (a) 1 and (b) 4
+    RBCs.
+}
+\end{figure}
+
+Figure
 
 
-
-\begin{table}
-    \begin{center}
-        \begingroup
-        \setlength{\tabcolsep}{9pt}
-        \renewcommand{\arraystretch}{1.5}
-        \begin{tabular}{ccccc}
-            $p$   & cells & \titletable{interpolate}{20000} & \titletable{forces}{10000} & \titletable{spread}{10000} \\ \hline
-            64    & 4     & $0.04150 \pm 0.00013$           & $0.00289 \pm 0.00010$      & $0.40148 \pm 0.00146$      \\
-            128   & 4     & $0.02251 \pm 0.00003$           & $0.00286 \pm 0.00003$      & $0.20628 \pm 0.00060$      \\
-            256   & 4     & $0.01172 \pm 0.00002$           & $0.00286 \pm 0.00003$      & $0.11208 \pm 0.00031$      \\
-            512   & 4     & $0.00603 \pm 0.00002$           & $0.00286 \pm 0.00003$      & $0.06313 \pm 0.00014$      \\
-            1024  & 4     & $0.00349 \pm 0.00002$           & $0.00286 \pm 0.00003$      & $0.03931 \pm 0.00011$      \\
-            2048  & 4     & $0.00181 \pm 0.00001$           & $0.00286 \pm 0.00003$      & $0.02785 \pm 0.00011$      \\
-            4096  & 4     & $0.00103 \pm 0.00001$           & $0.00288 \pm 0.00002$      & $0.02168 \pm 0.00009$
-        \end{tabular}
-        \endgroup
-    \end{center}
-    \caption{%
-        Results of strong scaling tests for IB spread and interpolate.
-        Computation time for Lagrangian forces are also reported for comparison.
-        Reported values are in seconds.
-    }
-\end{table}
+%\begin{table}
+%    \begin{center}
+%        \begingroup
+%        \setlength{\tabcolsep}{9pt}
+%        \renewcommand{\arraystretch}{1.5}
+%        \begin{tabular}{ccccc}
+%            $p$   & cells & \titletable{interpolate}{20000} & \titletable{spread}{10000} \\ \hline
+%            64    & 4     & $0.04150 \pm 0.00013$           & $0.40148 \pm 0.00146$      \\
+%            128   & 4     & $0.02251 \pm 0.00003$           & $0.20628 \pm 0.00060$      \\
+%            256   & 4     & $0.01172 \pm 0.00002$           & $0.11208 \pm 0.00031$      \\
+%            512   & 4     & $0.00603 \pm 0.00002$           & $0.06313 \pm 0.00014$      \\
+%            1024  & 4     & $0.00349 \pm 0.00002$           & $0.03931 \pm 0.00011$      \\
+%            2048  & 4     & $0.00181 \pm 0.00001$           & $0.02785 \pm 0.00011$      \\
+%            4096  & 4     & $0.00103 \pm 0.00001$           & $0.02168 \pm 0.00009$
+%        \end{tabular}
+%        \endgroup
+%    \end{center}
+%    \caption{%
+%        Results of strong scaling tests for IB spread and interpolate with
+%        4 RBCs.
+%        Reported values are in seconds.
+%    }
+%\end{table}

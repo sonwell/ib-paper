@@ -46,13 +46,15 @@ grestore
 \smartqed  % flush right qed marks, e.g. at end of proof
 %
 %\usepackage{mathptmx}      % use Times fonts if available on your TeX system
+\usepackage{newtxtext,newtxmath}      % use Times fonts if available on your TeX system
 %
 % insert here the call for the packages your document requires
 %\usepackage{latexsym}
 %
 \usepackage{amsmath}
 \usepackage{amssymb}
-\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
 \usepackage{pgfplots}
 \usepackage{graphicx}
 \usepackage{calc}
@@ -61,31 +63,71 @@ grestore
 \usepackage[inline]{enumitem}
 \usepackage{float}
 \usepackage{xfrac}
-\usepackage{hyperref}
+\usepackage[hidelinks]{hyperref}
 \usepackage[capitalize, noabbrev]{cleveref}
 \usepackage{longtable}
 \usepackage{booktabs}
 \usepackage{xspace}
 \usepackage{manfnt}
 \usepackage{siunitx}
+\usepackage{float}
+
+\usetikzlibrary{matrix}
+\usepgfplotslibrary{groupplots}
+\newfloat{algorithm}{t}{lop}
 
 \definecolor{tol/contrast/blue}{RGB}{0,68,136}
 \definecolor{tol/contrast/red}{RGB}{187,85,102}
 \definecolor{tol/contrast/yellow}{RGB}{221,170,51}
 
-\allowdisplaybreaks
+\definecolor{tol/vibrant/blue}{RGB}{0,119,187}
+\definecolor{tol/vibrant/cyan}{RGB}{51,187,238}
+\definecolor{tol/vibrant/teal}{RGB}{0,153,136}
+\definecolor{tol/vibrant/orange}{RGB}{238,119,51}
+\definecolor{tol/vibrant/red}{RGB}{204,51,17}
+\definecolor{tol/vibrant/magenta}{RGB}{238,51,119}
+\definecolor{tol/vibrant/grey}{RGB}{187,187,187}
+
+\definecolor{tol/rainbow/26}{RGB}{220,5,12}
+\definecolor{tol/rainbow/18}{RGB}{247,240,86}
+\definecolor{tol/rainbow/15}{RGB}{78,178,101}
+\definecolor{tol/rainbow/10}{RGB}{25,101,176}
 
 % please place your own definitions here and don't use \def but
 % \newcommand{}{}
 
-\newcommand{\p}{\theta}
+\newcommand{\titletable}[2]{\bgroup\renewcommand{\arraystretch}{1.0}\begin{tabular}{@{}c@{}}{#1}\\\scalebox{0.75}{$N={#2}$}\end{tabular}\egroup}
 \renewcommand{\vec}[1]{\boldsymbol{#1}}
+
+\newcommand{\param}{\theta}
+\newcommand{\params}{\vec{\theta}}
 \newcommand{\laplacian}{\Delta}
-\newcommand{\cross}{\wedge}
-\newcommand{\grad}{\nabla}
-\renewcommand{\div}{\grad\cdot}
-\renewcommand{\d}{\relax\ifnum\lastnodetype>0 \mskip\thinmuskip\fi\textnormal{d}}
+\newcommand{\cross}{\times}
+\newcommand{\grad}[1][]{\nabla\if\relax\detokenize{#1}\relax\else{}_{#1}\fi}
+\renewcommand{\div}[1][]{\grad[#1]\cdot}
+\renewcommand{\d}{\relax\ifnum\lastnodetype>0\mskip\thinmuskip\fi\textnormal{d}}
 \renewcommand{\L}{\mathcal{E}}
+
+\newcommand{\domain}{\ensuremath{\Omega}}
+\newcommand{\interface}{\ensuremath{\Gamma}}
+\newcommand{\archetype}{\ensuremath{\hat{\Gamma}}}
+\newcommand{\reference}{\ensuremath{\interface_0}}
+\newcommand{\spread}{\ensuremath{\mathcal{S}}}
+\newcommand{\interp}{\ensuremath{\mathcal{S}^\dagger}}
+\newcommand{\Dirac}{\delta}
+\newcommand{\kernel}{\phi}
+\newcommand{\basic}{\varphi}
+\newcommand{\Basic}{\Phi}
+\newcommand{\poly}{p}
+\newcommand{\Poly}{P}
+
+\newcommand{\x}{\vec{x}}
+\newcommand{\X}{\vec{X}}
+\renewcommand{\u}{\vec{u}}
+\newcommand{\U}{\dot{\vec{X}}}
+\newcommand{\f}{\vec{f}}
+\newcommand{\F}{\vec{F}}
+\newcommand{\um}{\mskip\thinmuskip\si{\micro\meter}}
 
 % Insert the name of "your journal" with
 % \journalname{myjournal}

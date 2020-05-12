@@ -1,1 +1,27 @@
-\subsection{Convergence study}
+\subsubsection{Convergence study}
+\bgroup\color{red}
+WTS that as $h\to 0$, solution converges to something.
+\egroup
+
+\begin{table}
+    \begin{center}
+        \begingroup
+        \setlength{\tabcolsep}{9pt}
+        \renewcommand{\arraystretch}{1.5}
+        \begin{tabular}{ccc|cc|cc}
+                                                                                                                                         \\ \toprule
+            $h$       & $n_d$ & $n_s$ & $\|\vec{u}_h-\vec{u}_{0.5h}\|_2$ & order    & $\|\vec{u}_h-\vec{u}_{0.5h}\|_{\infty}$ & order    \\ \midrule
+            $1.00\um$ & 31    & 132   & 0.000789                         &          & 0.006200                                &          \\
+            $0.50\um$ & 132   & 546   & 0.000331                         & 1.253194 & 0.004700                                & 0.399607 \\
+            $0.25\um$ & 546   & 2210  & 0.000111                         & 1.576272 & 0.002486                                & 0.918834 \\ \bottomrule
+        \end{tabular}
+        \endgroup
+    \end{center}
+    \caption{%
+        Convergence study for the case of a single red blood cell in a
+        $16\um\times16\um\times16\um$ triply periodic domain and shear-like
+        flow with shear rate $\dot{\gamma} = 1000\si{\per\second}$. We observe
+        order \textasciitilde1.4 convergence in the $\ell_2$ norm and order
+        \textasciitilde0.7 in the max norm.
+    }
+\end{table}
