@@ -18,10 +18,30 @@ WTS that as $h\to 0$, solution converges to something.
         \endgroup
     \end{center}
     \caption{%
-        Convergence study for the case of a single red blood cell in a
+        Convergence of the fluid velocity for the case of a single red blood
+        cell in a $16\um\times16\um\times16\um$ triply periodic domain and
+        shear-like flow with shear rate $\dot{\gamma} = 1000\si{\per\second}$.
+        We observe approximately first-order convergence.
+    }
+\end{table}
+
+\begin{table}
+    \begin{center}
+        \begingroup
+        \setlength{\tabcolsep}{9pt}
+        \renewcommand{\arraystretch}{1.5}
+        \begin{tabular}{cc|cc|cc}
+                                                                                                                                  \\ \toprule
+            $h$       & $n_d$ &  $\|\vec{X}_h-\vec{X}_{0.5h}\|_2$ & order    & $\|\vec{X}_h-\vec{X}_{0.5h}\|_{\infty}$ & order    \\ \midrule
+            $1.00\um$ & 31    &  $4.14315\times10^{-6}$           &          & $1.57796\times10^{-5}$                  &          \\
+            $0.50\um$ & 132   &  $5.89760\times10^{-6}$           & 0.405772 & $1.22294\times10^{-5}$                  & 0.351832 \\
+            $0.25\um$ & 546   &  $7.91287\times10^{-6}$           & 0.497374 & $1.04531\times10^{-5}$                  & 0.221083 \\ \bottomrule
+        \end{tabular}
+        \endgroup
+    \end{center}
+    \caption{%
+        Convergence of data sites for the case of a single red blood cell in a
         $16\um\times16\um\times16\um$ triply periodic domain and shear-like
-        flow with shear rate $\dot{\gamma} = 1000\si{\per\second}$. We observe
-        order \textasciitilde1.4 convergence in the $\ell_2$ norm and order
-        \textasciitilde0.7 in the max norm.
+        flow with shear rate $\dot{\gamma} = 1000\si{\per\second}$.
     }
 \end{table}
