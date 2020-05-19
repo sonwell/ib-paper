@@ -26,10 +26,10 @@ What I am envisioning for the methods section(s):
 \begin{algorithm}
 \caption{Parallel interpolation}
 \label{algo:par-interp}
-\begin{algorithmic}
+\begin{algorithmic}[1]
 \Procedure{parallel-interpolate}{$\interface_h,\,\domain_h,\,e(\vec{x})$}
-
-\For {$i = 1,\,\ldots,\,n_d$ \textbf{parallel}}
+\State $\triangleright\ $\textbf{generate}: Values of $E$ sampled at each point in $\interface_h$
+\For {$i = 1,\,\ldots,\,|\interface_h|$ \textbf{parallel}}
     \State $\vec{x} \gets h(\lfloor\vec{X}_i\rceil+\vec{g})$\Comment{$\vec{X}_i\in\interface_h$, $\vec{x}\in\domain_h$}
     \State $\Delta\vec{x} \gets \vec{x}-\vec{X}_i$
     \For {$j = 1,\,\ldots,\,s^d$}
@@ -37,7 +37,7 @@ What I am envisioning for the methods section(s):
         \State $E(\vec{X}_i) \gets E(\vec{X}_i) + w \cdot e(\vec{x}+h\vec{\sigma}_j)$
     \EndFor
 \EndFor
-\State \textbf{return} $E(\interface_h)$
+\State \Return $E(\interface_h)$
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
@@ -45,9 +45,10 @@ What I am envisioning for the methods section(s):
 \begin{algorithm}
 \caption{Single-threaded spread}
 \label{algo:serial-spread}
-\begin{algorithmic}
+\begin{algorithmic}[1]
 \Procedure{serial-spread}{$\interface_h,\,\domain_h,\,L(\vec{X})$}
-\For {$i = 1,\,\ldots,\,n_s$}
+\State $\triangleright\ $\textbf{generate}: Values of $\ell$ sampled at each point in $\domain_h$
+\For {$i = 1,\,\ldots,\,|\interface_h|$}
     \State $\vec{x} \gets h(\lfloor\vec{X}_i\rceil+\vec{g})$\Comment{$\vec{X}_i\in\interface_h$, $\vec{x}\in\domain_h$}
     \State $\Delta\vec{x} \gets \vec{x}-\vec{X}_i$
     \For {$j = 1,\,\ldots,\,s^d$}
@@ -55,7 +56,7 @@ What I am envisioning for the methods section(s):
         \State $\ell(\vec{x}+h\vec{\sigma}_j) \gets \ell(\vec{x}+h\vec{\sigma}_j) + w \cdot L(\vec{X}_i)$
     \EndFor
 \EndFor
-\State \textbf{return} $\ell(\domain_h)$
+\State \Return $\ell(\domain_h)$
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
@@ -63,16 +64,17 @@ What I am envisioning for the methods section(s):
 \begin{algorithm}
 \caption{Parallel spread}
 \label{algo:par-spread}
-\begin{algorithmic}
+\begin{algorithmic}[1]
 \Procedure{parallel-spread}{$\interface_h,\,\domain_h,\,L(\vec{X})$}
-\For {$i = 1,\,\ldots,\,n_s$ \textbf{parallel}}
+\State $\triangleright\ $\textbf{generate}: Values of $\ell$ sampled at each point in $\domain_h$
+\For {$i = 1,\,\ldots,\,|\interface_h|$ \textbf{parallel}}
     \State $K_i \gets \mathfrak{K}(\lfloor\vec{X}_i\rceil)$ \Comment{Sort key}
     \State $P_i \gets i$ \Comment{Initial ordering}
 \EndFor
 \State \textbf{sort} $\{P_i\}$ \textbf{by} $\{K_i\}$
 \State $q \gets \text{\textbf{count unique} }\{K_i\}$
 \For {$j = 1,\,\ldots,\,s^d$}
-    \For {$i = 1,\,\ldots,\,n_s$ \textbf{parallel}}
+    \For {$i = 1,\,\ldots,\,|\interface_h|$ \textbf{parallel}}
         \State $p \gets P_i$
         \State $\vec{x} \gets h(\lfloor\vec{X}_p\rceil+\vec{g})$\Comment{$\vec{X}_p\in\interface_h$, $\vec{x}\in\domain_h$}
         \State $\Delta\vec{x} \gets \vec{x}-\vec{X}_i$
@@ -85,7 +87,7 @@ What I am envisioning for the methods section(s):
         \State $\ell(\vec{x} + h\vec{\sigma}_j) \gets \ell(\vec{x} + h\vec{\sigma}_j) + V_i$
     \EndFor
 \EndFor
-\State \textbf{return} $\ell(\domain_h)$
+\State \Return $\ell(\domain_h)$
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
@@ -93,17 +95,18 @@ What I am envisioning for the methods section(s):
 \begin{algorithm}
 \caption{Buffered parallel spread (pre-allocated buffer)}
 \label{algo:pa-spread}
-\begin{algorithmic}
-\Require $\texttt{sz} \ge 1$
+\begin{algorithmic}[1]
 \Procedure{pa-buffer-parallel-spread}{$\interface_h,\,\domain_h,\,L(\vec{X}), \ell'_1,\,\ldots,\,\ell'_\texttt{sz}$}
-\For {$i = 1,\,\ldots,\,n_s$ \textbf{parallel}}
+\State $\triangleright\ $\textbf{require}: $\texttt{sz} \ge 1$
+\State $\triangleright\ $\textbf{generate}: Values of $\ell$ sampled at each point in $\domain_h$
+\For {$i = 1,\,\ldots,\,|\interface_h|$ \textbf{parallel}}
     \State $K_i \gets \mathfrak{K}(\lfloor\vec{X}_i\rceil)$ \Comment{Sort key}
     \State $P_i \gets i$ \Comment{Initial ordering}
 \EndFor
 \State \textbf{sort} $\{P_i\}$ \textbf{by} $\{K_i\}$
 \State $q \gets \text{\textbf{count unique} }\{K_i\}$
 \For {$j = 1,\,\ldots,\,\lceil s^d/\texttt{sz}\rceil$}
-    \For {$i = 1,\,\ldots,\,n_s$ \textbf{parallel}}
+    \For {$i = 1,\,\ldots,\,|\interface_h|$ \textbf{parallel}}
         \State $p \gets P_i$
         \State $\vec{x} \gets h(\lfloor\vec{X}_p\rceil+\vec{g})$\Comment{$\vec{X}_p\in\interface_h$, $\vec{x}\in\domain_h$}
         \State $\Delta\vec{x} \gets \vec{x}-\vec{X}_i$
@@ -121,7 +124,7 @@ What I am envisioning for the methods section(s):
         \EndFor
     \EndFor
 \EndFor
-\State \textbf{return} $\ell'_1(\domain_h) + \cdots + \ell'_\texttt{sz}(\domain_h)$
+\State \Return $\ell'_1(\domain_h) + \cdots + \ell'_\texttt{sz}(\domain_h)$
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
@@ -129,13 +132,14 @@ What I am envisioning for the methods section(s):
 \begin{algorithm}
 \caption{Buffered parallel spread (on-the-fly buffer allocation)}
 \label{algo:otf-spread}
-\begin{algorithmic}
-\Require $\texttt{sz} \ge 1$
+\begin{algorithmic}[1]
 \Procedure{otf-buffer-parallel-spread}{$\interface_h,\,\domain_h,\,L(\vec{X})$}
+\State $\triangleright\ $\textbf{require}: $\texttt{sz} \ge 1$
+\State $\triangleright\ $\textbf{generate}: Values of $\ell$ sampled at each point in $\interface_h$
 \For {$i = k,\,\ldots,\,\texttt{sz}$}
     \State $\ell'_k \gets 0$
 \EndFor
-\State \textbf{return} \textsc{pa-buffer-parallel-spread}($\interface_h,\,\domain_h,\,L(\vec{X}),\,\ell'_1,\,\ldots,\,\ell'_\texttt{sz}$) \Comment{Algorithm \ref{algo:pa-spread}}
+\State \Return \Call{pa-buffer-parallel-spread}{$\interface_h,\,\domain_h,\,L(\vec{X}),\,\ell'_1,\,\ldots,\,\ell'_\texttt{sz}$} \Comment{Algorithm \ref{algo:pa-spread}}
 \EndProcedure \Comment{Lifetime of $\ell'_k$ ends here}
 \end{algorithmic}
 \end{algorithm}
@@ -144,12 +148,17 @@ What I am envisioning for the methods section(s):
 \clearpage
 \section{Numerical results}
 
-For the tests described below, we consider a $16\um\times16\um\times16\um$
-triply periodic domain with an initial periodic shear flow,
+Here we describe two types of test: unstructured IB points, in which points are
+placed randomly in the domain and generate a force independently from the other
+IB points, and structured IB points, in which the points comprise an elastic
+structure and forces are generated based on the configuration of the points as
+a whole. For these tests, we consider a $16\um\times16\um\times16\um$ triply
+periodic domain with an initial shear-like flow,
 $\vec{u} = (0,\,0,\,\dot{\gamma}(y-8\um))$, with shear rate
-$\dot{\gamma} = 1000\si{\per\second}$, which has a jump at $y=0\um$ or
-$y=16\um$. A background force is added to maintain this jump and so that the
-initial flow is also the steady flow for the system, as in [@Fai:XXX].
+$\dot{\gamma} = 1000\si{\per\second}$. This flow has a sharp transition at the
+periodic boundary $y=0\um$, so a background force is added to maintain this
+transition and so that the initial flow is also the steady flow in the absence
+of other forces, as in [@Fai:XXX].
 
 Serial and multicore CPU tests were performed on a single node with 48
 Intel\textsuperscript{\textregistered} Xeon\textsuperscript{\textregistered}
@@ -171,15 +180,15 @@ positions. The fluid solver is not invoked for these tests. Instead, at each
 timestep, interpolate the fluid velocity to each of the IB points and predict
 updated positions for the IB points. Compute a Hookean force with spring
 constant $0.01\si{dyn\per\centi\meter}$. Spread these forces to the fluid grid,
-but do not use them to update the fluid velocity. The forces are discarded in
-such a way that the force calculation is not optimized away. This ensures that
-the points do not settle into a steady position and the spread and interpolate
-operations receive new data each timestep. Finally, interpolate the velocity to
-each of the IB points again and update the position of the IB points. While the
-interpolated velocities are the same as those computed at the beginning of the
-timestep, this is done by analogy to the fluid solver, which interpolates fluid
-velocities twice and spreads forces once per timestep. The timestep used is
-$1\times 10^{-4}\si{\second}$.
+but do not use them to update the fluid velocity. Instead, discard the forces
+in such a way that the force calculation is not optimized away. This ensures
+that the points do not settle into a steady position and the spread and
+interpolate operations receive new data each timestep. Finally, interpolate the
+velocity to each of the IB points again and update the position of the IB
+points. While the interpolated velocities are the same as those computed at the
+beginning of the timestep, this is done by analogy to the fluid solver, which
+interpolates fluid velocities twice and spreads forces once per timestep. The
+timestep used is $k = 0.1\ms$.
 
 We use this test to compare the performance of the parallel algorithms to
 their serial counterparts and, for the spread variants, to each other.
@@ -188,23 +197,39 @@ their serial counterparts and, for the spread variants, to each other.
 \input{grid-dependence}
 \input{serial-comparison}
 
-\subsection{Structured IB points}
+\subsection{Red Blood Cells}
 
-In this section, we replace the randomly-placed IB points with points sampled
-on the surface of a red blood cell (RBC). We track $n_d$ data sites per RBC.
-We construct an interpolant based on the positions of those points and evaluate
-forces at $n_s$ sample sites. It is to the data sites that we interpolate
-fluid velocity and from the sample sites that we spread forces. It is generally
-the case that $n_s > n_d$, so that we interpolate to fewer points than we
-spread from. These point sets are generated by the \texttt{KernelNode} library.
-Here, we invoke the fluid solver, so that as the RBC deforms, the force it
-imparts on the fluid will affect the fluid velocity. The RBC is modeled as an
-elastic structure, obeying the Skalak constitutive law [@Skalak:XXX] with shear
-modulus $2.5\times10^{-3}\si{dyn\per\centi\meter}$ and bulk modulus
-$2.5\times10^{-1}\si{dyn\per\centi\meter}$. The timestep required for stability
-in this test is $k=1\times 10^{-7}\si{\second}$.
+We are motivated by the desire to simulate the motion of cells immersed in a
+fluid. Cells are not randomly generated points, but cohesive structures, kept
+together by elastic forces and the near-constant volume maintained by their
+membranes. In this section, we replace the randomly-placed IB points with
+points sampled on the surface of a red blood cell (RBC). We track $n_d$ data
+sites per RBC, and interpolate fluid velocities only to these points. We
+construct an RBF interpolant based on the positions of the data sites and
+evaluate forces at $n_s$ sample sites, chosen so that neighboring sample sites
+are initially within $0.5h$ of each other. We spread forces from the sample
+sites. It is generally the case that $n_s > n_d$, so that we interpolate to
+fewer points than we spread from. These point sets are generated by the
+\texttt{KernelNode} library. In this case, we invoke the fluid solver, so that
+as the RBC deforms, the force it imparts on the fluid will affect the fluid
+velocity. The RBC is modeled as an elastic structure, obeying the Skalak
+constitutive law [@Skalak:XXX] with shear modulus $2.5\times10^{-3}\dynpercm$
+and bulk modulus $2.5\times10^{-1}\dynpercm$, with rest configuration given
+in [@Omori:XXX]:
+\begin{equation}
+    \begin{aligned}
+        x(\theta,\,\phi) &= 3.91\um\cos\theta\cos\phi, \\
+        y(\theta,\,\phi) &= 3.91\um\sin\theta\cos\phi, \\
+        z(\theta,\,\phi) &= \frac{3.91\um}{2}\sin\phi\left[0.21 + 2.0 \cos^2\phi -1.12 \cos^4\phi\right],
+    \end{aligned}
+\end{equation}
+where $\theta \in [-\pi,\,\pi)$ and $\phi \in (-\pi/2,\,\pi/2)$. We choose not
+to include the end points for the range of $\phi$ to avoid the singularities in
+this parametrization. The timestep required for stability in this test is
+$k=0.1\ms$.  
 
-We begin by confirming the convergence of the solution.
+We first validate the fluid solver for these tests, and then perform similar
+scaling tests as above.
 
 \input{convergence-study}
 \input{strong-scaling}

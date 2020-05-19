@@ -1,7 +1,11 @@
-\subsubsection{Strong scaling of interaction operations}
-\bgroup\color{red}
-WTS that for fixed problem and increasing number of threads, runtime decreases.
-\egroup
+\subsubsection{Strong scaling}
+
+We again wish to see how these algorithms can help speed up the runtime of
+a fixed problem. Here, we consider tests with a single RBC and with 4 RBCs.
+To construct the RBCs, we now use $n_d=864$ data sites, for an initial data
+site spacing of approximately $0.8h$, and $n_s=8832$ sample sites per cell, for
+an initial sample site spacing for approximately $0.25h$. We use a timestep of
+$k=0.1\us$ to simulate the motion of the cells for $1\ms$.
 
 %\begin{table}
 %    \begin{center}
@@ -42,8 +46,8 @@ WTS that for fixed problem and increasing number of threads, runtime decreases.
 ]
 \nextgroupplot[
         xmode=log,
-        xmin=64,
-        xmax=6144,
+        xmin=45.2548339959,
+        xmax=5792.61875148,
         log basis x=2,
         ymode=log,
         ymax=64,
@@ -68,7 +72,7 @@ WTS that for fixed problem and increasing number of threads, runtime decreases.
         (2048, {0.01080/0.00094})
         (4096, {0.01080/0.00093})
     }; \label{plot:rbc-interp}
-    \addplot+[only marks, mark=*, color=tol/vibrant/teal, mark options={fill=tol/vibrant/teal}] coordinates {%
+    \addplot+[only marks, mark=triangle*, color=tol/vibrant/blue, mark options={fill=tol/vibrant/blue}] coordinates {%
         (64  , {0.11888/0.11888})
         (128 , {0.11888/0.06535})
         (256 , {0.11888/0.03912})
@@ -77,11 +81,13 @@ WTS that for fixed problem and increasing number of threads, runtime decreases.
         (2048, {0.11888/0.01627})
         (4096, {0.11888/0.01455})
     }; \label{plot:rbc-spread}
+    \addplot+[no marks, dashed, black, domain=64:4096] {(x/64)^0.9};
+    \addplot+[no marks, black, domain=64:4096] {(x/64)};
     \node [fill=white] at (rel axis cs: 0.075, 0.95) {(a)};
 \nextgroupplot[
         xmode=log,
-        xmin=64,
-        xmax=6144,
+        xmin=45.2548339959,
+        xmax=5792.61875148,
         log basis x=2,
         ymode=log,
         ymax=64,
@@ -105,7 +111,7 @@ WTS that for fixed problem and increasing number of threads, runtime decreases.
         (2048, {0.04150/0.00181})
         (4096, {0.04150/0.00103})
     };
-    \addplot+[only marks, mark=*, color=tol/vibrant/teal, mark options={fill=tol/vibrant/teal}] coordinates {%
+    \addplot+[only marks, mark=triangle*, color=tol/vibrant/blue, mark options={fill=tol/vibrant/blue}] coordinates {%
         (64  , {0.40148/0.40148})
         (128 , {0.40148/0.20628})
         (256 , {0.40148/0.11208})
@@ -114,6 +120,8 @@ WTS that for fixed problem and increasing number of threads, runtime decreases.
         (2048, {0.40148/0.02785})
         (4096, {0.40148/0.02168})
     };
+    \addplot+[no marks, dashed, black, domain=64:4096] {(x/64)^0.9};
+    \addplot+[no marks, black, domain=64:4096] {(x/64)};
     \node [fill=white] at (rel axis cs: 0.075, 0.95) {(b)};
 \end{groupplot}
 \path (rbc-strong c1r1.south west|-current bounding box.south)--
@@ -125,18 +133,34 @@ coordinate(legendpos) (rbc-strong c2r1.south east|-current bounding box.south);
     %draw
   ]at([yshift=-1ex]legendpos)
   {
-    \ref{plot:rbc-interp}& interpolate&[5pt]
-    \ref{plot:rbc-spread}& spread \\};
+      \ref{plot:rbc-interp}& Algorithm \ref{algo:par-interp}&[5pt]
+      \ref{plot:rbc-spread}& Algorithm \ref{algo:otf-spread} \\};
 \end{tikzpicture}
 \caption{%
-    Speedup from parallel interpolation (Algorithm \ref{algo:par-interp})
-    and spread (OTF variant of Algorithm \ref{algo:par-spread}) with increasing
-    numbers of threads compared to 64 threads on the GPU for (a) 1 and (b) 4
-    RBCs.
+    Speedup of Algorithms \ref{algo:par-interp} and \ref{algo:otf-spread} with
+    increasing numbers of threads compared to 64 threads on the GPU for (a) 1
+    and (b) 4 RBCs. Speedup is measured relative to the time taken for each
+    algorithm using 64 threads on the GPU. Dashed lines indicate trends, and
+    solid lines indicate ideal scaling.
 }
+\label{fig:str-strong}
 \end{figure}
 
-Figure
+Figure \ref{fig:str-strong} shows the speedup observed with increasing threads
+for 1 and 4 RBCs for 64--4096 threads on the GPU. We again see that the initial
+speedup for interpolation is nearly linear with increased threads. In subfigure
+(a), there is a sharp plateau that corresponds to every data site having its
+own thread. In other words, there are more threads than there is work to be
+done, since we track only 864 data sites for a single RBC. Subfigure (b), on
+the other hand, has 3456 data sites, so the trend continues for 512--4096
+threads. In this case, we expect this graph to plateau beyond 4096, as each
+data site already has its own thread. However, we do not expect for the trend
+to continue with more cells, as the presumed maximum number of threads for
+interpolation is 4480, as discussed in Section [@sec:grid-dependence]. 
+Comparing subfigure (a) to (b), for spread, we see that the speedup is also
+dependent on the amount of work. This indicates that, as with interpolation,
+the maximum speedup for spread is limited by hardware, rather than being a
+limitation of the algorithm.
 
 
 %\begin{table}

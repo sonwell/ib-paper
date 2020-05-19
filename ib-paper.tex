@@ -54,7 +54,6 @@ grestore
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{algorithm}
-\usepackage{algpseudocode}
 \usepackage{pgfplots}
 \usepackage{graphicx}
 \usepackage{calc}
@@ -65,6 +64,7 @@ grestore
 \usepackage{xfrac}
 \usepackage[hidelinks]{hyperref}
 \usepackage[capitalize, noabbrev]{cleveref}
+\usepackage{algpseudocode}
 \usepackage{longtable}
 \usepackage{booktabs}
 \usepackage{xspace}
@@ -128,6 +128,11 @@ grestore
 \newcommand{\f}{\vec{f}}
 \newcommand{\F}{\vec{F}}
 \newcommand{\um}{\mskip\thinmuskip\si{\micro\meter}}
+\newcommand{\dynpercm}{\mskip\thinmuskip\si{dyn\per\centi\meter}}
+\newcommand{\us}{\mskip\thinmuskip\si{\micro\second}}
+\newcommand{\ms}{\mskip\thinmuskip\si{\milli\second}}
+
+\newcommand{\thrust}{\texttt{thrust}}
 
 % Insert the name of "your journal" with
 % \journalname{myjournal}
@@ -162,22 +167,22 @@ grestore
 \maketitle
 
 \begin{abstract}
-    This note describes a parallel implementation of the immersed
-    boundary method which relies on the well-studied parallel primitives
+    We introduce a parallel implementation of the immersed boundary method
+    interaction operations which relies on the well-studied parallel primitives
     key-value sort and segmented reduce. This makes the algorithms feasible for
-    use on general purpose graphical processing units in addition to most other
-    architectures. This is compared to existing parallelization methods.
+    use on general purpose graphical processing units (GPGPUs) in addition to
+    most other architectures.
 
 % \keywords{}
 % \PACS{}
 % \subclass{MSC code1 \and MSC code2 \and more}
 \end{abstract}
 
-\input{introduction}
-\input{ib-overview}
-\input{fluid-solver}
-\input{cell-modeling}
-\input{frame-coupling}
+%\input{introduction}
+%\input{ib-overview}
+%\input{fluid-solver}
+%\input{cell-modeling}
+%\input{frame-coupling}
 \input{results}
 \input{conclusion}
 

@@ -1,8 +1,19 @@
-\subsubsection{Weak scaling of interaction operations}
-\bgroup\color{red}
-WTS that for increasing problem size and threads, runtime stays approximately
-the same. Use 1--8 cells of $n_d=864$ and $n_s=8832$ each, and 64--512 threads.
-\egroup
+\subsubsection{Weak scaling}
+
+To see how the algorithm scales given more computing resources, we increase
+the number of cells in the domain and increase the number of threads
+proprtionally. Cells are constructed with $n_d=832$ data sites and $n_s=8832$
+sample sites, as before. We place between 1 and 8 cells in the domain,
+while threads increase from 64 to 512. Using a timestep of $k = 0.1\us$, we
+simulate the motion of these cells for $1\ms$.
+
+In Section \ref{sec:unst-weak}, we observe that, as a side-effect of increasing
+point density per grid cell, runtime for parallel spread decreases as the
+number of points and threads increases. Here, the cells are initially far
+enough part as to not have any overlapping support points.  As a result, while
+individual grid cells may contain several IB points, average point density is
+still low, so we do not expect to see the same reduction in runtime as observed
+previously.
 
 \begin{table}
     \begin{center}
@@ -21,6 +32,14 @@ the same. Use 1--8 cells of $n_d=864$ and $n_s=8832$ each, and 64--512 threads.
     \end{center}
     \caption{%
         Weak scaling results for increasing numbers of RBCs (cells column) and 
-        threads. Each RBC has $n_d = 864$ and $n_s = 8832$.
+        threads. Each RBC has $n_d = 864$ and $n_s = 8832$. Times are reported
+        in seconds. $N$ is the number of samples taken.
     }
+    \label{tab:str-weak}
 \end{table}
+
+Table \ref{tab:str-weak} shows the runtimes for increasing number of RBCs and
+threads. For both interpolate and spread, we see that the runtimes are nearly
+constant, and we recover the near-perfect scaling we saw with random IB points.
+After an initial drop in runtime between one RBC with 64 threads and two RBCs
+and 128 threads, runtimes even off and begin to increase.

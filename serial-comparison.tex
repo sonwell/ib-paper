@@ -1,8 +1,13 @@
 \subsubsection{Strong scaling}
-We now consider how runtime varies for the test problem with $n=2^{16}$ IB
-points, a grid refinement of 64 (grid size $h=0.25\um$), and using the OTF
-variant of Algorithm \ref{algo:par-spread} with different numbers of threads.
-We use up to 32 threads on the CPU and 64--4096 threads on the GPU.
+It is commonly the case that we wish to employ parallelization to improve 
+runtimes for a problem of interest. To illustrate this improvement, we now
+consider how runtime varies for the test problem with $n=2^{16}$ IB points, a
+grid refinement of 64 (grid size $h=0.25\um$), and Algorithm
+\ref{algo:otf-spread} with different numbers of threads. We use up to 32
+threads on the CPU and 64--4096 threads on the GPU. For a fixed problem, we
+ideally wish to see the runtime using $2p$ threads to be half of that using
+$p$ threads. In other words, the ideal speedup using twice as many threads is
+2.
 
 
 %\begin{table}[h]
@@ -47,9 +52,12 @@ We use up to 32 threads on the CPU and 64--4096 threads on the GPU.
 
 \begin{figure}[h]
 \begin{tikzpicture}
-\begin{axis}[
-        xmin=0.666666666666,
-        xmax=6144,
+\begin{groupplot}[
+    group style={group name=unst-strong, group size=2 by 1},
+]
+\nextgroupplot[
+        xmin=0.70710678118,  % approx. 1/√2
+        xmax=45.2548339959,  % approx 32√2
         xmode=log,
         log basis x=2,
         ymode=log,
@@ -57,18 +65,19 @@ We use up to 32 threads on the CPU and 64--4096 threads on the GPU.
         ymax=128,
         log basis y=2,
         log origin=infty,
-        width=\textwidth,
+        width=0.46153846153\textwidth,
         height=0.5\textwidth,
         axis lines=center,
         xlabel={threads},
         ylabel={speedup},
         xlabel near ticks,
         ylabel near ticks,
+        xtick={1, 2, 4, 8, 16, 32},
         ytick={1, 4, 16, 64},
         legend style={at={(0.5, 0.9)}, anchor=center, draw=none,
                       /tikz/every even column/.append style={column sep=5pt}},
         legend cell align={left},
-        legend columns=2
+        legend columns=1
     ]
     \addplot+[only marks, mark=diamond*, color=tol/vibrant/magenta, mark options={fill=tol/vibrant/magenta}] coordinates {%
         (1 , {1.30763/1.29442})
@@ -77,18 +86,43 @@ We use up to 32 threads on the CPU and 64--4096 threads on the GPU.
         (8 , {1.30763/0.18004})
         (16, {1.30763/0.09969})
         (32, {1.30763/0.07371})
-    };
-    \addlegendentry{CPU interpolate}
-    \addplot+[only marks, mark=square*, color=tol/vibrant/teal, mark options={fill=tol/vibrant/teal}] coordinates {%
+    }; \label{plot:unst-strong-interp}
+    \addplot+[only marks, mark=triangle*, color=tol/vibrant/blue, mark options={fill=tol/vibrant/blue}] coordinates {%
         (1 , {1.33840/1.50377})
         (2 , {1.33840/0.92804})
         (4 , {1.33840/0.44697})
         (8 , {1.33840/0.24580})
         (16, {1.33840/0.14895})
         (32, {1.33840/0.12225})
-    };
-    \addlegendentry{CPU spread}
-    \addplot+[only marks, mark=*, color=tol/vibrant/orange, mark options={fill=tol/vibrant/orange}] coordinates {%
+    }; \label{plot:unst-strong-spread}
+    \addplot+[no marks, dashed, black, domain=1:32] {x^0.93};
+    \addplot+[no marks, dotted, black, domain=1:32] {0.88*x^0.89};
+    \addplot+[no marks, black, domain=1:32] {x};
+    \node[fill=white] at (rel axis cs: 0.075, 0.95) {(a)};
+\nextgroupplot[
+        xmin=45.2548339959,  % approx 32√2
+        xmax=5792.61875148,  % approx 4096√2
+        xmode=log,
+        log basis x=2,
+        ymode=log,
+        ymin=0.5,
+        ymax=128,
+        log basis y=2,
+        log origin=infty,
+        width=0.53846153846\textwidth,
+        height=0.5\textwidth,
+        axis lines=center,
+        xlabel={threads},
+        xlabel near ticks,
+        ylabel near ticks,
+        ytick={1, 4, 16, 64},
+        legend style={at={(0.5, 0.9)}, anchor=center, draw=none,
+                      /tikz/every even column/.append style={column sep=5pt}},
+        legend cell align={left},
+        legend columns=1
+    ]
+    
+    \addplot+[only marks, mark=diamond*, color=tol/vibrant/magenta, mark options={fill=tol/vibrant/magenta}] coordinates {%
         (64  , {1.30763/0.80977})
         (128 , {1.30763/0.43929})
         (256 , {1.30763/0.22434})
@@ -97,7 +131,6 @@ We use up to 32 threads on the CPU and 64--4096 threads on the GPU.
         (2048, {1.30763/0.03074})
         (4096, {1.30763/0.01689})
     };
-    \addlegendentry{GPU interpolate}
     \addplot+[only marks, mark=triangle*, color=tol/vibrant/blue, mark options={fill=tol/vibrant/blue}] coordinates {%
         (64  , {1.33840/0.96698})
         (128 , {1.33840/0.49359})
@@ -107,24 +140,32 @@ We use up to 32 threads on the CPU and 64--4096 threads on the GPU.
         (2048, {1.33840/0.05351})
         (4096, {1.33840/0.03905})
     };
-    \addlegendentry{GPU spread}
-    \addplot+[no marks, dashed, black, domain=1:32] {x^0.93};
-    \addplot+[no marks, dotted, black, domain=1:32] {0.88*x^0.89};
-    \addplot+[no marks, densely dashed, black, domain=64:4096] {1.61*(x/64)^0.93};
-    \addplot+[no marks, densely dotted, black, domain=64:4096] {1.38*(x/64)^0.93};
-\end{axis}
+    \addplot+[no marks, dashed, black, domain=64:4096] {1.61*(x/64)^0.93};
+    \addplot+[no marks, dotted, black, domain=64:4096] {1.38*(x/64)^0.93};
+    \addplot+[no marks, black, domain=64:4096] {1.61*x/64};
+    \node[fill=white] at (rel axis cs: 0.075, 0.95) {(b)};
+\end{groupplot}
+\path (unst-strong c1r1.south west|-current bounding box.south)--
+coordinate(legendpos) (unst-strong c2r1.south east|-current bounding box.south);
+\matrix[
+    matrix of nodes,
+    anchor=north,
+    inner sep=0.2em,
+    %draw
+  ]at([yshift=-1ex]legendpos)
+  {
+    \ref{plot:unst-strong-interp}& Algorithm \ref{algo:par-interp}&[5pt]
+    \ref{plot:unst-strong-spread}& Algorithm \ref{algo:otf-spread}\\};
 \end{tikzpicture}
 \caption{%
-    Strong scaling results for OTF and grid spacing $h = 0.5\um$ (a grid
-    refinement of 64) for $2^{16}$ randomly placed IB points in a
-    $16\um\times16\um\times16\um$ triply periodic domain. Speedup is measured
+    Strong scaling results for Algorithm \ref{algo:otf-spread} and grid spacing
+    $h = 0.5\um$ (a grid refinement of 64) for $2^{16}$ randomly placed IB
+    points in a $16\um\times16\um\times16\um$ triply periodic domain for
+    (a) 1-32 CPU cores, and (b) 64-4096 threads on the GPU. Speedup is measured
     relative to serial Algorithms \ref{algo:par-interp} and
-    \ref{algo:serial-spread}. The four dashed or dotted trendlines give
-    estimates for the percentage of the computation is done in parallel:
-    approximately 93\% for CPU and GPU interpolation, and approximately 89\%
-    for CPU spread. The trendline for GPU spread also indicates 93\%
-    parallelization, but calls to the \texttt{thrust} library for GPU code may
-    use more (or fewer) threads than listed.
+    \ref{algo:serial-spread}. The solid black lines show the trendline for
+    ideal speedup. The dashed or dotted lines give the initial trend for
+    interpolation and spreading, respectively.
 }
 \label{fig:unstructured-strong}
 \end{figure}
@@ -132,12 +173,12 @@ We use up to 32 threads on the CPU and 64--4096 threads on the GPU.
 Figure \ref{fig:unstructured-strong} shows the results of these tests. Speedup
 is measured relative to the serial interpolation and spread implementations.
 The trendlines yield estimates for the percentage of work that is done in
-parallel for parallel spread and interpolate: approximately 93\% for CPU and
-GPU interpolation, and approxmately 89\% for CPU spread. {\color{red} We remind
-the reader that it is not trivial to limit the number of threads used by
-\texttt{thrust} for work done on the GPU, so the key-value sort and segmented
-reduce use as many threads as \texttt{thrust} decides is prudent. While the
-trendline indicates a 93\% parallel fraction, this is merely an approximation.}
+parallel for spread and interpolate: approximately 93\% for CPU and GPU
+interpolation, and approxmately 89\% for CPU spread. It is not trivial to limit
+the number of threads used by {\thrust} for work done on the GPU, so the
+key-value sort and segmented reduce use as many threads as {\thrust} decides is
+prudent. While the trendline indicates a 93\% parallel fraction, this is merely
+an approximation.
 
 Parallel CPU interpolate using a single processor is identical to the serial
 CPU interpolate, so the CPU interpolate passes through $(1,\,1)$. The same is
@@ -145,28 +186,41 @@ not true of the parallel spread using a single processor compared to serial
 spread. Because of the additional sort step in the parallel spread algorithm,
 single-threaded Algorithm \ref{algo:par-spread} is about 12\% slower than its
 serial counterpart. The CPU code also enjoys the benefit of using vector
-registers for some of the computation. {\color{red}This, coupled with the
-faster processors, accounts for most of the difference in speed between the CPU
-and the GPU for the same number of threads.}
+registers for some of the computation. The GPU requires 64 threads to match
+the speed of a single CPU core. Based on the trendline in Figure
+\ref{fig:unstructured-strong} and the speedup for grid refinement shown in
+Figure \ref{fig:grid-dependence}, we see that the GPU attains a speedup of
+approximately 5.25$\times$ compared to 32 CPU processors, and uses
+approximately 4480 threads, where the kernel reaches the limit on register
+memory.
 
-\bgroup\color{red}
-Interestingly, even at 4096 threads,  parallel interpolate on the GPU shows no
-indication of plateauing. The final data point for that curve shows a speedup
-of approximately 77$\times$. Figure \ref{fig:grid-dependence}, on the other
-hand, shows that the maximum speedup we can expect for this problem is 
-approximately 84$\times$, which the trendline predicts will occur at
-approximately 4480 threads. Thus, we can expect the plateau for parallel
-interpolate on the GPU to be very abrupt. The parallelization may be limited
-by the GPUs register file size, 256KB, where each thread is using 14 32-bit
-registers.
-\egroup
+%\bgroup\color{red}
+%Interestingly, even at 4096 threads,  parallel interpolate on the GPU shows no
+%indication of plateauing. The final data point for that curve shows a speedup
+%of approximately 77$\times$. Figure \ref{fig:grid-dependence}, on the other
+%hand, shows that the maximum speedup we can expect for this problem is 
+%approximately 84$\times$, which the trendline predicts will occur at
+%approximately 4480 threads. Thus, we can expect the plateau for parallel
+%interpolate on the GPU to be very abrupt. The parallelization may be limited
+%by the GPUs register file size, 256KB, where each thread is using 14 32-bit
+%registers.
+%\egroup
 
-\subsubsection{Weak scaling}
-\bgroup\color{red}
-WTS that for increasing work and threads proportionally, run time does not
-change.
-\egroup
+Overall, trends for the CPU and GPU are very similar. The plateauing of the
+CPU curves may not be the limitations of the algorithm for the CPU. Despite
+having 48 cores, the test using 32 cores did not utilize them at full capacity.
+Using fewer cores, on the other hand, was able to maintain full utilization
+for the duration of the test. If not for having a comparatively limited number
+of CPU cores, we expect to see the CPU trend continue. Because of these
+similarities, we will restrict ourselves to the GPU, but expect any conclusions
+to hold for the CPU as well.
 
+\subsubsection{Weak scaling}\label{sec:unst-weak}
+In contrast, with improved computing resources, we may wish to solve bigger
+problems. The ideal parallel algorithm solves a problem with $p$ threads in the
+same time as it solves a twice bigger problem with $2p$ threads. Here, we place
+between $2^{16}$ and $2^{19}$ points randomly in the domain. We increase the
+number of threads proportionally, between 128 and 1024.  
 
 \begin{table}
     \begin{center}
@@ -186,18 +240,25 @@ change.
     \caption{%
         Weak scaling results for $p$ threads and $n$ randomly placed IB points
         in a $16\um\times16\um\times16\um$ triply periodic domain with
-        $h=0.5\um$ on the GPU.
+        $h=0.5\um$ on the GPU. Times are reported in seconds. $N$ is the number
+        of samples taken.
     }
     \label{tab:unstructured-weak}
 \end{table}
 
 Table \ref{tab:unstructured-weak} lists runtimes for increasing threads and
 problem size on the GPU. Interpolate scales nearly perfectly with a difference
-of 15\si{\milli\second} (\textasciitilde3\%) increase between the problem with
-128 threads and $2^{16}$ IB points and that with 1024 threads and $2^{19}$
-points. Spread, on the other hand, decreases in time as the problem size
-increases.  \textcolor{red}{Because of the segmented reduce: density goes from
-1 point per every 4 grid cells to 2 points per grid cell. Would expect this to
-plateau off, and probably start increasing, for even larger problems, when the
-density surpasses the tile size \texttt{thrust}'s segmented reduce uses,
-whatever that may be.}
+of $15\ms$ (\textasciitilde3\%) increase between the problem with 128 threads
+and $2^{16}$ IB points and that with 1024 threads and $2^{19}$ points. Spread,
+on the other hand, decreases in time as the problem size increases. This
+speedup is artificial, and should not be expected in general. In the $n=2^{16}$
+case, there is 1 point for every 4 grid cells, on average. When $n=2^{19}$,
+the density increases to 2 for every grid cell. As a result, it becomes
+increasingly unlikely to find a cell containing no IB points. This means that
+writing the values to the output vector(s) becomes increasingly coalesced,
+which, in turn, reduces the number of writes to global memory and vastly
+improves the speed of the write overall. Typical use of the IB method does not
+have IB points in every grid cell, but the recommendations that IB points on
+connected structures be spaced $0.5h$--$h$ apart typically yields 1--4 IB
+points in each occupied grid cell. We now consider a more typical use of the IB
+method.
