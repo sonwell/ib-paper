@@ -2,30 +2,60 @@
 
 From the above, we can see that $\mathcal{S}$ has approximately equal number
 of nonzero entries per column. This means, that the interpolation matrix,
-$\mathcal{S}^\dagger$, has approximately equal number of nonzero entries per row.
-This property is beneficial for parallelization. Consider the $j^\text{th}$ row of
-$\mathcal{S}^\dagger$, which corresponds to interpolating to Lagrangian point
-$\vec{X}_j$ using the values at its support points. There are at most $s^d$
-values in that row, which correspond to the shifts that give a potentially
-nonzero value for $\delta_h$. Compute $\vec{x} = h(\lfloor\vec{X}_j\rceil+\vec{g})$.
-Then $\Delta\vec{X} = \vec{X}_j-\vec{x}$. Now, since the shifts $\{\vec{\sigma}_i\}$
-are known beforehand, we can compute $\delta_h(\vec{\sigma}_i-\Delta\vec{X})$
-and, if $\#(\vec{\sigma}_i+\lfloor\vec{x}\rceil) \neq\epsilon$, we accumulate
-products
+$\mathcal{S}^\dagger$, has approximately equal number of nonzero entries per
+row. This property is beneficial for parallelization. Consider the
+$i^\text{th}$ row of $\mathcal{S}^\dagger$, which corresponds to interpolating
+to Lagrangian point $\X_i$ using the values at its support points. There are at
+most $s^d$ values in that row, which correspond to the shifts that give a
+potentially nonzero value for $\delta_h$. Compute $\vec{x} =
+h(\idx{\X_i}+\vec{g})$. Then $\Delta\X = \X_i-\x$. Now, since the shifts
+$\{\vec{\sigma}_j\}$ are known beforehand, we can compute
+$\delta_h(\vec{\sigma}_j-\Delta\X)$ and, if $\#(\vec{\sigma}_j+\idx{\x})
+\neq\epsilon$, we accumulate products
 \begin{equation*}
-    E_j = \sum_{i=1}^{s^d}\delta_h(\vec{\sigma}_i+\Delta\vec{X})e_{\#(\vec{\sigma}_i+\lfloor\vec{x}\rceil)}.
+    E_i = \sum_{j=1}^{s^d}\delta_h(\vec{\sigma}_j+\Delta\X)e_{\#(\vec{\sigma}_j+\idx{\x})}.
 \end{equation*}
 
+\begin{algorithm}
+\caption{Parallel interpolation}
+\label{algo:par-interp}
+\begin{algorithmic}[1]
+\Procedure{parallel-interpolate}{$\interface_h,\,\domain_h,\,e(\x)$}
+\State $\triangleright\ $\textbf{generate}: Values of $E$ sampled at each point in $\interface_h$
+\For {$i = 1,\,\ldots,\,n_\gamma$ \textbf{parallel}}
+    \State $\x \gets h(\idx{\X_i}+\vec{g})$\Comment{$\X_i\in\interface_h$, $\x\in\domain_h$}
+    \State $\Delta\x \gets \x-\X_i$
+    \State $v \gets 0$\Comment{Temporary accumulation variable}
+    \For {$j = 1,\,\ldots,\,s^d$}
+        \State $w \gets \delta_h(\Delta\x+h\vec{\sigma}_j)$
+        \If {$\x + h\vec{\sigma}_j\in\domain$}
+            \State $v \gets v + w \cdot e(\x+h\vec{\sigma}_j)$\label{line:par-interp-acc}
+        \EndIf
+    \EndFor
+    \State $E(\X_i) \gets v$
+\EndFor
+\State \Return $E(\interface_h)$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
 Assigning one thread per Lagrangian point (i.e., one thread per row), this
-calculation can be performed in parallel, and since the $j^\text{th}$ thread writes
-to the $j^\text{th}$ entry of $\vec{E}$, there are no write contentions. Because the
-number of products is approximately the same for each row, each thread does
-approximately the same amount of work. On architectures that enforce thread
-synchrony, such as GPUs, this means that we do not incur a penalty from having
-threads wait for other threads to finish.
+calculation can be performed in parallel, and since the $j^\text{th}$ thread
+writes to the $j^\text{th}$ entry of $\vec{E}$, there are no write contentions.
+Because the number of products is approximately the same for each row, each
+thread does approximately the same amount of work. On architectures that
+enforce thread synchrony, such as GPUs, this means that we do not incur a
+penalty from having threads wait for other threads to finish. Algorithm
+\ref{algo:par-interp} lists the parallel interpolation algorithm in pseudocode. 
+For simplicity, we have used the notation $e(\x)$ in place of
+$e_{\#(\idx{\x})}$, $E(\X_i)$ in place of $E_i$, and $E(\interface_h)$ in place
+of $\vec{E}$. We note that using a single thread for Algorithm
+\ref{algo:par-interp} is identical to the serial interpolation algorithm.
 
 Since each thread computes the appropriate $\delta_h$-weights for its own row,
 it is unnecessary to construct $\mathcal{S}^\dagger$ explicitly. Other than
-allocating memory for $\vec{E}$, all of the work for this algorithm is parallel,
-so we expect to see near-perfect scaling and a theoretical runtime of
-$\mathcal{O}(n_\gamma/p)$, where $p$ is the number of threads.
+allocating memory for $\vec{E}$, all of the work for this algorithm is
+parallel, so we expect to see near-perfect scaling. Additionally, other than
+using the grid spacing $h$ for scaling in various places, the evaluation
+of $\delta_h$, and information about boundaries, there is no dependence on the 
+Eulerian grid.

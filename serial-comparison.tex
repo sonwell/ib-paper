@@ -172,13 +172,13 @@ coordinate(legendpos) (unst-strong c2r1.south east|-current bounding box.south);
 
 Figure \ref{fig:unstructured-strong} shows the results of these tests. Speedup
 is measured relative to the serial interpolation and spread implementations.
-The trendlines yield estimates for the percentage of work that is done in
-parallel for spread and interpolate: approximately 93\% for CPU and GPU
-interpolation, and approxmately 89\% for CPU spread. It is not trivial to limit
-the number of threads used by {\thrust} for work done on the GPU, so the
-key-value sort and segmented reduce use as many threads as {\thrust} decides is
-prudent. While the trendline indicates a 93\% parallel fraction, this is merely
-an approximation.
+The trendlines estimate that increasing computing resources by a factor of two
+decreases runtime by a factor or about 1.91 for CPU and GPU interpolation and
+by a factor of about 1.85 for CPU spread.  It is not trivial to limit the
+number of threads used by {\thrust} for work done on the GPU, so the key-value
+sort and segmented reduce use as many threads as {\thrust} decides is prudent.
+While the trendline indicates a decrease in runtime by a factor of 1.91 as
+well, this is merely an approximation.  
 
 Parallel CPU interpolate using a single processor is identical to the serial
 CPU interpolate, so the CPU interpolate passes through $(1,\,1)$. The same is

@@ -12,39 +12,6 @@ grids, we investigate whether Algorithms \ref{algo:par-interp} and
 dependence affects the runtime of Algorithms \ref{algo:pa-spread} and
 \ref{algo:otf-spread}.
 %
-%For $w$-bit integer data types, \thrust implements its sorts as radix
-%sort, which has theoretical work $\mathcal{O}(w n / p)$ per thread, where $n$
-%is the number of elements to be sorted and $p$ the number of threads. Because
-%linear algebra libraries such as BLAS and LAPACK and their sparse counterparts
-%typically rely on 32-bit signed integers for indexing, it is natural to choose
-%$w = 32$. This limits the number of grid points to $2^{32}$ that can be indexed
-%uniquely by a 32-bit integer, but until this limit is reached, the key-value
-%sort has a theoretical linear runtime in the number of IB points. Beyond
-%$2^{32}$ -- or, more likely, $2^{31}$ because of the sign bit -- grid points,
-%this runtime bound no longer holds. A larger data type, with a larger $w$ must
-%be used. In this way, there is implicit dependence on the grid within Algorithm
-%\ref{algo:par-spread}.
-%
-%Segmented reduce, on the other hand, has theoretical work $\mathcal{O}(n / p)$
-%regardless of the data type used for indexing. However, an implementation of
-%segemented reduce may be able to effectively leverage shared memory on the GPU,
-%or the cache, depending on how many IB points, on average, inhabit a grid cell.
-%As an example, for the extreme case where all of the IB points are located
-%within the same grid cell, segmented reduce proceeds as a regular reduce, which
-%leverages the memory hierarchy, and can therefore be extremely fast. On the
-%other hand, if each IB point inhabits its own grid cell, there is nothing for
-%the segmented reduce algorithm to do, so any time spent in this step is for
-%naught. The general segmented reduce algorithm works somewhere in between. The
-%typical heuristic for placing IB points dictates that inhabited grid cells have
-%1--4, for $d=2$, or 1--8, for $d=3$, IB points. The lower bound in each case
-%corresponds to each IB point inhabiting its own grid cell, whereas the upper
-%bound may use the memory hierarchy, so the efficacy of segmented reduce is
-%dependent upon their distribution and density in a complicated way. For any
-%fixed $n$ and Eulerian grid, there is some distribution of points that will
-%give the worst-case runtime. While we do not aim to find exactly what this
-%distribution is, we posit that, according to the theoretical work,  the runtime
-%does not deviate too much from the runtime for arbitrarily distributed points.
-
 
 \begin{table}
     \begin{center}

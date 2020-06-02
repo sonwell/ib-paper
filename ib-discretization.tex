@@ -1,100 +1,96 @@
-\subsection{The structure of $\mathcal{S}$ and $\mathcal{S}^\dagger$}
+\subsection{Structure of IB interaction operators}
 
-Let $\Omega_h$ be a regular grid on $\Omega$ with grid spacing $h$. Define
-$\vec{g} \in [0,\,1)^d$ to be the fixed vector such that a grid point $\vec{x}$
-can be decomposed as $\vec{x}=h(\vec{i}+\vec{g})$, where $\vec{i}$ has integer
-components. Moreover, let $\Gamma_h$ be a discretization of the interface
-$\Gamma$. For illustration purposes, we can think of $\Gamma_h$ as a collection
-of arbitrary points in $\Omega$. We refer to points in $\Omega_h$ as (Eulerian)
-grid ponts, and points in $\Gamma_h$ as Lagrangian points.
+Let $\domain_h$ be a regular grid on $\domain$ with grid spacing $h$. Define
+$\vec{g} \in [0,\,1)^d$ to be the fixed vector such that a grid point $\x$
+can be decomposed as $\x=h(\vec{i}+\vec{g})$, where $\vec{i}$ has integer
+components. Moreover, let $\interface_h$ be a discretization of the interface
+$\interface$. For illustration purposes, we can think of $\interface_h$ as a
+collection of arbitrary points in $\domain$. We refer to points in $\domain_h$
+as (Eulerian) grid ponts, and points in $\interface_h$ as (Lagrangian) IB
+points.
 
-[Equations @eq:scalar-interp;@eq:scalar-spread] are discretized on $\Omega_h$
-and $\Gamma_h$, respectively, to yield
+Equations \eqref{eq:scalar-interp} and \eqref{eq:scalar-spread} are discretized
+on $\domain_h$ and $\interface_h$, respectively, to yield
 \begin{align}
     \label{eq:disc-interp}
-    E(\vec{X}_j) &= \sum_i \delta_h(\vec{x}_i-\vec{X}_j)e(\vec{x}_i) h^d \quad \text{and} \\
+    E(\X_j) &= \sum_i \delta_h(\x_i-\X_j)e(\x_i) h^d \quad \text{and} \\
     \label{eq:disc-spread}
-    \ell(\vec{x}_i) &= \sum_j \delta_h(\vec{x}_i-\vec{X}_j)L(\vec{X}_j) \d A.
+    \ell(\x_i) &= \sum_j \delta_h(\x_i-\X_j)L(\X_j) \d\gamma_j.
 \end{align}
 Each of the above equations look like a matrix-vector multiplication, so we 
-will define $\mathcal{S}=(\delta_h(\vec{x}_i-\vec{X}_j))$, where the subscript
-$i$ indicates the row and subscript $j$ indicates the column. Collecting the
-values of $e(\vec{x})$ at each Eulerian grid point and of $L(\vec{X})$ at
-each Lagrangian point, we rewrite [equations @eq:disc-interp;@eq:disc-spread]
-as
+define the \emph{spread matrix} $\mathcal{S}=(\delta_h(\x_i-\X_j))$, where the
+subscript $i$ indicates the row and subscript $j$ indicates the column. We call
+its transpose, $\mathcal{S}^\dagger$, the \emph{interpolation matrix}.
+Collecting values $e(\x_i)h^d$ at each grid point and $L(\X_j)\d\gamma_j$ at
+each IB point, we rewrite Equations \eqref{eq:disc-interp} and
+\eqref{eq:disc-spread} in matrix form as
 \begin{align}
     \label{eq:matrix-interp}
     \vec{E} &= \mathcal{S}^\dagger\vec{e} \quad\text{and} \\
     \label{eq:matrix-spread}
     \vec{\ell} &= \mathcal{S}\vec{L},
 \end{align}
-respectively. For this reason, we call $\mathcal{S}$ the \emph{spread matrix},
-and its transpose, $\mathcal{S}^\dagger$, the \emph{interpolation matrix}.
+respectively.
 
-As we have said, $\delta_h$ is the tensor product of scaled, one-dimensional
+The kernel $\delta_h$ is the tensor product of scaled, one-dimensional
 kernels, $h^{-1}\phi(h^{-1}x)$. Let $\mathrm{supp}\mskip\thinmuskip\phi$
 denote the support of $\phi$ and define
 \begin{equation}
     s[\phi] = |\mathrm{supp}\mskip\thinmuskip\phi\cap\mathbb{Z}|-1
 \end{equation}
-to be the size of the support in meshwidths. For brevity, we write $s=s[\phi]$.
-For any $\vec{X}\in\Omega$, there are at most $s^d$ grid points
-$\vec{x}\in\Omega_h$ for which $\delta_h(\vec{x}-\vec{X})$ is nonzero.
+to be the size of the support in units of grid spaces. For brevity, we write
+$s=s[\phi]$.  For any $\X\in\domain$, there are at most $s^d$ grid points
+$\x\in\domain_h$ for which $\delta_h(\x-\X)$ is nonzero. We call these points
+the \emph{support points} of $\X$. If $\X$ is sufficiently far from any
+boundary, the subset of $\domain$ which has the same support points as $\X$ is
+an $h^d = h\times\cdot\times h$ region, and contains a single grid point. For
+$\X$ near a boundary, the region may be smaller, and may not contain a grid
+point, depending on the type of boundary. We imagine extending the domain such
+that each of these regions has side length $h$ in each dimension. We extend the
+grid with ghost points so that each region contains a single grid point. We
+call this extension $\bar{\domain}_h$. Collectively, these regions cover
+$\domain$, so we consider them to be the \emph{de facto} grid cells, and
+henceforth refer to them as such. We can now identify any $\X\in\domain$ with a
+grid point $\x\in\bar{\domain}_h$ if they are in the same grid cell, and since
+$\x=h(\vec{i}+\vec{g})$, we identify a grid cell by the integers $\vec{i}$. We
+adopt the notation $\idx{\X}=\vec{i}$ for the function that maps points in
+$\domain$ to the vector of integers identifying the grid cell containing $\X$.
 
-Let $\vec{y}\in\Omega$ be an arbitrary point and consider the set of grid
-points for which $\delta_h(\vec{x}-\vec{y})$ and $\vec{x}\in\Omega_h$. Denote
-this set of grid points $\Sigma(\vec{y})$, called the \emph{support points}
-of $\vec{y}$. The pre-image $\Sigma^{-1}(\Sigma(\vec{y}))$ is a subset of
-$\Omega$ containing at most one grid point. For $\vec{y}$ sufficiently far away
-from any boundary, $\Sigma^{-1}(\Sigma(\vec{y}))$ is an $h \times h$ ($d=2$) or
-$h \times h \times h$ ($d=3$) subset of $\Omega$. For points near a boundary,
-the region may be smaller. Collectively, these regions cover $\Omega$, so we
-consider them to be the \emph{de facto} grid cells. For those grid cells that
-do not contain a grid point, we extend $\Omega_h$, in a regular way, with ghost
-points. Call this extension $\bar{\Omega}_h$. Now, any $h \times h$ or
-$h \times h \times h$ extended grid cell that entirely contains a grid cell
-also contains exactly one grid point in $\bar{\Omega}_h$, including grid cells
-near a boundary. We can identify an $\vec{y}\in\Omega$ with a grid point
-$\vec{x}\in\bar{\Omega}_h$ if they are in the same extended grid cell, and
-since $\vec{x}=h(\vec{i}=\vec{g})$, we identify a grid cell by the integers
-$\vec{i}$. Finally, we define $\lfloor\cdot\rceil:\Omega\to\mathbb{Z}$ such
-that $\lfloor\vec{y}\rceil = \vec{i}$.
-
-We now turn our attention to the evaluation of $\delta_h(\vec{x}-\vec{X})$. We
-assume $\vec{x}\in\Omega_h$ and write
+We now turn our attention to the evaluation of $\delta_h(\x-\X)$. We assume
+$\x\in\domain_h$ and write
 \begin{equation}
     \label{eq:delta-defs}
     \begin{aligned}
-        \delta_h(\vec{x}-\vec{X})
-        &= \delta_h(\vec{x}-h(\lfloor\vec{X}\rceil+\vec{g}) + h(\lfloor\vec{X}\rceil+\vec{g}) - \vec{X}) \\
-        &= \delta_h(h\vec{\sigma} - \Delta\vec{X}) \\
-        &= \prod_{i=1}^d h^{-1}\phi((\vec{\sigma} - h^{-1}\Delta\vec{X})\cdot\vec{c}_i).
+        \delta_h(\x-\X)
+        &= \delta_h(\x-h(\idx{\X}+\vec{g}) + h(\idx{\X}+\vec{g}) - \X) \\
+        &\equiv \delta_h(h\shift - \Delta\X) \\
+        &= \prod_{i=1}^d h^{-1}\phi((\shift - h^{-1}\Delta\X)_i).
     \end{aligned}
 \end{equation}
-where $\Delta\vec{X}$ is the displacement of $\vec{X}$ from its associated grid
-point, $\vec{\sigma} = \lfloor\vec{x}\rceil-\lfloor\vec{X}\rceil$ since
-$\vec{x} = h(\lfloor\vec{x}\rceil+\vec{g})$, and $\vec{c}_i$ is the $i^\text{th}$
-canonical basis vector. We refer to $\vec{\sigma}$ as a \emph{shift}. Shifts
-that result in a possibly nonzero value of $\delta_h$ are known \emph{a priori}
-based on $\phi$, and usually range from $-\lfloor s/2\rfloor$ to
-$\lfloor(s-1)/2\rfloor$ in each component. We can therefore choose an order for
-the shifts $\{\vec{\sigma}_i\}_{i=1}^{s^d}$. We denote the $i^\text{th}$ shift
-$\vec{\sigma}_i$.
+where $\Delta\X = \X-h(\idx{\X}+\vec{g})$ is the displacement of $\X$ from its
+associated grid point, $\shift = \idx{\x}-\idx{\X}\in\mathbb{Z}^d$ since
+$\x \equiv h(\idx{\x}+\vec{g})$, and subscript $i$ denotes the $i^\text{th}$
+component. We refer to $\shift$ as a \emph{shift}. Shifts that result in
+a possibly nonzero value of $\delta_h$ are known \emph{a priori} based on the
+kernel $\phi$, and usually range from $-\floor{s/2}$ to $\floor{(s-1)/2}$ in
+each component. We can therefore assign an order to the shifts, $\shift_1$,
+$\shift_2$, \dots, $\shift_{s^d}$. We need only compute $\Delta\X$ once to be
+able to compute several values of $\delta_h$.
 
-We need one more ingredient to construct $\mathcal{S}$. Let $\vec{x}_k$ be the
-be the $k^\text{th}$ grid point, such that, e.g., $e_k = e(\vec{x}_k)$ is the $k^\text{th}$
-entry of $\vec{e}$. The grid point $\vec{x}_k$ can be decomposed into
-$h(\vec{i}+\vec{g})$ for some $\vec{i}$ with integer components. Define the
-grid indexing function $\#:\mathbb{Z}^d\to\mathbb{Z}\cup\{\epsilon\}$ such that
-$\#(\lfloor\vec{x}_k\rceil) = \#(\vec{i}) = k$ for all grid points and
-$\#(\vec{i}')=\epsilon$ if $h(\vec{i}'+\vec{g}) \not\in \Omega$.
-
-We are now ready to construct $\mathcal{S}$. Consider a Lagrangian point
-$\vec{X}_j$ that is in the same grid cell as grid point
-$\vec{x}_k=h(\lfloor\vec{X}_j\rceil+\vec{g})$. The $j^\text{th}$ column of
-$\mathcal{S}$ is zero except for up to $s^d$ values where for
-$i=1,\,\ldots,\,s^d$, if $\#(\lfloor\vec{X}_j\rceil+\vec{\sigma}_i)\neq\epsilon$,
+We need one more ingredient to construct $\mathcal{S}$. Let $\x_k$ be the be
+the $k^\text{th}$ grid point. That is, for Eulerian function $e(\x)$, we
+construct the vector $\vec{e}$ with $k^\text{th}$ entry $e_k = e(\x_k)$.
+Suppose that $\idx{\x_k}=\vec{i}$. Define the \emph{grid indexing function}
+$\#:\mathbb{Z}^d\to\mathbb{Z}\cup\{\epsilon\}$ such that $\#(\idx{\x_k}) =
+\#(\vec{i}) = k$ for $\x\in\domain_h$ and $\#(\vec{i}') = \epsilon$ if
+$h(\vec{i}'+\vec{g}) \not\in \domain$. The value $\epsilon$ is used as an error
+value and distinguishes an Eulerian point which does not have a corresponding
+row in $\mathcal{S}$, and therefore does not contribute to, e.g., $\vec{\ell}$.
+We are now ready to construct $\mathcal{S}$. Let $\X_j$ be an IB point. The
+$j^\text{th}$ column of $\mathcal{S}$ is zero except for up to $s^d$ values
+where, for $i=1,\,\ldots,\,s^d$, if $\#(\idx{\X_j}+\shift_i)\neq\epsilon$,
 \begin{equation}
     \label{eq:s-columnwise}
-    \mathcal{S}_{i,\#(\lfloor\vec{X}_j\rceil + \vec{\sigma}_i)} = \delta_h(h\vec{\sigma}_i-\vec{X}_j+\vec{x}_k).
+    \mathcal{S}_{\#\left(\idx{\X_j} + \shift_i\right),j} = \delta_h\left(h\shift_i-\X_j+\idx{\X_j}\right).
 \end{equation}
+

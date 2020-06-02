@@ -1,17 +1,20 @@
 \section{Eulerian-Lagrangian frame coupling}
 
-Below, we describe a method for evaluating
+Here, we describe a method for approximating
 \begin{align}
     \label{eq:scalar-interp}
-    E(\vec{X}) &= \int_\Omega \delta_h(\vec{x}-\vec{X})e(\vec{x}) \d\omega \quad \text{and}\\
+    E(\vec{X}) &= \int_\domain \delta_h(\vec{x}-\vec{X})e(\vec{x}) \d\omega \quad \text{and}\\
     \label{eq:scalar-spread}
-    \ell(\vec{x}) &= \int_\Gamma \delta_h(\vec{x}-\vec{X})L(\vec{X}) \d\gamma
+    \ell(\vec{x}) &= \int_\interface \delta_h(\vec{x}-\vec{X})L(\vec{X}) \d\gamma
 \end{align}
-for scalar-valued functions $e: \Omega\to\mathbb{R}$ and $L:\Gamma\to\mathbb{R}$.
-For vector-valued functions, such as $\vec{u}$ and $\vec{F}$, the algorithm
-can be applied to each component individually. For some grids, it may be
-possible to process each component concurrently. We consider this possibility
-at the end of the section.
+where scalar-valued Eulerian function $e:\domain\to\mathbb{R}$ is interpolated
+to Lagrangian point $\X$ and Lagrangian function $L:\interface\to\mathbb{R}$ is
+spread to Eulerian point $\x$. For vector-valued functions, such as $\vec{u}$
+and $\vec{F}$, the algorithm can be applied to each component individually. For
+a staggered grid, this is necessary, as the grid for each component has a
+different set of grid points, and may have a different number of grid points.
+We then discuss parallelizing equation \eqref{eq:scalar-interp} and introduce a
+novel parallelization scheme for evaluating equation \eqref{eq:scalar-spread}.
 
 \input{ib-discretization}
 \input{interp-parallel}

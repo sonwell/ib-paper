@@ -131,6 +131,12 @@ grestore
 \newcommand{\dynpercm}{\mskip\thinmuskip\si{dyn\per\centi\meter}}
 \newcommand{\us}{\mskip\thinmuskip\si{\micro\second}}
 \newcommand{\ms}{\mskip\thinmuskip\si{\milli\second}}
+\newcommand{\floor}[1]{\left\lfloor{#1}\right\rfloor}
+\newcommand{\ceil}[1]{\left\lceil{#1}\right\rceil}
+\newcommand{\round}[1]{\left\lfloor{#1}\right\rceil}
+\newcommand{\idx}[1]{\round{#1}}
+\newcommand{\key}{\mathfrak{K}}
+\newcommand{\shift}{\vec{\sigma}}
 
 \newcommand{\thrust}{\texttt{thrust}}
 
@@ -179,10 +185,10 @@ grestore
 \end{abstract}
 
 %\input{introduction}
-%\input{ib-overview}
+\input{ib-overview}
 %\input{fluid-solver}
 %\input{cell-modeling}
-%\input{frame-coupling}
+\input{frame-coupling}
 \input{results}
 \input{conclusion}
 

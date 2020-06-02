@@ -162,6 +162,16 @@ dependent on the amount of work. This indicates that, as with interpolation,
 the maximum speedup for spread is limited by hardware, rather than being a
 limitation of the algorithm.
 
+The trendlines for these tests indicate that increasing computing resources
+by a factor of two decreases runtime by a factor of about 1.87 for these
+algorithms. Again, this is merely an approximation as the sort and reduction
+steps of the spread algorithm are provided by {\thrust}, and therefore are
+not limited to the listed number of threads. The similarity between the result
+of the tests with RBCs and with randomly placed points indicates that the
+distribution of points does not have a marked impact on the efficacy of the
+parallelization for a fixed problem. We now see if the same holds for weak
+scaling tests.
+
 
 %\begin{table}
 %    \begin{center}

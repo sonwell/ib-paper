@@ -1,151 +1,3 @@
-\clearpage
-
-\bgroup
-\color{red}
-What I am envisioning for the methods section(s):
-\begin{itemize}
-    \item Preliminary definitions of symbols, expansion on things in the
-        introduction, etc.
-    \item Info about fluid solver, interface modelling.
-    \item Introduce the single-threaded algorithms above.
-    \item Remarks on how these algorithms are theoretically $\Theta(|\interface_h|)$;
-        can we get a $\Theta(|\interface_h|/p)$ (or whatever) parallel algorithm?
-    \item McQueen \& Peskin can potentially do this for interfaces of codimension 1
-        on coarse enough grids, but have potentially no/poor parallelization for
-        e.g.\ flagella, which are codimension 2.
-    \item Introduce base algorithm, we suspect it's $\mathcal{O}(|\interface_h|/p)$ (see results),
-        it's fast, but in some cases, we can do better by computing several sweeps at a time.
-    \item Introduce variant(s), which improve speed, but depend on the Eulerian grid.
-        \begin{itemize}
-            \item on-the-fly (OTF) buffer allocation
-            \item buffer pre-allocation (PA)
-        \end{itemize}
-\end{itemize}
-
-
-\begin{algorithm}
-\caption{Parallel interpolation}
-\label{algo:par-interp}
-\begin{algorithmic}[1]
-\Procedure{parallel-interpolate}{$\interface_h,\,\domain_h,\,e(\vec{x})$}
-\State $\triangleright\ $\textbf{generate}: Values of $E$ sampled at each point in $\interface_h$
-\For {$i = 1,\,\ldots,\,|\interface_h|$ \textbf{parallel}}
-    \State $\vec{x} \gets h(\lfloor\vec{X}_i\rceil+\vec{g})$\Comment{$\vec{X}_i\in\interface_h$, $\vec{x}\in\domain_h$}
-    \State $\Delta\vec{x} \gets \vec{x}-\vec{X}_i$
-    \For {$j = 1,\,\ldots,\,s^d$}
-        \State $w \gets \delta_h(\Delta\vec{x}+h\vec{\sigma}_j)$
-        \State $E(\vec{X}_i) \gets E(\vec{X}_i) + w \cdot e(\vec{x}+h\vec{\sigma}_j)$
-    \EndFor
-\EndFor
-\State \Return $E(\interface_h)$
-\EndProcedure
-\end{algorithmic}
-\end{algorithm}
-
-\begin{algorithm}
-\caption{Single-threaded spread}
-\label{algo:serial-spread}
-\begin{algorithmic}[1]
-\Procedure{serial-spread}{$\interface_h,\,\domain_h,\,L(\vec{X})$}
-\State $\triangleright\ $\textbf{generate}: Values of $\ell$ sampled at each point in $\domain_h$
-\For {$i = 1,\,\ldots,\,|\interface_h|$}
-    \State $\vec{x} \gets h(\lfloor\vec{X}_i\rceil+\vec{g})$\Comment{$\vec{X}_i\in\interface_h$, $\vec{x}\in\domain_h$}
-    \State $\Delta\vec{x} \gets \vec{x}-\vec{X}_i$
-    \For {$j = 1,\,\ldots,\,s^d$}
-        \State $w \gets \delta_h(\Delta\vec{x}+h\vec{\sigma}_j)$
-        \State $\ell(\vec{x}+h\vec{\sigma}_j) \gets \ell(\vec{x}+h\vec{\sigma}_j) + w \cdot L(\vec{X}_i)$
-    \EndFor
-\EndFor
-\State \Return $\ell(\domain_h)$
-\EndProcedure
-\end{algorithmic}
-\end{algorithm}
-
-\begin{algorithm}
-\caption{Parallel spread}
-\label{algo:par-spread}
-\begin{algorithmic}[1]
-\Procedure{parallel-spread}{$\interface_h,\,\domain_h,\,L(\vec{X})$}
-\State $\triangleright\ $\textbf{generate}: Values of $\ell$ sampled at each point in $\domain_h$
-\For {$i = 1,\,\ldots,\,|\interface_h|$ \textbf{parallel}}
-    \State $K_i \gets \mathfrak{K}(\lfloor\vec{X}_i\rceil)$ \Comment{Sort key}
-    \State $P_i \gets i$ \Comment{Initial ordering}
-\EndFor
-\State \textbf{sort} $\{P_i\}$ \textbf{by} $\{K_i\}$
-\State $q \gets \text{\textbf{count unique} }\{K_i\}$
-\For {$j = 1,\,\ldots,\,s^d$}
-    \For {$i = 1,\,\ldots,\,|\interface_h|$ \textbf{parallel}}
-        \State $p \gets P_i$
-        \State $\vec{x} \gets h(\lfloor\vec{X}_p\rceil+\vec{g})$\Comment{$\vec{X}_p\in\interface_h$, $\vec{x}\in\domain_h$}
-        \State $\Delta\vec{x} \gets \vec{x}-\vec{X}_i$
-        \State $w \gets \delta_h(\Delta\vec{x}+h\vec{\sigma}_j)$
-        \State $V_i \gets w \cdot L(\vec{X}_p)$
-    \EndFor
-    \State \textbf{reduce} $\{V_i\}$ \textbf{by} $\{K_i\}$
-    \For {$i = 1,\,\ldots,\,q$ \textbf{parallel}}
-        \State $\vec{x} \gets h(\mathfrak{K}^{-1}(K_i) + \vec{g})$
-        \State $\ell(\vec{x} + h\vec{\sigma}_j) \gets \ell(\vec{x} + h\vec{\sigma}_j) + V_i$
-    \EndFor
-\EndFor
-\State \Return $\ell(\domain_h)$
-\EndProcedure
-\end{algorithmic}
-\end{algorithm}
-
-\begin{algorithm}
-\caption{Buffered parallel spread (pre-allocated buffer)}
-\label{algo:pa-spread}
-\begin{algorithmic}[1]
-\Procedure{pa-buffer-parallel-spread}{$\interface_h,\,\domain_h,\,L(\vec{X}), \ell'_1,\,\ldots,\,\ell'_\texttt{sz}$}
-\State $\triangleright\ $\textbf{require}: $\texttt{sz} \ge 1$
-\State $\triangleright\ $\textbf{generate}: Values of $\ell$ sampled at each point in $\domain_h$
-\For {$i = 1,\,\ldots,\,|\interface_h|$ \textbf{parallel}}
-    \State $K_i \gets \mathfrak{K}(\lfloor\vec{X}_i\rceil)$ \Comment{Sort key}
-    \State $P_i \gets i$ \Comment{Initial ordering}
-\EndFor
-\State \textbf{sort} $\{P_i\}$ \textbf{by} $\{K_i\}$
-\State $q \gets \text{\textbf{count unique} }\{K_i\}$
-\For {$j = 1,\,\ldots,\,\lceil s^d/\texttt{sz}\rceil$}
-    \For {$i = 1,\,\ldots,\,|\interface_h|$ \textbf{parallel}}
-        \State $p \gets P_i$
-        \State $\vec{x} \gets h(\lfloor\vec{X}_p\rceil+\vec{g})$\Comment{$\vec{X}_p\in\interface_h$, $\vec{x}\in\domain_h$}
-        \State $\Delta\vec{x} \gets \vec{x}-\vec{X}_i$
-        \For {$k=1,\,\ldots,\,\textbf{min}(\texttt{sz},\,s^d-\texttt{sz}\cdot j)$}
-            \State $w \gets \delta_h(\Delta\vec{x}+h\vec{\sigma}_{\texttt{sz}\cdot j + k})$
-            \State $V_{ik} \gets w \cdot L(\vec{X}_p)$ \Comment{$V\in\mathbb{R}^{|\interface_h|\times\texttt{sz}}$}
-        \EndFor
-    \EndFor
-    \State \textbf{reduce} $\{V_{i\cdot}\}$ \textbf{by} $\{K_i\}$
-    \For {$i = 1,\,\ldots,\,q$ \textbf{parallel}}
-        \State $\vec{x} \gets h(\mathfrak{K}^{-1}(K_i) + \vec{g})$
-        \For {$k=1,\,\ldots,\,\textbf{min}(\texttt{sz},\,s^d-\texttt{sz}\cdot j)$}
-        \State $\ell'_k(\vec{x} + h\vec{\sigma}_{\texttt{sz}\cdot j + k}) \gets
-                \ell'_k(\vec{x} + h\vec{\sigma}_{\texttt{sz}\cdot j + k}) + V_{ik}$
-        \EndFor
-    \EndFor
-\EndFor
-\State \Return $\ell'_1(\domain_h) + \cdots + \ell'_\texttt{sz}(\domain_h)$
-\EndProcedure
-\end{algorithmic}
-\end{algorithm}
-
-\begin{algorithm}
-\caption{Buffered parallel spread (on-the-fly buffer allocation)}
-\label{algo:otf-spread}
-\begin{algorithmic}[1]
-\Procedure{otf-buffer-parallel-spread}{$\interface_h,\,\domain_h,\,L(\vec{X})$}
-\State $\triangleright\ $\textbf{require}: $\texttt{sz} \ge 1$
-\State $\triangleright\ $\textbf{generate}: Values of $\ell$ sampled at each point in $\interface_h$
-\For {$i = k,\,\ldots,\,\texttt{sz}$}
-    \State $\ell'_k \gets 0$
-\EndFor
-\State \Return \Call{pa-buffer-parallel-spread}{$\interface_h,\,\domain_h,\,L(\vec{X}),\,\ell'_1,\,\ldots,\,\ell'_\texttt{sz}$} \Comment{Algorithm \ref{algo:pa-spread}}
-\EndProcedure \Comment{Lifetime of $\ell'_k$ ends here}
-\end{algorithmic}
-\end{algorithm}
-\egroup
-
-\clearpage
 \section{Numerical results}
 
 Here we describe two types of test: unstructured IB points, in which points are
@@ -207,26 +59,27 @@ points sampled on the surface of a red blood cell (RBC). We track $n_d$ data
 sites per RBC, and interpolate fluid velocities only to these points. We
 construct an RBF interpolant based on the positions of the data sites and
 evaluate forces at $n_s$ sample sites, chosen so that neighboring sample sites
-are initially within $0.5h$ of each other. We spread forces from the sample
-sites. It is generally the case that $n_s > n_d$, so that we interpolate to
-fewer points than we spread from. These point sets are generated by the
-\texttt{KernelNode} library. In this case, we invoke the fluid solver, so that
-as the RBC deforms, the force it imparts on the fluid will affect the fluid
-velocity. The RBC is modeled as an elastic structure, obeying the Skalak
+are initially within aproximately $0.5h$ of each other. We spread forces from
+the sample sites. It is generally the case that $n_s > n_d$, so that we
+interpolate to fewer points than we spread from. These point sets are generated
+by the \texttt{KernelNode} library. In this case, we invoke the fluid solver,
+so that as the RBC deforms, the force it imparts on the fluid will affect the
+fluid velocity. The RBC is modeled as an elastic structure, obeying the Skalak
 constitutive law [@Skalak:XXX] with shear modulus $2.5\times10^{-3}\dynpercm$
 and bulk modulus $2.5\times10^{-1}\dynpercm$, with rest configuration given
 in [@Omori:XXX]:
 \begin{equation}
     \begin{aligned}
-        x(\theta,\,\phi) &= 3.91\um\cos\theta\cos\phi, \\
-        y(\theta,\,\phi) &= 3.91\um\sin\theta\cos\phi, \\
-        z(\theta,\,\phi) &= \frac{3.91\um}{2}\sin\phi\left[0.21 + 2.0 \cos^2\phi -1.12 \cos^4\phi\right],
+        x(\theta,\,\phi) &= R_0\cos\theta\cos\phi, \\
+        y(\theta,\,\phi) &= R_0\sin\theta\cos\phi, \\
+        z(\theta,\,\phi) &= \sfrac12 R_0\sin\phi\left[0.21 + 2.0 \cos^2\phi -1.12 \cos^4\phi\right],
     \end{aligned}
 \end{equation}
-where $\theta \in [-\pi,\,\pi)$ and $\phi \in (-\pi/2,\,\pi/2)$. We choose not
-to include the end points for the range of $\phi$ to avoid the singularities in
-this parametrization. The timestep required for stability in this test is
-$k=0.1\ms$.  
+where $R_0=3.91\um$, $\theta\in[-\pi,\,\pi)$, and $\phi\in[-\pi/2,\,\pi/2]$.
+The timestep required for stability in this test is $k=0.1\us$. In this case,
+an IB point requires at least 32 timesteps to transit a grid cell, so unlike
+the tests using randomly placed IB points above, there will be considerably
+more redundant computation.
 
 We first validate the fluid solver for these tests, and then perform similar
 scaling tests as above.

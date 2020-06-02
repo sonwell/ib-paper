@@ -1,11 +1,80 @@
 \subsection{Parallelization of spread}
 
-The difficulty arises in attempting to parallelize the spread operation.
-Row-wise parallelization of $\mathcal{S}\vec{L}$ yields threads doing vastly
-different amounts of work -- many no work at all -- and incurring the penalty
-of having threads wait for other threads to finish before being able to
-continue. Moreover, this parallelization would scale according to the size of
-the Eulerian grid rather than the number of Lagrangian points.
+\begin{algorithm}
+\caption{Single-threaded spread}
+\label{algo:serial-spread}
+\begin{algorithmic}[1]
+\Procedure{serial-spread}{$\interface_h,\,\domain_h,\,L(\X)$}
+\State $\triangleright\ $\textbf{generate}: Values of $\ell$ sampled at each point in $\domain_h$
+\For {$i = 1,\,\ldots,\,n_\gamma$}
+    \State $\x \gets h(\lfloor\X_i\rceil+\vec{g})$\Comment{$\X_i\in\interface_h$, $\x\in\domain_h$}
+    \State $\Delta\x \gets \x-\X_i$
+    \For {$j = 1,\,\ldots,\,s^d$}
+        \State $w \gets \delta_h(\Delta\x+h\vec{\sigma}_j)$
+        \If {$\x+h\vec{\sigma}_j\in\domain$}
+            \State $\ell(\x+h\vec{\sigma}_j) \gets \ell(\x+h\vec{\sigma}_j) + w \cdot L(\X_i)$
+        \EndIf
+    \EndFor
+\EndFor
+\State \Return $\ell(\domain_h)$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+\caption{Parallel spread}
+\label{algo:par-spread}
+\begin{algorithmic}[1]
+\Procedure{parallel-spread}{$\interface_h,\,\domain_h,\,L(\X)$}
+\State $\triangleright\ $\textbf{generate}: Values of $\ell$ sampled at each point in $\domain_h$
+\For {$i = 1,\,\ldots,\,n_\gamma$ \textbf{parallel}}
+    \State $K_i \gets \key(\idx{\X_i})$ \Comment{Sort key}
+    \State $P_i \gets i$ \Comment{Initial ordering}
+\EndFor
+\State \textbf{sort} $\{P_i\}$ \textbf{by} $\{K_i\}$ \Comment{$\{P_i\}$ now defines a permutation} \label{line:par-spread-sort}
+\State $q \gets \text{\textbf{count unique} }\{K_i\}$ \label{line:par-spread-q}
+\For {$j = 1,\,\ldots,\,s^d$}
+    \For {$i = 1,\,\ldots,\,|\interface_h|$ \textbf{parallel}}
+        \State $p \gets P_i$
+        \State $\x \gets h(\lfloor\X_p\rceil+\vec{g})$\Comment{$\X_p\in\interface_h$, $\x\in\domain_h$}
+        \State $\Delta\x \gets \x-\X_i$
+        \State $w \gets \delta_h(\Delta\x+h\vec{\sigma}_j)$
+        \State $V_i \gets w \cdot L(\X_p)$
+    \EndFor
+    \State \textbf{reduce} $\{V_i\}$ \textbf{by} $\{K_i\}$ \label{line:par-spread-reduce}
+    \For {$i = 1,\,\ldots,\,q$ \textbf{parallel}}
+        \State $\x \gets h(\key^{-1}(K_i) + \vec{g})$
+        \If {$\x+h\vec{\sigma}_j\in\domain$}
+            \State $\ell(\x + h\vec{\sigma}_j) \gets \ell(\x + h\vec{\sigma}_j) + V_i$
+        \EndIf
+    \EndFor
+\EndFor
+\State \Return $\ell(\domain_h)$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+We begin by considering a serial implementation of spread. Algorithm
+\ref{algo:serial-spread} lists an example implementation in pseudocode. The
+general form of the algorithm is quite similar to that of interpolation in
+Algorithm \ref{algo:par-interp}. As with interpolation, we expect spread to be
+minimally dependent on the Eulerian grid. There is one major difference between
+these two algorithms: whereas with interpolation, we could accumulate values
+into a temporary value $v$ (see Algorithm \ref{algo:par-interp} line
+\ref{line:par-interp-acc}), for spread, the index to which we write is
+dependent on the inner loop variable $j$, and therefore differs each iteration.
+We have no guarantees that the index is unique to that combination of $i$ and
+$j$, and therefore we cannot simply parallelize the loop over $i$, as we did
+with interpolation.
+
+We could consider thinking of spread as a matrix-vector multiplication and
+parallelize over the rows of $\mathcal{S}$, as we did for interpolation and
+$\mathcal{S}^\dagger$. Row-wise parallelization of $\mathcal{S}\vec{L}$ yields
+threads doing vastly different amounts of work -- some with potentially no work
+at all -- and incurring the penalty of having threads wait for other threads to
+finish before being able to continue. Moreover, this parallelization would
+scale according to the size of the Eulerian grid, as there are as many rows as
+Eulerian points, rather than the number of Lagrangian points.
 
 Instead, we wish to partition the work so that every thread does a similar
 amount of work, it scales well, and depends minimally on the size of the
@@ -15,33 +84,37 @@ $\mathcal{S}_2$, \dots, $\mathcal{S}_m$ and vectors $\vec{L}_1$, $\vec{L}_2$,
 \begin{equation*}
     \vec{\ell} = \mathcal{S}\vec{L} = \mathcal{S}_1\vec{L}_1 + \mathcal{S}_2\vec{L}_2 + \cdots + \mathcal{S}_m\vec{L}_m.
 \end{equation*}
-Here, $m$ is the number of serial operations or \emph{sweeps} needed to
-completely compute $\mathcal{S}\vec{L}$. The products $\mathcal{S}_i\vec{L}_i$
-are accumulated serially, but we aim to construct the matrices
-$\{\mathcal{S}_i\}$ in a way that allows for efficient parallel computation of
-each individual product.
+Here, $m$ is the number of thread synchronizations or \emph{sweeps} needed to
+completely compute $\mathcal{S}\vec{L}$. Accumulating the products
+$\mathcal{S}_i\vec{L}_i$ requires $m-1$ sparse vector additions, but we aim to
+construct the matrices $\{\mathcal{S}_i\}$ in a way that allows for efficient
+parallel computation of each individual product. The general idea is to choose
+the same support point for each IB point (i.e., the left-, bottom-, and
+front-most support point), compute a weighted value there, accumulate values
+where necessary, and spread to the single support point. This is then repeated
+for each support point. We build up to the algorithm using two specific cases.
 
-Consider two points in different grid cells, $\vec{x}_1$ and $\vec{x}_2$. Since
+Consider two points in different grid cells, $\x_1$ and $\x_2$. Since
 these points are in different grid cells, the support points
-$h(\lfloor\vec{x}_1\rceil+\vec{g}+\vec{\sigma}_i)$ of $\vec{x}_1$ and 
-$h(\lfloor\vec{x}_2\rceil+\vec{g}+\vec{\sigma}_i)$ of $\vec{x}_2$, assuming
-they exist, are distinct for $i=1,\,\ldots,\,s^d$. Thus, for any set
-$\{\vec{X}_j\}$ of Lagrangian points, each in different grid cells, the values
+$h(\idx{\x_1}+\vec{g}+\vec{\sigma}_i)$ of $\x_1$ and 
+$h(\idx{\x_2}+\vec{g}+\vec{\sigma}_i)$ of $\x_2$, assuming
+they exist, are distinct for all $i=1,\,\ldots,\,s^d$. Thus, for any set
+$\{\X_j\}$ of Lagrangian points, each in different grid cells, the values
 \begin{equation*}
-    \delta_h(h(\lfloor\vec{X}_j\rceil + \vec{g}+\vec{\sigma}_i)-\vec{X}_j)L_j,
+    \delta_h(h(\idx{\X_j} + \vec{g}+\vec{\sigma}_i)-\X_j)L_j,
 \end{equation*}
-for $\#(\lfloor\vec{X}_j\rceil+\vec{\sigma}_i)\neq\epsilon$, can be computed
-and written in parallel for fixed $i$, because the values of
-$\#(\lfloor\vec{X}_j\rceil+\vec{\sigma}_i)$, when not equal to $\epsilon$, are
-distinct, and gives the index of the output entry of $\vec{\ell}$.
+for $\#(\idx{\X_j}+\vec{\sigma}_i)\neq\epsilon$, can be computed and written in
+parallel for fixed $i$, because the values of $\#(\idx{\X_j}+\vec{\sigma}_i)$
+are either distinct or $\epsilon$, and gives the index of the output entry of
+$\vec{\ell}$ or, in the case of $\epsilon$, ultimately will not be written.
 Repeating for $i=1,\,\ldots,\,s^d$, we compute all of $\vec{\ell}$.
 
-Consider now a set of Lagrangian points $\{\vec{X}_j\}$ all in the same grid
-cell. For fixed $i$, the values $\#(\lfloor\vec{X}_j\rceil+\vec{\sigma}_i)$ are
-identical for all $j$, and would therefore contend with one another if
-attempting to write values in parallel and independently. In this case, we
-can use the well-know parallel reduce algorithm to accumulate values in
-parallel and ultimately use a single thread to write the value to $\vec{\ell}$.
+Consider now a set of Lagrangian points $\{\X_j\}$ all in the same grid cell.
+For fixed $i$, the values $\#(\idx{\X_j}+\vec{\sigma}_i)$ are identical for all
+$j$, and would therefore contend with one another if attempting to write values
+in parallel and independently. In this case, we can use the well-know parallel
+reduce algorithm to accumulate values in parallel and ultimately use a single
+thread to write the value to $\vec{\ell}$.
 
 Generally, we do not expect to have either of these situations. In fact, it is
 recommended in the IB literature that, for a connected interface, there be
@@ -50,11 +123,11 @@ can combine the two ideas above using the so-called parallel segmented reduce
 algorithm. Given a list of \emph{keys} and a list of \emph{values}, the
 algorithm sums (or \emph{reduces}) consecutive values if their corresponding
 keys match. The output is a list of non-repeating keys (though they may not be
-unique within the list) and a generally shorter list of values.
+unique within the list) and a corresponding list of reduced values.
 
 If we ensure that Lagrangian points in the same grid cell have the same key
 and are listed consecutively, we can use the segmented reduce algorithm to
-accumulate values for support point corresponding to a fixed shift
+accumulate all values for support point corresponding to a fixed shift
 $\vec{\sigma}$ for all Lagrangian points at once. Repeating this for each
 shift, we will have completely computed $\vec{\ell}$. To achieve this ordering
 of Lagrangian points, we introduce the key-value sort, which, given a list
@@ -64,26 +137,25 @@ be the list from 0 to $n_\gamma-1$, the resulting values define a permutation
 matrix $P$. This permuted list is analogous to the linked-list structure of
 [@McQueen:...], but performs better on architectures where computational units
 are not independent. Unlike [@McQueen:...], we reconstruct our lists every
-timestep instead of using an update. An update can be done by partitioning
-Lagrangian points into those that have stayed in their grid cell and those that
-have left, sorting by key the indices of just the points that have left their
-cell, and then merging them back into the main list. However, the worst-case
-runtime of the update is the same as simply reconstructing the list every
-timestep, but has the added cost of computing a partition and merging lists.
+timestep instead of using an update, though an analogous update can be achieved
+by partitioning points into those that have left their previous grid cell
+and those that have not, sorting the former, and merging the two partitions.
+However, list maintenance is not a bottleneck in our algorithm, so we have not
+tested this method.
 
-Lastly, we need suitable way to generate keys. A function $\mathfrak{K}$ that
-generates keys should be 1-to-1 with grid cells. In other words, $\mathfrak{K}$
+Lastly, we need suitable way to generate keys. A function $\key$ that
+generates keys should be 1-to-1 with grid cells. In other words, $\key$
 should be bijective with grid points in $\bar{\Omega}_h$. For this reason, it
-is often useful to formulate $\mathfrak{K}$ as a function of $\mathbb{Z}^d$ and
-so $\mathfrak{K}(\lfloor\vec{X}\rceil)$ gives the key for a Lagrangian point
-$\vec{X}$. However, bijectivity alone will, in general, invalidate $\#$ as an
-otherwise good choice for $\mathfrak{K}$. However, since $\mathfrak{K}$ is
-bijective, $\mathfrak{K}$ is invertible, so any Lagrangian point with key $k$
-has grid index $\#(\mathfrak{K}^{-1}(k))$, if it exists. It is also desirable
-that $\mathfrak{K}$ be independent of the shift $\vec{\sigma}$. If these
-conditions are met and the keys have a partial order, we can compute a key for
-each Lagrangian point, apply the key-value sort once, and then compute values
-and use segmented reduce once per shift.
+is often useful to formulate $\key$ as a function of $\mathbb{Z}^d$ and
+so $\key(\idx{\X})$ gives the key for a Lagrangian point $\X$. The
+requirement that $\key$ be bijective will, in general, invalidate $\#$
+as an otherwise good choice. However, since $\key$ is bijective,
+$\key$ is invertible, so any Lagrangian point with key $k$ has grid
+index $\#(\key^{-1}(k))$, if it exists. It is also desirable that
+$\key$ be independent of the shift $\vec{\sigma}$. If these conditions
+are met and the keys have a partial order, we can compute a key for each
+Lagrangian point, apply the key-value sort once, and then compute values and
+use segmented reduce once per shift.
 
 The corresponding matrices $\mathcal{S}_i$ each have at most one nonzero entry
 per column. Using key-value sort to define a permutation matrix $P$ allows us
@@ -103,19 +175,121 @@ reduce algorithm performs handily. Again, we have computed $\vec{\ell}$ without
 keeping more than a single entry of $\mathcal{S}$ in memory per thread at a
 time.
 
-\subsection{Optimizations}
-As described above, the algorithms uses $s^d$ sweeps to compute $\vec{\ell}$.
+The complete parallel spread algorithm is listed as Algorithm
+\ref{algo:par-spread}. It uses three routines that we do not specify here:
+key-value sort (line \ref{line:par-spread-sort}), unique count (line
+\ref{line:par-spread-q}), and segmented reduce (line
+\ref{line:par-spread-reduce}). For these three routines, we use the {\thrust}
+library, which has GPU and CPU implementations.
+
+For $w$-bit integer data types, {\thrust} implements its sorts as radix
+sort, which has theoretical work $\mathcal{O}(w n / p)$ per thread, where $n$
+is the number of elements to be sorted and $p$ the number of threads. Because
+linear algebra libraries such as BLAS and LAPACK and their sparse counterparts
+typically rely on 32-bit signed integers for indexing, it is natural to choose
+$w = 32$. This limits the number of grid points to $2^{32}$ that can be indexed
+uniquely by a 32-bit integer, but until this limit is reached, the key-value
+sort has a theoretical linear runtime in the number of IB points. Beyond
+$2^{32}$ -- or, more likely, $2^{31}$ because of the sign bit -- grid points,
+this runtime bound no longer holds. A larger data type, with a larger $w$ must
+be used. In this way, there is implicit dependence on the grid within Algorithm
+\ref{algo:par-spread}, but we do not expect to see the effects of this as we
+will always use a 32-bit integer. As a result, we can treat $w$ as fixed, and
+expect the work of key-value sort to be linear in the number of IB points.
+
+Segmented reduce, on the other hand, has theoretical work $\mathcal{O}(n / p)$
+regardless of the data type used for indexing. However, an implementation of
+segemented reduce may be able to effectively leverage shared memory on the GPU,
+or the cache, depending on how many IB points, on average, inhabit a grid cell.
+As an example, for the extreme case where all of the IB points are located
+within the same grid cell, segmented reduce proceeds as a regular reduce, which
+leverages the memory hierarchy, and can therefore be extremely fast. On the
+other hand, if each IB point inhabits its own grid cell, there is nothing for
+the segmented reduce algorithm to do, so any time spent in this step is for
+naught. The general segmented reduce algorithm works somewhere in-between. The
+typical heuristic for placing IB points dictates that inhabited grid cells have
+1--2, for $d=2$, or 1--4, for $d=3$, IB points. The lower bound in each case
+corresponds to each IB point inhabiting its own grid cell, whereas the upper
+bound may use the memory hierarchy, so the efficacy of segmented reduce is
+dependent upon their distribution and density in a complicated way. We posit
+that, according to the theoretical work, the runtime does not deviate too much
+from the runtime for arbitrarily distributed points, and is therefore also
+linear in the number of IB points.
+
+Algorithm \ref{algo:par-spread} uses one sweep per shift. Each sweep requires a
+thread synchronization, which can hurt parallelization. We now introduce
+variations that use more memory and add dependence on the Eulerian grid in
+exchange for a reduced number of sweeps.
+
+\subsection{Buffered spread variants}
+
+\begin{algorithm}
+\caption{Buffered parallel spread (pre-allocated buffer)}
+\label{algo:pa-spread}
+\begin{algorithmic}[1]
+\Procedure{pa-buffer-parallel-spread}{$\interface_h,\,\domain_h,\,L(\vec{X}), \ell'_1,\,\ldots,\,\ell'_\texttt{sz}$}
+\State $\triangleright\ $\textbf{require}: $\texttt{sz} \ge 1$
+\State $\triangleright\ $\textbf{generate}: Values of $\ell$ sampled at each point in $\domain_h$
+\For {$i = 1,\,\ldots,\,n_\gamma$ \textbf{parallel}}
+    \State $K_i \gets \key(\lfloor\vec{X}_i\rceil)$ \Comment{Sort key}
+    \State $P_i \gets i$ \Comment{Initial ordering}
+\EndFor
+\State \textbf{sort} $\{P_i\}$ \textbf{by} $\{K_i\}$
+\State $q \gets \text{\textbf{count unique} }\{K_i\}$
+\For {$j = 1,\,\ldots,\,\lceil s^d/\texttt{sz}\rceil$}
+    \For {$i = 1,\,\ldots,\,|\interface_h|$ \textbf{parallel}}
+        \State $p \gets P_i$
+        \State $\vec{x} \gets h(\lfloor\vec{X}_p\rceil+\vec{g})$\Comment{$\vec{X}_p\in\interface_h$, $\vec{x}\in\domain_h$}
+        \State $\Delta\vec{x} \gets \vec{x}-\vec{X}_i$
+        \For {$k=1,\,\ldots,\,\textbf{min}(\texttt{sz},\,s^d-\texttt{sz}\cdot j)$}
+            \State $w \gets \delta_h(\Delta\vec{x}+h\vec{\sigma}_{\texttt{sz}\cdot j + k})$
+            \State $V_{ik} \gets w \cdot L(\vec{X}_p)$ \Comment{$V\in\mathbb{R}^{|\interface_h|\times\texttt{sz}}$}
+        \EndFor
+    \EndFor
+    \State \textbf{reduce} $\{V_{i\cdot}\}$ \textbf{by} $\{K_i\}$
+    \For {$i = 1,\,\ldots,\,q$ \textbf{parallel}}
+        \State $\vec{x} \gets h(\key^{-1}(K_i) + \vec{g})$
+        \For {$k=1,\,\ldots,\,\textbf{min}(\texttt{sz},\,s^d-\texttt{sz}\cdot j)$}
+        \If {$\x+h\vec{\sigma}_{\texttt{sz}\cdot j + k}\in\domain$}
+            \State $\ell'_k(\vec{x} + h\vec{\sigma}_{\texttt{sz}\cdot j + k}) \gets
+                    \ell'_k(\vec{x} + h\vec{\sigma}_{\texttt{sz}\cdot j + k}) + V_{ik}$
+        \EndIf
+        \EndFor
+    \EndFor
+\EndFor
+\State \Return $\ell'_1(\domain_h) + \cdots + \ell'_\texttt{sz}(\domain_h)$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+\caption{Buffered parallel spread (on-the-fly buffer allocation)}
+\label{algo:otf-spread}
+\begin{algorithmic}[1]
+\Procedure{otf-buffer-parallel-spread}{$\interface_h,\,\domain_h,\,L(\vec{X})$}
+\State $\triangleright\ $\textbf{require}: $\texttt{sz} \ge 1$
+\State $\triangleright\ $\textbf{generate}: Values of $\ell$ sampled at each point in $\interface_h$
+\For {$i = k,\,\ldots,\,\texttt{sz}$}
+    \State $\ell'_k \gets 0$
+\EndFor
+\State \Return \Call{pa-buffer-parallel-spread}{$\interface_h,\,\domain_h,\,L(\vec{X}),\,\ell'_1,\,\ldots,\,\ell'_\texttt{sz}$} \Comment{Algorithm \ref{algo:pa-spread}}
+\EndProcedure \Comment{Lifetime of $\ell'_k$ ends here}
+\end{algorithmic}
+\end{algorithm}
+
+As described above, the algorithm uses $s^d$ sweeps to compute $\vec{\ell}$.
 However, for each sweep, any thread will perform identically the same
 operations. We can therefore consider computing multiple values of $\delta_h$
-for some fixed set of shifts, and the corresponding grid indices. Since
-$\mathfrak{K}$ is independent of the shift, we need compute it only once, and
-we can use $P$ for any set of shifts. To avoid write contentions, we need as
-many output vectors as shifts in the set. To each shift, we assign an output
-vector and we write all values for that shift to the corresponding output
-vector.
+for some fixed set of shifts, and the corresponding grid indices. Since $\key$
+is independent of the shift, we need compute it only once, and we can use $P$
+for any set of shifts. To avoid write contentions, we need as many output
+vectors as shifts in the set. The output vectors are called the \emph{buffer},
+and can be treated as a matrix. To each shift, we assign a column of the buffer
+and write all values for that shift to that column.  Ultimately, $\vec{\ell}$
+is the row-wise sum of the buffer.
 
 In other words, we can imagine computing $t$ values at once. We then expect to 
-have $w=\lceil s^d/t\rceil$ sweeps and we compute
+have $w=\ceil{s^d/t}$ sweeps and we compute
 \begin{equation}
     \label{eq:fused-sweeps}
     \begin{alignedat}{5}
@@ -127,18 +301,21 @@ have $w=\lceil s^d/t\rceil$ sweeps and we compute
     \end{alignedat}
 \end{equation}
 where in the first sweep, the first product in each set of parentheses is
-stored in the corresponding output vector $\vec{\ell}_i$; in the second sweep,
-the second product is stored in the corresponding output vector; and so on,
+stored in the corresponding buffer column $\vec{\ell}_i$; in the second sweep,
+the second product is stored in the corresponding buffer column; and so on,
 until all of the products have been computed. Finally, we accumulate values,
 $\vec{\ell} = \vec{\ell}_1 + \cdots + \vec{\ell}_t$. The only requirement for
-this optimization is that there is enough memory to hold all of the output
-vectors. Choosing values of $t$ that divide $s^d$ and are around 10 seem to
-give good results.
+this optimization is that there is enough memory to hold the buffer. Choosing
+values of $t$ around 10 seem to give good results. On the other hand, these
+variants depend on the size of the Eulerian grid as each vector addition
+operation requires one add operation per Eulerian grid point.
 
-So far, we have assumed that vector-valued quantities are discretized on
-staggered grids. On a uniform grid, where each component of a vector-valued
-quantity is discretized at the same spatial coordinate, the grid cells are
-identical for each component. In that case, each component will give the same
-sort key and values will be written to output entries with the same index, so
-we can compute sort keys and perform the sort once, and re-use the resulting
-$P$ for each component, all of which can be computed by the same thread.
+Algorithms \ref{algo:pa-spread} and \ref{algo:otf-spread} list the two buffered
+variants used in this paper. The only difference between them is that the
+lifetime of the buffer is unspecified for Algorithm \ref{algo:pa-spread}, but
+is pre-allocated, and Algorithm \ref{algo:otf-spread} allocates an appropriate
+buffer on-the-fly and is deallocated when the procedure terminates. The
+additional overhead of allocating the buffer in Algorithm \ref{algo:otf-spread}
+means that it should never outperform Algorithm \ref{algo:pa-spread}, but is
+included as an alternative for cases where large, long-lifetime buffers may
+cause memory exhaustion.
