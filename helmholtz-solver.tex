@@ -1,9 +1,0 @@
-\subsection{Helmholtz solver}
-
-To solve the Helmholtz system $\tilde{I}-\sfrac12\lambda\Delta_h$, we use
-conjugate gradients preconditioned with Chebyshev iteration. Chebyshev
-iteration requires only that the matrix be positive (negative) semi-definite,
-and uses only matrix-vector multiplication and vector scaling, it is
-parallelizable if those two operations are. Vector scaling is trivially
-parallelilzable, and for certain matrix formats, such as compressed sparse row,
-matrix-vector multiplication is parallelizable as well.
