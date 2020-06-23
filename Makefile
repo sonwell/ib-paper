@@ -7,3 +7,5 @@ clean:
 	rm *.fdb_latexmk
 	rm *.fls
 	rm *.out
+	rm *.bbl
+	rm *.blg
