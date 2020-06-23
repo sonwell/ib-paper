@@ -1,1 +1,17 @@
 \section{Summary}
+
+We have presented a parallel algorithm for interpolation and introduced a novel parallel
+algorithm for spreading forces from time-dependent interfaces in the immersed boundary
+method. These algorithms have a runtime that is independent of the Eulerian grid. This
+makes the parallelization useful for cases where IB points inhabit only a small
+percentage of the Eulerian grid cells. We have also introduced two variants for spread
+which trade off dependence on the Eulerian grid, in the form of a few vector adds and
+memory allocation, for improved runtimes for small enough grids.
+
+These algorithms exhibit nearly ideal scaling, on both the CPU and GPU, for problems of
+fixed size and increasing number of threads, as well as for problems of increasing size
+and number of threads.  We observed that on the GPU, larger problem sizes led to higher
+speedup plateaus, indicating that larger problems on more capable hardware will achieve
+even larger speedups than presented here.
+
+% vim: cc=90 tw=89

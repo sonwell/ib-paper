@@ -1,61 +1,60 @@
 \subsection{Parallelization of interpolation}
 
-From the above, we can see that $\mathcal{S}$ has approximately equal number
-of nonzero entries per column. This means, that the interpolation matrix,
-$\mathcal{S}^\dagger$, has approximately equal number of nonzero entries per
-row. This property is beneficial for parallelization. Consider the
-$i^\text{th}$ row of $\mathcal{S}^\dagger$, which corresponds to interpolating
-to Lagrangian point $\X_i$ using the values at its support points. There are at
-most $s^d$ values in that row, which correspond to the shifts that give a
-potentially nonzero value for $\delta_h$. Compute $\vec{x} =
-h(\idx{\X_i}+\vec{g})$. Then $\Delta\X = \X_i-\x$. Now, since the shifts
-$\{\vec{\sigma}_j\}$ are known beforehand, we can compute
-$\delta_h(\vec{\sigma}_j-\Delta\X)$ and, if $\#(\vec{\sigma}_j+\idx{\x})
-\neq\epsilon$, we accumulate products
+By construction, $\spread$ has approximately equal number of nonzero entries per column.
+This means, that the interpolation matrix, $\interp$, has approximately equal number of
+nonzero entries per row. This property is beneficial for parallelization. Consider the
+$i\th$ row of $\interp$, which corresponds to interpolating to IB point $\X_i$ using the
+values at its support points. There are at most $s^d$ values in that row, which
+correspond to the shifts that give a potentially nonzero value for $\Dirac_h$. Compute
+$\x=h(\idx{\X_i}+\stag)$. Then $\Delta\x=\X_i-\x$. Since the shifts $\{\shift_j\}$ are
+known beforehand, we can compute $\Dirac_h(\shift_j-\Delta\x)$ and accumulate products
 \begin{equation*}
-    E_i = \sum_{j=1}^{s^d}\delta_h(\vec{\sigma}_j+\Delta\X)e_{\#(\vec{\sigma}_j+\idx{\x})}.
+    E_i = \sum_{\substack{j=1\\\#(\shift_j+\idx{\x})\neq\error}}^{s^d}\Dirac_h(\shift_j+\Delta\x)e_{\#(\shift_j+\idx{\x})},
 \end{equation*}
+where $\#(\vec{i})$ is defined in Equation \ref{eq:grid-index-fn}. This is done for each
+IB point, for a total work proportional to the number of IB points.
 
 \begin{algorithm}
 \caption{Parallel interpolation}
 \label{algo:par-interp}
 \begin{algorithmic}[1]
-\Procedure{parallel-interpolate}{$\interface_h,\,\domain_h,\,e(\x)$}
+\Procedure{parallel-interpolate}{$\interface_h,\,\domain_h,\,\vec{e}$}
 \State $\triangleright\ $\textbf{generate}: Values of $E$ sampled at each point in $\interface_h$
 \For {$i = 1,\,\ldots,\,n_\gamma$ \textbf{parallel}}
-    \State $\x \gets h(\idx{\X_i}+\vec{g})$\Comment{$\X_i\in\interface_h$, $\x\in\domain_h$}
+    \State $\x \gets h(\idx{\X_i}+\stag)$\Comment{$\X_i\in\interface_h$, $\x\in\domain_h$}
     \State $\Delta\x \gets \x-\X_i$
     \State $v \gets 0$\Comment{Temporary accumulation variable}
     \For {$j = 1,\,\ldots,\,s^d$}
-        \State $w \gets \delta_h(\Delta\x+h\vec{\sigma}_j)$
-        \If {$\x + h\vec{\sigma}_j\in\domain$}
-            \State $v \gets v + w \cdot e(\x+h\vec{\sigma}_j)$\label{line:par-interp-acc}
+        \State $w \gets \Dirac_h(\Delta\x+h\shift_j)$
+        \State $k \gets \#(\idx{\x}+\shift_j)$
+        \If {$k\neq\error$}
+            \State $v \gets v + w \cdot e_k$\label{line:par-interp-acc}
         \EndIf
     \EndFor
-    \State $E(\X_i) \gets v$
+    \State $E_i \gets v$\label{line:par-interp-write}
 \EndFor
-\State \Return $E(\interface_h)$
+\State \Return $\vec{E}$
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
 
-Assigning one thread per Lagrangian point (i.e., one thread per row), this
-calculation can be performed in parallel, and since the $j^\text{th}$ thread
-writes to the $j^\text{th}$ entry of $\vec{E}$, there are no write contentions.
-Because the number of products is approximately the same for each row, each
-thread does approximately the same amount of work. On architectures that
-enforce thread synchrony, such as GPUs, this means that we do not incur a
-penalty from having threads wait for other threads to finish. Algorithm
-\ref{algo:par-interp} lists the parallel interpolation algorithm in pseudocode. 
-For simplicity, we have used the notation $e(\x)$ in place of
-$e_{\#(\idx{\x})}$, $E(\X_i)$ in place of $E_i$, and $E(\interface_h)$ in place
-of $\vec{E}$. We note that using a single thread for Algorithm
-\ref{algo:par-interp} is identical to the serial interpolation algorithm.
+Assigning one thread per IB point (i.e., one thread per row), this calculation can be
+performed in parallel, and since the $i^\text{th}$ thread writes to the $i^\text{th}$
+entry of $\vec{E}$, there are no write contentions. This can be seen on lines
+\ref{line:par-interp-acc} and \ref{line:par-interp-write} in Algorithm
+\ref{algo:par-interp}, where the accumulation happens in a temporary variable which is
+ultimately written to $\vec{E}$. In this case, the target index depends only on the loop
+variable $i$, and we can safely parallelize over this loop.  Because the number of
+products is approximately the same for each row, each thread does approximately the same
+amount of work. On architectures that enforce thread synchrony, such as GPUs, this means
+that we do not incur a penalty from having threads wait for other threads to finish.
 
-Since each thread computes the appropriate $\delta_h$-weights for its own row,
-it is unnecessary to construct $\mathcal{S}^\dagger$ explicitly. Other than
-allocating memory for $\vec{E}$, all of the work for this algorithm is
-parallel, so we expect to see near-perfect scaling. Additionally, other than
-using the grid spacing $h$ for scaling in various places, the evaluation
-of $\delta_h$, and information about boundaries, there is no dependence on the 
-Eulerian grid.
+Since each thread computes the appropriate $\Dirac_h$-weights for its own row, it is
+unnecessary to construct $\interp$ explicitly. Except allocating memory for $\vec{E}$,
+all of the work for this algorithm is parallel, so we expect to see near-perfect scaling.
+Additionally, other than using the grid spacing $h$ for scaling in various places, the
+evaluation of $\Dirac_h$, and information about boundaries, there is no dependence on the
+Eulerian grid. We now show how these properties can be maintained for the spreading
+operation.
+
+% vim: cc=90 tw=89

@@ -1,22 +1,35 @@
 \section{Introduction}
 
-Many problems in biophysics involve the interaction of an incompressible fluid
-and an immersed elastic interface. The solution to these problems can be
-approximated using the immersed boundary (IB) method, which was developed by
-Peskin to simulate blood flow through the heart [@Peskin:1972wa]. This method
-couples the equations governing fluid velocity and those governing elastic
-forces via operations we will refer to as \textit{interpolation} and
-\textit{spreading}. We treat solving the fluid equations and computing elastic
-forces as an implementation detail; we assume that they are parallelizable and
-limit our focus to the interpolation and spreading operations.
+Many problems in biophysics involve the interaction of an incompressible fluid and an
+immersed elastic interface. The solution to these problems can be approximated using the
+immersed boundary (IB) method, which was developed by Charles Peskin to simulate blood
+flow through the heart \cite{Peskin:1972wa}. This method couples the equations governing
+fluid velocity and pressure to those governing the interface movement and elastic forces
+via operations we will refer to as \term{interpolation} and \term{spreading}. We treat
+solving the fluid equations and computing elastic forces as an implementation detail and
+focus primarily on the interpolation and spreading operations. We are motivated by the
+desire to simulate whole blood, composed of red blood cells (RBCs) and platelets immersed
+in blood plasma, in a vessel lined by endothelial cells.  Approximately 40\% of the
+volume in healthy human blood is occupied by RBCs, and so even small domains may require
+tens of thousands of points or more to discretize these cells.
 
-McQueen and Peskin present a domain decomposition scheme to parallelize these
-operations on the Cray C-90 computer with a modest number of vector processors
-[@McQueen:1997kw]. Unfortunately, the trend in computing is to use \emph{more}
-processors rather than \emph{faster} processors. They also illustrate the need
-for a fast interpolation and spreading -- even parallelized, they spend roughly
-half of the wall clock time spreading and interpolating. Here, we introduce
-a novel parallelization scheme for the interpolation and spreading operations.
-We compare this to the method of Peskin and McQueen and a variant of their
-ideas on a massively parallel general purpose graphical processing unit
-(GPGPU).
+To take advantage of modern computing architectures, with ever increasing numbers of
+processors, it is necessary to develop parallel algorithms for the IB method. McQueen and
+Peskin present a domain decomposition scheme to parallelize the interpolation and
+spreading operations on the Cray C-90 computer with a modest number of vector processors
+\cite{McQueen:1997kw}.  Their results illustrate the need for a fast interpolation and
+spreading: even parallelized, they spend roughly half of the wall clock time spreading
+and interpolating.  However, for a grid of $128^3$ points, their approach is limited to
+1024 concurrent threads, and increasing parallelization requires refinement of the
+fluid grid. General purpose graphical processing units (GPGPUs), on the other hand,
+are capable of running thousands of threads concurrently.
+
+Here, we discuss the parallelization of interpolation and introduce a new parallelization
+for the spreading operation. We demonstrate that the concurrency of these algorithms
+scales with the number of IB points, independently of the Eulerian grid. The algorithms
+divide these operations into trivially parallelizable tasks and parallel primitives. They
+are therefore suitable for use on GPGPUs, along with many other architectures. We begin
+with an introduction to the IB method, and the role of the interpolation and spreading
+operations.
+
+% vim: cc=90 tw=89

@@ -1,96 +1,75 @@
-\subsection{Structure of IB interaction operators}
+\subsection{Preliminaries}
 
-Let $\domain_h$ be a regular grid on $\domain$ with grid spacing $h$. Define
-$\vec{g} \in [0,\,1)^d$ to be the fixed vector such that a grid point $\x$
-can be decomposed as $\x=h(\vec{i}+\vec{g})$, where $\vec{i}$ has integer
-components. Moreover, let $\interface_h$ be a discretization of the interface
-$\interface$. For illustration purposes, we can think of $\interface_h$ as a
-collection of arbitrary points in $\domain$. We refer to points in $\domain_h$
-as (Eulerian) grid ponts, and points in $\interface_h$ as (Lagrangian) IB
-points.
+For a regular grid on $\domain$ with grid spacing $h$, $\domain_h$, any grid point
+$\x\in\domain_h$ can be decomposed into a vector $\vec{i}$ with integer components and a
+fixed grid staggering, $\stag\in[0,\,1)^d$, such that $\x=h(\vec{i}+\stag)$. Let
+$\interface_h$ be a discretization of the interface $\interface$. For the purposes of
+interpolation and spreading, we can think of $\interface_h$ as a collection of arbitrary
+points in $\domain$.
 
-Equations \eqref{eq:scalar-interp} and \eqref{eq:scalar-spread} are discretized
-on $\domain_h$ and $\interface_h$, respectively, to yield
-\begin{align}
-    \label{eq:disc-interp}
-    E(\X_j) &= \sum_i \delta_h(\x_i-\X_j)e(\x_i) h^d \quad \text{and} \\
-    \label{eq:disc-spread}
-    \ell(\x_i) &= \sum_j \delta_h(\x_i-\X_j)L(\X_j) \d\gamma_j.
-\end{align}
-Each of the above equations look like a matrix-vector multiplication, so we 
-define the \emph{spread matrix} $\mathcal{S}=(\delta_h(\x_i-\X_j))$, where the
-subscript $i$ indicates the row and subscript $j$ indicates the column. We call
-its transpose, $\mathcal{S}^\dagger$, the \emph{interpolation matrix}.
-Collecting values $e(\x_i)h^d$ at each grid point and $L(\X_j)\d\gamma_j$ at
-each IB point, we rewrite Equations \eqref{eq:disc-interp} and
-\eqref{eq:disc-spread} in matrix form as
-\begin{align}
-    \label{eq:matrix-interp}
-    \vec{E} &= \mathcal{S}^\dagger\vec{e} \quad\text{and} \\
-    \label{eq:matrix-spread}
-    \vec{\ell} &= \mathcal{S}\vec{L},
-\end{align}
-respectively.
+\input{grid-figure}
 
-The kernel $\delta_h$ is the tensor product of scaled, one-dimensional
-kernels, $h^{-1}\phi(h^{-1}x)$. Let $\mathrm{supp}\mskip\thinmuskip\phi$
-denote the support of $\phi$ and define
+The kernel $\Dirac_h$ is the tensor product of scaled, one-dimensional kernels,
+$h^{-1}\kernel(h^{-1}x)$. Let $\supp\kernel$ denote the support of $\kernel$ and define
 \begin{equation}
-    s[\phi] = |\mathrm{supp}\mskip\thinmuskip\phi\cap\mathbb{Z}|-1
+    s[\kernel] = |\supp\kernel\cap\mathbb{Z}|-1
 \end{equation}
-to be the size of the support in units of grid spaces. For brevity, we write
-$s=s[\phi]$.  For any $\X\in\domain$, there are at most $s^d$ grid points
-$\x\in\domain_h$ for which $\delta_h(\x-\X)$ is nonzero. We call these points
-the \emph{support points} of $\X$. If $\X$ is sufficiently far from any
-boundary, the subset of $\domain$ which has the same support points as $\X$ is
-an $h^d = h\times\cdot\times h$ region, and contains a single grid point. For
-$\X$ near a boundary, the region may be smaller, and may not contain a grid
-point, depending on the type of boundary. We imagine extending the domain such
-that each of these regions has side length $h$ in each dimension. We extend the
-grid with ghost points so that each region contains a single grid point. We
-call this extension $\bar{\domain}_h$. Collectively, these regions cover
-$\domain$, so we consider them to be the \emph{de facto} grid cells, and
-henceforth refer to them as such. We can now identify any $\X\in\domain$ with a
-grid point $\x\in\bar{\domain}_h$ if they are in the same grid cell, and since
-$\x=h(\vec{i}+\vec{g})$, we identify a grid cell by the integers $\vec{i}$. We
-adopt the notation $\idx{\X}=\vec{i}$ for the function that maps points in
-$\domain$ to the vector of integers identifying the grid cell containing $\X$.
+to be the size of the support in terms of unit intervals. For brevity, we write
+$s=s[\kernel]$. For any $\X\in\domain$, there are at most $s^d$ grid points
+$\x\in\domain_h$ for which $\Dirac_h(\x-\X)$ is nonzero. We call these points the
+\term{support points} of $\X$. If $\X$ is sufficiently far from any boundary, the subset
+of $\domain$ each of whose points has the same support points as $\X$ is an
+$h^d=h\times\cdots\times h$ region, and contains a single grid point. For $\X$ near a
+non-periodic boundary, the region may be smaller, and may not contain a grid point. We
+extend the grid so that each of these regions has side length $h$ in each dimension and
+contains a single grid point.  We call this extension $\bar{\domain}_h$. Collectively,
+these regions cover $\domain$, so we consider them to be the \emph{de facto} grid cells,
+and henceforth refer to them as such. We can now identify any $\X\in\domain$ with a grid
+point $\x\in\bar{\domain}_h$ if they are in the same grid cell, and since
+$\x=h(\vec{i}+\stag)$ is the only grid point in the grid cell, we identify the cell by
+the integers $\vec{i}$. We adopt the notation $\idx{\X}=\vec{i}$ for the function that
+maps points in $\domain$ to the vector of integers identifying the grid cell containing
+$\X$.
 
-We now turn our attention to the evaluation of $\delta_h(\x-\X)$. We assume
+We now turn our attention to the evaluation of $\Dirac_h(\x-\X)$. We assume
 $\x\in\domain_h$ and write
 \begin{equation}
     \label{eq:delta-defs}
     \begin{aligned}
-        \delta_h(\x-\X)
-        &= \delta_h(\x-h(\idx{\X}+\vec{g}) + h(\idx{\X}+\vec{g}) - \X) \\
-        &\equiv \delta_h(h\shift - \Delta\X) \\
-        &= \prod_{i=1}^d h^{-1}\phi((\shift - h^{-1}\Delta\X)_i).
+        \Dirac_h(\x-\X)
+        &= \Dirac_h(\x-h(\idx{\X}+\stag) + h(\idx{\X}+\stag) - \X) \\
+        &\equiv \Dirac_h(h\shift - \Delta\x) \\
+        &= \prod_{i=1}^d h^{-1}\kernel((\shift - h^{-1}\Delta\x)_i),
     \end{aligned}
 \end{equation}
-where $\Delta\X = \X-h(\idx{\X}+\vec{g})$ is the displacement of $\X$ from its
-associated grid point, $\shift = \idx{\x}-\idx{\X}\in\mathbb{Z}^d$ since
-$\x \equiv h(\idx{\x}+\vec{g})$, and subscript $i$ denotes the $i^\text{th}$
-component. We refer to $\shift$ as a \emph{shift}. Shifts that result in
-a possibly nonzero value of $\delta_h$ are known \emph{a priori} based on the
-kernel $\phi$, and usually range from $-\floor{s/2}$ to $\floor{(s-1)/2}$ in
-each component. We can therefore assign an order to the shifts, $\shift_1$,
-$\shift_2$, \dots, $\shift_{s^d}$. We need only compute $\Delta\X$ once to be
-able to compute several values of $\delta_h$.
+where $\Delta\x = \X-h(\idx{\X}+\stag)$ is the displacement of $\X$ from its associated
+grid point, $\shift=\idx{\x}-\idx{\X}$, and subscript $i$ denotes the $i$ component. We
+refer to $\shift$ as a \term{shift}. Shifts that result in a possibly nonzero value of
+$\Dirac_h$ are known \emph{a priori} based on the kernel $\kernel$, and usually range
+from $-\floor{s/2}$ to $\floor{(s-1)/2}$ in each component. We can therefore assign an
+order to the shifts, $\shift_1$, $\shift_2$, \dots, $\shift_{s^d}$. We need only compute
+$\Delta\x$ once to be able to compute all nonzero values of $\Dirac_h(\x-\X)$.
 
-We need one more ingredient to construct $\mathcal{S}$. Let $\x_k$ be the be
-the $k^\text{th}$ grid point. That is, for Eulerian function $e(\x)$, we
-construct the vector $\vec{e}$ with $k^\text{th}$ entry $e_k = e(\x_k)$.
-Suppose that $\idx{\x_k}=\vec{i}$. Define the \emph{grid indexing function}
-$\#:\mathbb{Z}^d\to\mathbb{Z}\cup\{\epsilon\}$ such that $\#(\idx{\x_k}) =
-\#(\vec{i}) = k$ for $\x\in\domain_h$ and $\#(\vec{i}') = \epsilon$ if
-$h(\vec{i}'+\vec{g}) \not\in \domain$. The value $\epsilon$ is used as an error
-value and distinguishes an Eulerian point which does not have a corresponding
-row in $\mathcal{S}$, and therefore does not contribute to, e.g., $\vec{\ell}$.
-We are now ready to construct $\mathcal{S}$. Let $\X_j$ be an IB point. The
-$j^\text{th}$ column of $\mathcal{S}$ is zero except for up to $s^d$ values
-where, for $i=1,\,\ldots,\,s^d$, if $\#(\idx{\X_j}+\shift_i)\neq\epsilon$,
+We need one more ingredient to construct $\spread$. We let $\x_k$ be the be the $k\th$
+grid point, and for Eulerian function $e(\x)$, we construct the vector $\vec{e}$ with
+$k\th$ entry $e_k = e(\x_k)$. Define the \term{grid indexing function}
+\begin{equation}
+    \label{eq:grid-index-fn}
+    \#(\vec{i}) = \begin{cases}
+        k, & \idx{\x_k}=\vec{i},\ \x_k\in\domain_h \\
+        \error, & \text{otherwise}.
+    \end{cases}
+\end{equation}
+The value $\error$ indicates an Eulerian point outside of $\domain$, does not have a
+corresponding row in $\spread$, and therefore does not contribute to spreading or
+interpolation. We are now ready to construct $\spread$. Let $\X_j$ be an IB
+point. The $j\th$ column of $\mathcal{S}$ is zero except for up to $s^d$ values where,
+for $i=1,\,\ldots,\,s^d$, if $\#(\idx{\X_j}+\shift_i)\neq\error$,
 \begin{equation}
     \label{eq:s-columnwise}
-    \mathcal{S}_{\#\left(\idx{\X_j} + \shift_i\right),j} = \delta_h\left(h\shift_i-\X_j+\idx{\X_j}\right).
+    \spread_{\#\left(\idx{\X_j}+\shift_i\right),j} = \Dirac_h\left(h\left(\shift_i+\idx{\X_j}+\stag\right)-\X_j\right).
 \end{equation}
+From a practicality standpoint, it is unnecessary to explicitly construct $\spread$. We
+illustrate this with the serial spreading algorithm.
 
+% vim: cc=90 tw=89

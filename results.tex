@@ -1,89 +1,84 @@
 \section{Numerical results}
 
-Here we describe two types of test: unstructured IB points, in which points are
-placed randomly in the domain and generate a force independently from the other
-IB points, and structured IB points, in which the points comprise an elastic
-structure and forces are generated based on the configuration of the points as
-a whole. For these tests, we consider a $16\um\times16\um\times16\um$ triply
-periodic domain with an initial shear-like flow,
-$\vec{u} = (0,\,0,\,\dot{\gamma}(y-8\um))$, with shear rate
-$\dot{\gamma} = 1000\si{\per\second}$. This flow has a sharp transition at the
-periodic boundary $y=0\um$, so a background force is added to maintain this
-transition and so that the initial flow is also the steady flow in the absence
-of other forces, as in [@Fai:XXX].
+Here we describe two types of test: unstructured IB points, in which points are placed
+randomly in the domain and generate a force independently from the other IB points, and
+structured IB points, in which the points comprise an elastic structure and forces are
+generated based on the configuration of the points as a whole. For these tests, we use
+a $16\um\times16\um\times16\um$ triply periodic domain with an initially shear-like flow,
+$\u=(0,\,0,\,\shear(y-8\um))$, with shear rate $\shear$. Tests use a shear rate of
+$1000\si{\per\second}$ unless otherwise noted. This flow has a sharp transition at the
+periodic boundary $y=0\um$, so a background force is added to maintain this transition
+and so that the initial flow is also the steady flow in the absence of other forces, as
+in \cite{Fai:2013do}.
 
-Serial and multicore CPU tests were performed on a single node with 48
-Intel\textsuperscript{\textregistered} Xeon\textsuperscript{\textregistered}
-CPU E5-2697 v2 2.70\si{\giga\hertz} processors and 256 GB of RAM running CentOS
-Linux release 7.7.1908 (x86\_64). Parallel CPU implementations use Intel's
-OpenMP library, \texttt{libiomp5}. GPU tests used the same node with an
-NVIDIA\textsuperscript{\textregistered} Tesla\textsuperscript{\textregistered}
-K80 ($2\times$GK210 GPU with 13 823.5\si{\mega\hertz} multiprocessors and 12
-GB of global memory each). Only one of the GK210 GPUs was used. The CPU code
-was written in C++17 and the GPU code was written in C++/CUDA and used version
-9.2 CUDA libraries. Both the CPU and GPU code were compiled using
-\texttt{clang} version 7.0.1.
+Serial and multicore CPU tests were performed on a single node with 48 Intel{\reg}
+Xeon{\reg} CPU E5-2697 v2 2.70\si{\giga\hertz} processors and 256 GB of RAM running
+CentOS Linux release 7.7.1908 (x86\_64). Parallel CPU implementations use Intel's OpenMP
+library, \texttt{libiomp5}. GPU tests used the same node with an NVIDIA{\reg} Tesla{\reg}
+K80 ($2\times$GK210 GPU with 13 823.5\si{\mega\hertz} multiprocessors and 12 GB of global
+memory each). Only one of the GK210 GPUs was used. The CPU code was written in C++17 and
+the GPU code was written in C++/CUDA and used version 9.2 CUDA libraries. Both the CPU
+and GPU code were compiled using \texttt{clang} version 7.0.1. All tests are performed in
+double precision. We begin with tests using unstructured IB points, for which both of
+these architectures were used.
 
-\subsection{Unstructured IB points}
+\subsection{Unstructured IB points}\label{sec:unst}
 
-We first consider a set of $n$ IB points randomly placed in the domain
-described above. The IB points are imagined to be tethered to their initial
-positions. The fluid solver is not invoked for these tests. Instead, at each
-timestep, interpolate the fluid velocity to each of the IB points and predict
-updated positions for the IB points. Compute a Hookean force with spring
-constant $0.01\si{dyn\per\centi\meter}$. Spread these forces to the fluid grid,
-but do not use them to update the fluid velocity. Instead, discard the forces
-in such a way that the force calculation is not optimized away. This ensures
-that the points do not settle into a steady position and the spread and
-interpolate operations receive new data each timestep. Finally, interpolate the
-velocity to each of the IB points again and update the position of the IB
-points. While the interpolated velocities are the same as those computed at the
-beginning of the timestep, this is done by analogy to the fluid solver, which
-interpolates fluid velocities twice and spreads forces once per timestep. The
-timestep used is $k = 0.1\ms$.
+Consider a set of $n$ IB points randomly placed in the domain described above. The IB
+points are imagined to be tethered to their initial positions. The fluid solver is not
+invoked for these tests. Instead, at each timestep, we interpolate the fluid velocity to
+each of the IB points and predict updated positions for the IB points. Using these
+predicted positions, we compute a Hookean force for each IB point with spring constant
+$0.01\si{dyn\per\centi\meter}$. We spread these forces from the predicted positions to
+the fluid grid, but do not use them to update the fluid velocity. This ensures that the
+points do not settle into a steady position so the spreading and interpolation operations
+receive new data each timestep. Finally, we interpolate the velocity to the positions of
+the IB points at the beginning of the timestep again and update the position of the IB
+points. While the interpolated velocities are the same as those computed at the beginning
+of the timestep, this is done by analogy to the fluid solver, which interpolates fluid
+velocities twice and spreads forces once per timestep.
 
-We use this test to compare the performance of the parallel algorithms to
-their serial counterparts and, for the spread variants, to each other.
+We use this test to compare the performance of the parallel algorithms to their serial
+counterparts and, for the spreading variants, to each other.
 
 
 \input{grid-dependence}
 \input{serial-comparison}
 
-\subsection{Red Blood Cells}
+\subsection{Elastic Objects}
 
-We are motivated by the desire to simulate the motion of cells immersed in a
-fluid. Cells are not randomly generated points, but cohesive structures, kept
-together by elastic forces and the near-constant volume maintained by their
-membranes. In this section, we replace the randomly-placed IB points with
-points sampled on the surface of a red blood cell (RBC). We track $n_d$ data
-sites per RBC, and interpolate fluid velocities only to these points. We
-construct an RBF interpolant based on the positions of the data sites and
-evaluate forces at $n_s$ sample sites, chosen so that neighboring sample sites
-are initially within aproximately $0.5h$ of each other. We spread forces from
-the sample sites. It is generally the case that $n_s > n_d$, so that we
-interpolate to fewer points than we spread from. These point sets are generated
-by the \texttt{KernelNode} library. In this case, we invoke the fluid solver,
-so that as the RBC deforms, the force it imparts on the fluid will affect the
-fluid velocity. The RBC is modeled as an elastic structure, obeying the Skalak
-constitutive law [@Skalak:XXX] with shear modulus $2.5\times10^{-3}\dynpercm$
-and bulk modulus $2.5\times10^{-1}\dynpercm$, with rest configuration given
-in [@Omori:XXX]:
+We are motivated by the desire to simulate the motion of cells immersed in a fluid. Cells
+are not randomly generated points, but cohesive structures, kept together by elastic
+forces and the near-constant volume enclosed by their membranes. In this section, we
+replace the randomly-placed IB points with points sampled on the surface of either a
+sphere or an RBC. We track $n_d$ data sites per object, and interpolate fluid velocities
+only to these points. We construct an RBF interpolant based on the positions of the data
+sites and evaluate forces at $n_s$ sample sites, chosen so that neighboring sample sites
+are initially within approximately $0.5h$ of each other. We spread forces from the sample
+sites. It is generally the case that $n_s > n_d$, so that we interpolate to fewer points
+than we spread from. In the parlance of Section \ref{sec:parallel}, $n_\gamma=n_d$ in the
+context of interpolation, and $n_\gamma=n_s$ in the context of spreading. These point
+sets are generated by the \texttt{KernelNode} library. In this case, we invoke the fluid
+solver, so that as the object deforms, the force it imparts on the fluid will affect the
+fluid velocity. The sphere and RBC are elastic, obeying the Skalak constitutive law
+\cite{Skalak:1973tp} with shear modulus $2.5\times10^{-3}\dynpercm$ and bulk modulus
+$2.5\times10^{-1}\dynpercm$. The RBC has rest configuration given in \cite{Omori:2012hw}:
 \begin{equation}
     \begin{aligned}
-        x(\theta,\,\phi) &= R_0\cos\theta\cos\phi, \\
-        y(\theta,\,\phi) &= R_0\sin\theta\cos\phi, \\
-        z(\theta,\,\phi) &= \sfrac12 R_0\sin\phi\left[0.21 + 2.0 \cos^2\phi -1.12 \cos^4\phi\right],
+        x(\theta,\,\varphi) &= R_0\cos\theta\cos\varphi, \\
+        y(\theta,\,\varphi) &= R_0\sin\theta\cos\varphi, \\
+        z(\theta,\,\varphi) &= \sfrac12 R_0\sin\varphi\left[0.21 + 2.0 \cos^2\varphi -1.12 \cos^4\varphi\right],
     \end{aligned}
 \end{equation}
-where $R_0=3.91\um$, $\theta\in[-\pi,\,\pi)$, and $\phi\in[-\pi/2,\,\pi/2]$.
-The timestep required for stability in this test is $k=0.1\us$. In this case,
-an IB point requires at least 32 timesteps to transit a grid cell, so unlike
-the tests using randomly placed IB points above, there will be considerably
-more redundant computation.
-
-We first validate the fluid solver for these tests, and then perform similar
-scaling tests as above.
+where $R_0=3.91\um$, $\theta\in[-\pi,\,\pi)$, and $\varphi\in[-\pi/2,\,\pi/2]$. These
+tests require a timestep of $k=0.1\us$ for stability. With $\shear=1000\si{\per\second}$,
+an IB point requires at least 32 timesteps to transit a grid cell, so unlike the tests
+using randomly placed IB points above, there will be considerably more redundant
+computation. We first validate the fluid solver with the elastic sphere before performing
+scaling tests, similar to those above, with RBCs.
 
 \input{convergence-study}
 \input{strong-scaling}
 \input{weak-scaling}
+
+% vim: cc=90 tw=89

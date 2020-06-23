@@ -1,13 +1,12 @@
-\subsubsection{Strong scaling}
-It is commonly the case that we wish to employ parallelization to improve 
-runtimes for a problem of interest. To illustrate this improvement, we now
-consider how runtime varies for the test problem with $n=2^{16}$ IB points, a
-grid refinement of 64 (grid size $h=0.25\um$), and Algorithm
-\ref{algo:otf-spread} with different numbers of threads. We use up to 32
-threads on the CPU and 64--4096 threads on the GPU. For a fixed problem, we
-ideally wish to see the runtime using $2p$ threads to be half of that using
-$p$ threads. In other words, the ideal speedup using twice as many threads is
-2.
+\subsubsection{Strong scaling} \label{sec:unst-strong}
+
+It is commonly the case that we wish to employ parallelization to improve runtimes for a
+problem of interest. To illustrate this improvement, we now consider how runtime varies
+for the test problem with $n=2^{16}$ IB points, a grid refinement of 64 (grid size
+$h=0.25\um$), and Algorithm \ref{algo:otf-spread} with different numbers of threads. We
+use up to 32 threads on the CPU and 64--4096 threads on the GPU. For a fixed problem, we
+ideally wish to see the runtime using $2p$ threads to be half of that using $p$ threads.
+In other words, using twice as many threads yield an ideal speedup of 2.
 
 
 %\begin{table}[h]
@@ -158,69 +157,65 @@ coordinate(legendpos) (unst-strong c2r1.south east|-current bounding box.south);
     \ref{plot:unst-strong-spread}& Algorithm \ref{algo:otf-spread}\\};
 \end{tikzpicture}
 \caption{%
-    Strong scaling results for Algorithm \ref{algo:otf-spread} and grid spacing
-    $h = 0.5\um$ (a grid refinement of 64) for $2^{16}$ randomly placed IB
-    points in a $16\um\times16\um\times16\um$ triply periodic domain for
-    (a) 1-32 CPU cores, and (b) 64-4096 threads on the GPU. Speedup is measured
-    relative to serial Algorithms \ref{algo:par-interp} and
-    \ref{algo:serial-spread}. The solid black lines show the trendline for
-    ideal speedup. The dashed or dotted lines give the initial trend for
-    interpolation and spreading, respectively.
+Strong scaling results for Algorithm \ref{algo:otf-spread} and grid spacing
+$h = 0.5\um$ (a grid refinement of 64) for $2^{16}$ randomly placed IB points
+in a $16\um\times16\um\times16\um$ triply periodic domain for (a) 1-32 CPU
+cores, and (b) 64-4096 threads on the GPU. Speedup is measured relative to
+serial Algorithms \ref{algo:par-interp} and \ref{algo:serial-spread}. The solid
+black lines show the trendline for ideal speedup. The dashed or dotted lines
+give the initial trend for interpolation and spreading, respectively.
 }
 \label{fig:unstructured-strong}
 \end{figure}
 
-Figure \ref{fig:unstructured-strong} shows the results of these tests. Speedup
-is measured relative to the serial interpolation and spread implementations.
-The trendlines estimate that increasing computing resources by a factor of two
-decreases runtime by a factor or about 1.91 for CPU and GPU interpolation and
-by a factor of about 1.85 for CPU spread.  It is not trivial to limit the
-number of threads used by {\thrust} for work done on the GPU, so the key-value
-sort and segmented reduce use as many threads as {\thrust} decides is prudent.
-While the trendline indicates a decrease in runtime by a factor of 1.91 as
-well, this is merely an approximation.  
+Figure \ref{fig:unstructured-strong} shows the results of these tests. Speedup is
+measured relative to the serial interpolation and spreading implementations.  The
+trendlines estimate that increasing computing resources by a factor of two decreases
+runtime by a factor of about 1.91 for CPU and GPU interpolation and by a factor of about
+1.85 for CPU spreading. It is not trivial to limit the number of threads used by
+{\thrust} for work done on the GPU, so the key-value sort and segmented reduce use as
+many threads as {\thrust} decides is prudent.  While the trendline indicates a decrease
+in runtime by a factor of 1.91 as well, this is merely an approximation.  
 
-Parallel CPU interpolate using a single processor is identical to the serial
+Parallel CPU interpolation using a single processor is identical to the serial
 CPU interpolate, so the CPU interpolate passes through $(1,\,1)$. The same is
-not true of the parallel spread using a single processor compared to serial
-spread. Because of the additional sort step in the parallel spread algorithm,
-single-threaded Algorithm \ref{algo:par-spread} is about 12\% slower than its
-serial counterpart. The CPU code also enjoys the benefit of using vector
-registers for some of the computation. The GPU requires 64 threads to match
-the speed of a single CPU core. Based on the trendline in Figure
-\ref{fig:unstructured-strong} and the speedup for grid refinement shown in
-Figure \ref{fig:grid-dependence}, we see that the GPU attains a speedup of
-approximately 5.25$\times$ compared to 32 CPU processors, and uses
-approximately 4480 threads, where the kernel reaches the limit on register
-memory.
+not true of parallel spreading using a single processor compared to serial
+spreading. Because of the additional sort step in the parallel spreading
+algorithm, single-threaded Algorithm \ref{algo:par-spread} is about 12\% slower
+than its serial counterpart. The CPU code also enjoys the benefit of using
+vector registers for some of the computation. The GPU requires 64 threads to
+match the speed of a single CPU core.
+%Based on the trendline in Figure
+%\ref{fig:unstructured-strong} and the speedup for grid refinement shown in
+%Figure \ref{fig:grid-dependence}, we see that the GPU attains a speedup of
+%approximately 5.25$\times$ compared to 32 CPU processors, and uses
+%approximately 4480 threads, where the kernel reaches the limit on register
+%memory.
+%
+Even at 4096 threads, interpolate on the GPU shows no indication of plateauing. The final
+data point for that curve shows a speedup of approximately $77\times$. Figure
+\ref{fig:grid-dependence}(b), on the other hand, shows that the maximum speedup we can
+expect for this problem is approximately 85$\times$, which the trendline in Figure
+\ref{fig:unstructured-strong}(b) predicts will occur at approximately 4480 threads. Thus,
+we can expect the plateau for interpolate on the GPU to be very abrupt. This indicates a
+hardware limitation, the likely culprit being exhaustion of register memory. The
+plateauing of the CPU curves is not a limitation of the algorithm for the CPU. Despite
+having 48 cores, the test using 32 cores did not utilize them at full capacity. Using
+fewer cores, on the other hand, was able to maintain full utilization for the duration of
+the test. If not for having a comparatively limited number of CPU cores, we expect to see
+the CPU trend continue.
 
-%\bgroup\color{red}
-%Interestingly, even at 4096 threads,  parallel interpolate on the GPU shows no
-%indication of plateauing. The final data point for that curve shows a speedup
-%of approximately 77$\times$. Figure \ref{fig:grid-dependence}, on the other
-%hand, shows that the maximum speedup we can expect for this problem is 
-%approximately 84$\times$, which the trendline predicts will occur at
-%approximately 4480 threads. Thus, we can expect the plateau for parallel
-%interpolate on the GPU to be very abrupt. The parallelization may be limited
-%by the GPUs register file size, 256KB, where each thread is using 14 32-bit
-%registers.
-%\egroup
-
-Overall, trends for the CPU and GPU are very similar. The plateauing of the
-CPU curves may not be the limitations of the algorithm for the CPU. Despite
-having 48 cores, the test using 32 cores did not utilize them at full capacity.
-Using fewer cores, on the other hand, was able to maintain full utilization
-for the duration of the test. If not for having a comparatively limited number
-of CPU cores, we expect to see the CPU trend continue. Because of these
-similarities, we will restrict ourselves to the GPU, but expect any conclusions
-to hold for the CPU as well.
+If not for hardware limitations, it seems that the algorithm scales without bound on
+either the CPU of GPU. Overall, trends for the CPU and GPU are very similar. Because of
+these similarities, we will restrict ourselves to the GPU, but expect any conclusions to
+hold for the CPU as well.
 
 \subsubsection{Weak scaling}\label{sec:unst-weak}
-In contrast, with improved computing resources, we may wish to solve bigger
-problems. The ideal parallel algorithm solves a problem with $p$ threads in the
-same time as it solves a twice bigger problem with $2p$ threads. Here, we place
-between $2^{16}$ and $2^{19}$ points randomly in the domain. We increase the
-number of threads proportionally, between 128 and 1024.  
+In contrast, with improved computing resources, we may wish to solve bigger problems. The
+ideal parallel algorithm solves a problem with $p$ threads in the same time as it solves
+a twice bigger problem with $2p$ threads. Here, we place between $2^{16}$ and $2^{19}$
+points randomly in the domain. We increase the number of threads proportionally, between
+128 and 1024.  
 
 \begin{table}
     \begin{center}
@@ -228,20 +223,20 @@ number of threads proportionally, between 128 and 1024.
         \setlength{\tabcolsep}{9pt}
         \renewcommand{\arraystretch}{1.5}
         \begin{tabular}{ccccc}
-                                                                                              \toprule
-            $p$  & $n$      & \titletable{interpolate}{20000} & \titletable{spread}{10000} \\ \midrule
-            128  & $2^{16}$ & $0.43930 \pm 0.00019$           & $0.47632 \pm 0.00142$      \\
-            256  & $2^{17}$ & $0.44918 \pm 0.00056$           & $0.46503 \pm 0.00026$      \\
-            512  & $2^{18}$ & $0.45072 \pm 0.00061$           & $0.44533 \pm 0.00028$      \\
-            1024 & $2^{19}$ & $0.45442 \pm 0.00049$           & $0.43561 \pm 0.00024$      \\ \bottomrule
+                                                                                               \toprule
+            $p$  & $n$      & \titletable{interpolate}{20000}  & \titletable{spread}{10000} \\ \midrule
+            128  & $2^{16}$ & $0.43930 \pm 0.00372 $           & $0.47632 \pm 0.00278 $     \\
+            256  & $2^{17}$ & $0.44918 \pm 0.01097 $           & $0.46503 \pm 0.00050 $     \\
+            512  & $2^{18}$ & $0.45072 \pm 0.01195 $           & $0.44533 \pm 0.00054 $     \\
+            1024 & $2^{19}$ & $0.45442 \pm 0.00960 $           & $0.43561 \pm 0.00047 $     \\ \bottomrule
         \end{tabular}
         \endgroup
     \end{center}
     \caption{%
-        Weak scaling results for $p$ threads and $n$ randomly placed IB points
-        in a $16\um\times16\um\times16\um$ triply periodic domain with
-        $h=0.5\um$ on the GPU. Times are reported in seconds. $N$ is the number
-        of samples taken.
+Weak scaling results for interpolation and spreading for $p$ threads and $n$ randomly
+placed IB points in a $16\um\times16\um\times16\um$ triply periodic domain with
+$h=0.5\um$ on the GPU. 95\% confidence intervals for average time per call are reported
+in seconds. $N$ is the number of samples taken.
     }
     \label{tab:unstructured-weak}
 \end{table}
@@ -252,7 +247,7 @@ of $15\ms$ (\textasciitilde3\%) increase between the problem with 128 threads
 and $2^{16}$ IB points and that with 1024 threads and $2^{19}$ points. Spread,
 on the other hand, decreases in time as the problem size increases. This
 speedup is artificial, and should not be expected in general. In the $n=2^{16}$
-case, there is 1 point for every 4 grid cells, on average. When $n=2^{19}$,
+case, there is 1 IB point for every 4 grid cells, on average. When $n=2^{19}$,
 the density increases to 2 for every grid cell. As a result, it becomes
 increasingly unlikely to find a cell containing no IB points. This means that
 writing the values to the output vector(s) becomes increasingly coalesced,
@@ -262,3 +257,5 @@ have IB points in every grid cell, but the recommendations that IB points on
 connected structures be spaced $0.5h$--$h$ apart typically yields 1--4 IB
 points in each occupied grid cell. We now consider a more typical use of the IB
 method.
+
+% vim: cc=90 tw=89

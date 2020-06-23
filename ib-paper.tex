@@ -61,9 +61,11 @@ grestore
 \usepackage{color}
 \usepackage[inline]{enumitem}
 \usepackage{float}
+\usepackage{subfigure}
+\usepackage{tikz}
 \usepackage{xfrac}
+\usepackage{cite}
 \usepackage[hidelinks]{hyperref}
-\usepackage[capitalize, noabbrev]{cleveref}
 \usepackage{algpseudocode}
 \usepackage{longtable}
 \usepackage{booktabs}
@@ -71,8 +73,10 @@ grestore
 \usepackage{manfnt}
 \usepackage{siunitx}
 \usepackage{float}
+\usepackage{fmtcount}
 
 \usetikzlibrary{matrix}
+\usetikzlibrary{shapes}
 \usepgfplotslibrary{groupplots}
 \newfloat{algorithm}{t}{lop}
 
@@ -107,19 +111,14 @@ grestore
 \renewcommand{\div}[1][]{\grad[#1]\cdot}
 \renewcommand{\d}{\relax\ifnum\lastnodetype>0\mskip\thinmuskip\fi\textnormal{d}}
 \renewcommand{\L}{\mathcal{E}}
+\newcommand{\reg}{\textsuperscript{\textregistered}}
 
 \newcommand{\domain}{\ensuremath{\Omega}}
 \newcommand{\interface}{\ensuremath{\Gamma}}
-\newcommand{\archetype}{\ensuremath{\hat{\Gamma}}}
-\newcommand{\reference}{\ensuremath{\interface_0}}
 \newcommand{\spread}{\ensuremath{\mathcal{S}}}
-\newcommand{\interp}{\ensuremath{\mathcal{S}^\dagger}}
+\newcommand{\interp}{\ensuremath{\spread^\dagger}}
 \newcommand{\Dirac}{\delta}
 \newcommand{\kernel}{\phi}
-\newcommand{\basic}{\varphi}
-\newcommand{\Basic}{\Phi}
-\newcommand{\poly}{p}
-\newcommand{\Poly}{P}
 
 \newcommand{\x}{\vec{x}}
 \newcommand{\X}{\vec{X}}
@@ -127,6 +126,7 @@ grestore
 \newcommand{\U}{\dot{\vec{X}}}
 \newcommand{\f}{\vec{f}}
 \newcommand{\F}{\vec{F}}
+\newcommand{\stag}{\vec{g}}
 \newcommand{\um}{\mskip\thinmuskip\si{\micro\meter}}
 \newcommand{\dynpercm}{\mskip\thinmuskip\si{dyn\per\centi\meter}}
 \newcommand{\us}{\mskip\thinmuskip\si{\micro\second}}
@@ -135,10 +135,18 @@ grestore
 \newcommand{\ceil}[1]{\left\lceil{#1}\right\rceil}
 \newcommand{\round}[1]{\left\lfloor{#1}\right\rceil}
 \newcommand{\idx}[1]{\round{#1}}
-\newcommand{\key}{\mathfrak{K}}
+\newcommand{\key}{\kappa}
 \newcommand{\shift}{\vec{\sigma}}
+\newcommand{\error}{\varnothing}
+\newcommand{\bigo}[1]{\mathcal{O}({#1})}
+\newcommand{\supp}{\mathrm{supp}\mskip\thinmuskip}
+\newcommand{\bufsz}{\texttt{sz}}
+\newcommand{\shear}{\dot{\gamma}}
+\newcommand{\nth}[2][m]{\ordinalnum{#2}[#1]}
+\renewcommand{\th}{\textsuperscript{th}}
 
 \newcommand{\thrust}{\texttt{thrust}}
+\newcommand{\term}[1]{\textit{#1}}
 
 % Insert the name of "your journal" with
 % \journalname{myjournal}
@@ -162,7 +170,7 @@ grestore
 \institute{%
     A. Kassen \at Department of Mathematics \newline University of Utah \and
     V. Shankar \at School of Computing \newline University of Utah \and
-    A. Fogelson \at Department of Mathematics \newline University of Utah \newline
+    A. Fogelson \at Departments of Mathematics and Biomedical Engineering \newline University of Utah \newline
     \email{fogelson@math.utah.edu}
 }
 
@@ -173,21 +181,21 @@ grestore
 \maketitle
 
 \begin{abstract}
-    We introduce a parallel implementation of the immersed boundary method
-    interaction operations which relies on the well-studied parallel primitives
-    key-value sort and segmented reduce. This makes the algorithms feasible for
-    use on general purpose graphical processing units (GPGPUs) in addition to
-    most other architectures.
+We introduce a parallel implementation of the immersed boundary method
+Euler\-ian-Lagrangian interaction operations which relies on the well-studied parallel
+primitives key-value sort and segmented reduce. This makes the algorithms feasible for
+use on general purpose graphical processing units (GPGPUs) in addition to most other
+architectures. We test these algorithms on arbitrarily scattered points and elastic 
+structures. The tests exhibit near-ideal scaling for the algorithms on both a multicore
+CPU and GPU.
 
 % \keywords{}
 % \PACS{}
 % \subclass{MSC code1 \and MSC code2 \and more}
 \end{abstract}
 
-%\input{introduction}
+\input{introduction}
 \input{ib-overview}
-%\input{fluid-solver}
-%\input{cell-modeling}
 \input{frame-coupling}
 \input{results}
 \input{conclusion}
@@ -204,7 +212,9 @@ grestore
 %\section*{Conflict of interest}
 
 
+\bibliography{ib-paper}{}
 \bibliographystyle{spmpsci}      % mathematics and physical sciences
 \end{document}
 % end of file template.tex
 
+% vim: cc=90 tw=89

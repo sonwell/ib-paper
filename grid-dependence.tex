@@ -1,13 +1,12 @@
-\subsubsection{Dependence on background grid}
+\subsubsection{Dependence on background grid}\label{sec:grid-dependence}
 
-The serial Algorithms \ref{algo:par-interp} and \ref{algo:serial-spread}
-do not explicitly depend on the size of the fluid grid. Perhaps with the
-exception of the sorting and reducing steps, Algorithm \ref{algo:par-spread}
-also does not depend on the size of the grid. Algorithms \ref{algo:pa-spread}
-and \ref{algo:otf-spread}, on the other hand, ultimately sum their buffer
-vectors, which have one entry per grid point. Algorithm \ref{algo:otf-spread}
-also incorporates the allocation of these buffers. Using a few different fluid
-grids, we investigate whether Algorithms \ref{algo:par-interp} and
+The serial Algorithms \ref{algo:par-interp} and \ref{algo:serial-spread} do not
+explicitly depend on the size of the fluid grid. With perhaps the exception of the
+sorting and reducing steps, Algorithm \ref{algo:par-spread} also does not depend on the
+size of the grid. Algorithms \ref{algo:pa-spread} and \ref{algo:otf-spread}, on the other
+hand, ultimately sum their buffer vectors, which have one entry per grid point. Algorithm
+\ref{algo:otf-spread} also incorporates the allocation of these buffers. Using a few
+different fluid grids, we investigate whether Algorithms \ref{algo:par-interp} and
 \ref{algo:par-spread} are independent of the grid in practice, and how the grid
 dependence affects the runtime of Algorithms \ref{algo:pa-spread} and
 \ref{algo:otf-spread}.
@@ -35,22 +34,24 @@ dependence affects the runtime of Algorithms \ref{algo:pa-spread} and
     \egroup
     \end{center}
     \caption{%
-        Timing results for interpolation and spreading on different devices and
-        grid configurations. Grid refinement is the number of grid points per
-        $16\um$ in each dimension. Times are reported in seconds.
+Average timing results for interpolating to and spreading from $2^{16}$ IB points from
+1000 timesteps on different devices and grid configurations. Interpolation (Algorithm
+\ref{algo:par-interp}) happens twice per timestep and spreading (Algorithms
+\ref{algo:serial-spread}, \ref{algo:par-spread}--\ref{algo:otf-spread}) happens once per
+timestep. Grid refinement is the number of grid points per $16\um$ in each dimension.
+Times per call to the listed algorithm are reported in seconds.
     }
     \label{tab:grid-timing}
 \end{table}
 
-Table \ref{tab:grid-timing} lists timing results for this test case with
-$n=2^{16}$ IB points and 16, 32, 64, and 128 grid points per $16\um$.
-The rows with device listed as $1\times\text{CPU}$ correspond to the serial
-algorithms and will serve as a reference point for the rest of the section. If
-the serial algorithms depend on the fluid grid, they do so only mildly. In
-fact, under close scrutiny, it seems that these deviations are due to
-hardware-level differences in the integer multiplications and additions used in
-computing sort and grid indices. We can therefore expect each of the algorithms
-to exhibit a mild variation in runtime for different grid refinements.
+Table \ref{tab:grid-timing} lists timing results for $n=2^{16}$ IB points and 16, 32, 64,
+and 128 grid points per $16\um$. The rows with device listed as $1\times\text{CPU}$
+correspond to the serial algorithms and will serve as a reference point for the rest of
+the section. If the serial algorithms depend on the fluid grid, they do so only mildly.
+In fact, under close scrutiny, it seems that these deviations are due to hardware-level
+differences in the integer multiplications and additions used in computing sort keys and
+grid indices. We can therefore expect each of the algorithms to exhibit a mild variation
+in runtime for different grid refinements.
 
 %The segmented reduce in Algorithms \ref{algo:par-spread}, \ref{algo:pa-spread},
 %and \ref{algo:otf-spread} each have an implicit dependence on the fluid grid.
@@ -176,29 +177,29 @@ coordinate(legendpos) (dep c2r1.south east|-current bounding box.south);
     \ref{plot:grid-dep-otf}& Algorithm \ref{algo:otf-spread}\\};
 \end{tikzpicture}
 \caption{%
-    Speedup from parallel interpolation (Algorithm \ref{algo:par-interp})
-    and spread (Algorithms \ref{algo:par-spread}--\ref{algo:otf-spread})
-    compared to their serial counterparts on $2^{16}$ randomly placed IB points
-    for different grid refinements on (a) 16 CPUs and (b) the GPU. 
+Speedup of Algorithm \ref{algo:par-interp} (interpolation) and Algorithms
+\ref{algo:par-spread}--\ref{algo:otf-spread} (spreading) compared to their serial
+counterparts on $2^{16}$ randomly placed IB points for different grid refinements on (a)
+16 CPUs and (b) the GPU. 
 }
 \label{fig:grid-dependence}
 \end{figure}
 
-The speedup for these parallelization schemes is illustrated in Figure
-\ref{fig:grid-dependence}. Algorithm \ref{algo:par-interp} is independent of
-the fluid grid, as expected. Any grid dependence introduced by the sort and
-reduce steps of Algorithm \ref{algo:par-spread} is not obvious for the grids
-presented. On the other hand, the degradation of speedup for the sweep-fused
-Algorithms \ref{algo:pa-spread} and \ref{algo:otf-spread} is apparent for finer
-grids. For small problems with $128^3$ or fewer grid points, one gets better
-performance from the sweep-fused spread variants, with the exception of
-Algorithm \ref{algo:otf-spread} on the GPU. This is attributed to the slower
-allocation of the buffer for a finer grid. For problems where the grid has
-$256^3$ or more grid points, we expect Algorithm \ref{algo:par-spread} to be
-the fastest choice for spread. Because our fluid solver fits in GPU memory only
-for fewer than $128^3$ grid points, for the remainder of this work we consider
-only a grid with a grid refinement of 64 ($h = 0.25\um$). We can imagine using
-this algorithm on a less capable device with more limited memory, so we
-restrict ourselves to Algorithm \ref{algo:otf-spread} for spread, computing
-$\texttt{sz}=8$ values per sweep, to minimize the lifetime of the buffer used
-in spreading while still enjoying the benefit of using the buffer.
+The speedup for these schemes is illustrated in Figure \ref{fig:grid-dependence}.
+Algorithm \ref{algo:par-interp} is independent of the fluid grid, as expected. Any grid
+dependence introduced by the sort and reduce steps of Algorithm \ref{algo:par-spread} is
+not obvious for the grids presented. On the other hand, the degradation of speedup for
+the sweep-fused Algorithms \ref{algo:pa-spread} and \ref{algo:otf-spread} is apparent for
+finer grids. For small problems with $128^3$ or fewer grid points, one gets better
+performance from the sweep-fused variants, with the exception of Algorithm
+\ref{algo:otf-spread} on the GPU. This can be attributed to the slower allocation of the
+buffer for a finer grid. For problems where the grid has $256^3$ or more grid points, we
+expect Algorithm \ref{algo:par-spread} to be the fastest choice for spreading. Because
+our fluid solver fits in GPU memory only for fewer than $128^3$ grid points, for the
+remainder of this work we consider only a grid with a grid refinement of 64 ($h =
+0.25\um$). We can imagine using this algorithm on a less capable device with more limited
+memory, so we restrict ourselves to Algorithm \ref{algo:otf-spread} for spreading,
+computing $\bufsz=8$ values per sweep, to minimize the lifetime of the buffer used in
+spreading while still enjoying the benefit of using the buffer.
+
+% vim: cc=90 tw=89

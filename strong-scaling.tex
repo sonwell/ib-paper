@@ -3,8 +3,8 @@
 We again wish to see how these algorithms can help speed up the runtime of
 a fixed problem. Here, we consider tests with a single RBC and with 4 RBCs.
 To construct the RBCs, we now use $n_d=864$ data sites, for an initial data
-site spacing of approximately $0.8h$, and $n_s=8832$ sample sites per cell, for
-an initial sample site spacing for approximately $0.25h$. We use a timestep of
+site spacing of approximately $1.6h$, and $n_s=8832$ sample sites per cell, for
+an initial sample site spacing of approximately $0.5h$. We use a timestep of
 $k=0.1\us$ to simulate the motion of the cells for $1\ms$.
 
 %\begin{table}
@@ -32,7 +32,7 @@ $k=0.1\us$ to simulate the motion of the cells for $1\ms$.
 %        \endgroup
 %    \end{center}
 %    \caption{%
-%        Results of strong scaling tests for IB spread and interpolate.
+%        Results of strong scaling tests for IB spreading and interpolate.
 %        Reported values are in seconds.
 %    }
 %\end{table}
@@ -149,23 +149,24 @@ coordinate(legendpos) (rbc-strong c2r1.south east|-current bounding box.south);
 Figure \ref{fig:str-strong} shows the speedup observed with increasing threads
 for 1 and 4 RBCs for 64--4096 threads on the GPU. We again see that the initial
 speedup for interpolation is nearly linear with increased threads. In subfigure
-(a), there is a sharp plateau that corresponds to every data site having its
-own thread. In other words, there are more threads than there is work to be
-done, since we track only 864 data sites for a single RBC. Subfigure (b), on
-the other hand, has 3456 data sites, so the trend continues for 512--4096
-threads. In this case, we expect this graph to plateau beyond 4096, as each
-data site already has its own thread. However, we do not expect for the trend
-to continue with more cells, as the presumed maximum number of threads for
-interpolation is 4480, as discussed in Section [@sec:grid-dependence]. 
-Comparing subfigure (a) to (b), for spread, we see that the speedup is also
-dependent on the amount of work. This indicates that, as with interpolation,
-the maximum speedup for spread is limited by hardware, rather than being a
-limitation of the algorithm.
+\ref{fig:str-strong}(a), there is a sharp plateau that corresponds to every
+data site having its own thread. In other words, there are more threads than
+there is work to be done, since we track only 864 data sites for a single RBC.
+Subfigure \ref{fig:str-strong}(b), on the other hand, has 3456 data sites, so
+the trend continues for 512--4096 threads. In this case, we expect this graph
+to plateau beyond 4096, when each data site has its own thread. However, we do
+not expect for the trend to continue with more cells, as the presumed maximum
+number of threads for interpolation is 4480, as discussed in Section
+\ref{sec:unst-strong}. Comparing subfigure \ref{fig:str-strong}(a)
+to (b), for spread, we see that the speedup is also dependent on the amount of
+work. This indicates that, as with interpolation, the maximum speedup for
+spreading is limited by hardware, rather than being a limitation of the
+algorithm.
 
 The trendlines for these tests indicate that increasing computing resources
 by a factor of two decreases runtime by a factor of about 1.87 for these
 algorithms. Again, this is merely an approximation as the sort and reduction
-steps of the spread algorithm are provided by {\thrust}, and therefore are
+steps of the spreading algorithm are provided by {\thrust}, and therefore are
 not limited to the listed number of threads. The similarity between the result
 of the tests with RBCs and with randomly placed points indicates that the
 distribution of points does not have a marked impact on the efficacy of the
@@ -191,7 +192,7 @@ scaling tests.
 %        \endgroup
 %    \end{center}
 %    \caption{%
-%        Results of strong scaling tests for IB spread and interpolate with
+%        Results of strong scaling tests for IB spreading and interpolate with
 %        4 RBCs.
 %        Reported values are in seconds.
 %    }
