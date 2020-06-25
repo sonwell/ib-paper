@@ -1,0 +1,152 @@
+\begin{figure}[tb]
+    \begin{center}
+    \begin{tikzpicture}
+        \draw[help lines] (-0.1, -0.1) grid (3.1, 2.1);
+        \node[circle, fill=black, inner sep=2pt, label={$\X_1$}] (x1) at (0.6, 0.6) {};
+        \node[circle, fill=black, inner sep=2pt, label={$\X_5$}] (x2) at (1.1, 1.1) {};
+        \node[circle, fill=black, inner sep=2pt, label={$\X_3$}] (x3) at (1.8, 1.3) {};
+        \node[circle, fill=black, inner sep=2pt, label={$\X_2$}] (x4) at (2.3, 1.1) {};
+        \node[circle, fill=black, inner sep=2pt, label={$\X_4$}] (x5) at (2.2, 0.4) {};
+
+        \node[draw=none, rectangle, minimum width=1cm, minimum height=1cm, text centered] (kh) at (-1.5, -1.5) {$K$};
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=kh] (k1) {1};
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=k1] (k2) {6};
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=k2] (k3) {5};
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=k3] (k4) {3};
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=k4] (k5) {5};
+
+        \draw[->, >=stealth] (-0.5, 1) to [out=180, in=90] node [midway, left] {\shortstack{Compute\\keys}} (-1.5, -1);
+
+        \node[draw=none, rectangle, minimum width=1cm, minimum height=1cm, text centered, below of=kh] (ph) {$P$};
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=ph] (p1) {1};
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=p1] (p2) {2};
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=p2] (p3) {3};
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=p3] (p4) {4};
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=p4] (p5) {5};
+
+        \draw[->, >=stealth] (x1) to [out=270, in=90] (k1.north);
+        \draw[->, >=stealth] (x4) to [out=195, in=90] (k2.north);
+        \draw[->, >=stealth] (x3) to [out=270, in=90] (k3.north);
+        \draw[->, >=stealth] (x5) to [out=270, in=90] (k4.north);
+        \draw[->, >=stealth] (x2) to [out=270, in=90] (k5.north);
+%    \end{tikzpicture}
+%
+%    \begin{tikzpicture}
+%        \node[draw=none, rectangle, minimum width=1cm, minimum height=1cm, text centered] (kh) at (-1.5, 1.5) {$K$};
+%        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=kh] (k1) {1};
+%        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=k1] (k2) {5};
+%        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=k2] (k3) {5};
+%        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=k3] (k4) {6};
+%        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=k4] (k5) {3};
+%        \node[draw=none, rectangle, minimum width=1cm, minimum height=1cm, text centered, below of=kh] (ph) {$P$};
+%        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=ph] (p1) {1};
+%        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=p1] (p2) {2};
+%        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=p2] (p3) {3};
+%        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=p3] (p4) {4};
+%        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=p4] (p5) {5};
+
+        \node[draw=none, rectangle, minimum width=1cm, minimum height=1cm, text centered] (lh) at (-1.5, -4.5) {$K$};
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=lh] (l1) {1};
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=l1] (l2) {3};
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=l2] (l3) {5};
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=l3] (l4) {5};
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=l4] (l5) {6};
+
+        \draw[->, >=stealth] (-2, -2.5) to [out=180, in=180] node [midway, left] {Sort} (-2, -4.5);
+
+        \node[draw=none, rectangle, minimum width=1cm, minimum height=1cm, text centered, below of=lh] (qh) {$P$};
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=qh] (q1) {1};
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=q1] (q2) {4};
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=q2] (q3) {3};
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=q3] (q4) {5};
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=q4] (q5) {2};
+
+        \draw[->, >=stealth] (p1) to [out=270, in=90] (l1.north);
+        \draw[->, >=stealth] (p2) to [out=270, in=90] (l5.north);
+        \draw[->, >=stealth] (p3) to [out=270, in=90] (l3.north);
+        \draw[->, >=stealth] (p4) to [out=270, in=90] (l2.north);
+        \draw[->, >=stealth] (p5) to [out=270, in=90] (l4.north);
+%    \end{tikzpicture}
+%
+%    \begin{tikzpicture}
+%        \node[draw=none, rectangle, minimum width=1cm, minimum height=1cm, text centered] (lh) at (-1.5, 1.5) {$K$};
+%        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=lh] (l1) {1};
+%        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=l1] (l2) {3};
+%        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=l2] (l3) {5};
+%        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=l3] (l4) {5};
+%        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=l4] (l5) {6};
+        \node[draw=none, rectangle, minimum width=1cm, minimum height=1cm, text centered, below of=qh] (vh) {$V$};
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=vh] (v1) {$v_1$};
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=v1] (v2) {$v_4$};
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=v2] (v3) {$v_3$};
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=v3] (v4) {$v_5$};
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=v4] (v5) {$v_2$};
+
+        \draw[->, >=stealth] (qh.west) to [out=180, in=180] node[midway, left] {\shortstack[r]{Compute\\values}} ($(vh.west) + (0, 2pt)$);
+
+        \node[draw=none, rectangle, minimum width=1cm, minimum height=1cm, text centered] (mh) at (-1.5, -8.5) {$K'$};
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=mh] (m1) {1};
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=m1] (m2) {3};
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=m2] (m3) {5};
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=m3] (m4) {6};
+
+        \draw[->, >=stealth] ($(vh.west)+(0, -2pt)$) to [out=180, in=180] node [midway, left] {Reduce} (mh.west); 
+        \node[draw=none, rectangle, minimum width=1cm, minimum height=1cm, text centered, below of=mh] (wh) {$V$};
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=wh] (w1) {$v_1$};
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=w1] (w2) {$v_4$};
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=w2] (w3) {$\scriptstyle v_3+v_5$};
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=w3] (w4) {$v_2$};
+        \node[draw, rectangle, fill=black!15, minimum width=1cm, minimum height=1cm, right of=w4] {};
+
+        \draw[->, >=stealth] (v1) to [out=270, in=90] (m1.north);
+        \draw[->, >=stealth] (v2) to [out=270, in=90] (m2.north);
+        \draw[->, >=stealth] (v3) to [out=270, in=90] (m3.north);
+        \draw[->, >=stealth] (v4) to [out=270, in=90] (m3.north);
+        \draw[->, >=stealth] (v5) to [out=270, in=90] (m4.north);
+%    \end{tikzpicture}
+%
+%    \begin{tikzpicture}
+%        \node[draw=none, rectangle, minimum width=1cm, minimum height=1cm, text centered] (wh) at (-1.5, 1.5) {$V$};
+%        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=wh] (w1) {$v_1$};
+%        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=w1] (w2) {$v_5$};
+%        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=w2] (w3) {$\scriptstyle v_2+v_3$};
+%        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, right of=w3] (w4) {$v_4$};
+
+        \node[draw=none, rectangle, minimum width=1cm, minimum height=1cm, text centered] (fh) at (-1.5, -11.5) {$\ell$};
+        \draw[fill=black!15] ($(fh.north east) + (0.25cm-0.2pt, -0.2pt)$) -- ($(fh.north east) + (0cm, -0.2pt)$) to [snake=zigzag, segment length=0.33333205cm] ($(fh.south east) + (0cm, 0.2pt)$) -- ($(fh.south east) + (0.25cm-0.2pt, 0.2pt)$) -- cycle;
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, text centered, right of=fh, xshift=0.25cm] (f1) {};
+        \node[draw, rectangle, fill=black!15, minimum width=1cm, minimum height=1cm, text centered, right of=f1] (f2) {};
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, text centered, right of=f2] (f3) {};
+        \node[draw, rectangle, fill=black!15, minimum width=2cm, minimum height=1cm, text centered, right of=f3, xshift=0.5cm] (fe) {\dots};
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, text centered, right of=fe, xshift=0.5cm] (f4) {};
+        \node[draw, rectangle, minimum width=1cm, minimum height=1cm, text centered, right of=f4] (f5) {};
+        \draw[fill=black!15] ($(f5.north east) + (-0.2pt, -0.2pt)$) -- ($(f5.north east) + (0.25cm, -0.2pt)$) to [snake=zigzag, segment length=0.33333205cm] ($(f5.south east) + (0.25cm, 0.2pt)$) -- ($(f5.south east) + (-0.2pt, 0.2pt)$) -- cycle;
+
+        \draw[->, >=stealth] (wh.west) to [out=180, in=180] node [midway, left, yshift=2pt] {Add} (fh.west);
+
+        \draw[->, >=stealth] (w1.south) to [out=270, in=90] (f1.north);
+        \draw[->, >=stealth] (w2.south) to [out=270, in=90] (f3.north);
+        \draw[->, >=stealth] (w3.south) to [out=270, in=90] (f4.north);
+        \draw[->, >=stealth] (w4.south) to [out=270, in=90] (f5.north);
+
+        \draw[->, >=stealth] (6.75, -11) to [out=45, in=0] node [midway, left, xshift=-2pt] {\shortstack[r]{Repeat for\\each shift}} (4.25, -6);
+    \end{tikzpicture}
+
+    \end{center}
+
+    \caption{%
+        Schematic of Algorithm \ref{algo:par-spread} for Lagrangian points
+        $\X_1$ through $\X_5$ in a small region of $\domain$. Grey grid lines
+        indicate the boundaries of grid cells. The rows labelled $K$, $P$, $V$,
+        and $\ell$ represent the memory of arrays for the keys, permutation,
+        values, and output vector, respectively. Keys are computed according to
+        grid cell, starting with 1 at the bottom left and continuing
+        sequentially from left to right then bottom to top. The value $v_i$
+        corresponds to point $\X_i$ for a given shift, and are computed in
+        sorted order using the values in $P$. The results of reducing $V$ by
+        $K$ yields unique keys $K'$. Points $\X_3$ and $\X_5$ inhabit the same
+        grid cell, so reduction adds their corresponding values before writing
+        to the output vector. Grey denotes unused memory.
+    }
+    \label{fig:algo}
+\end{figure}

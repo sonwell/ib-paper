@@ -43,6 +43,7 @@ writing for each shift completes the calculation.
 \State \textbf{sort} $\{P_i\}$ \textbf{by} $\{K_i\}$ \Comment{$\{P_i\}$ now defines a permutation} \label{line:par-spread-sort}
 \State $q \gets \text{\textbf{count unique} }\{K_i\}$ \label{line:par-spread-q}
 \For  {$j = 1,\,\ldots,\,s^d$} \label{line:par-spread-shifts} \Comment{Loop over shifts}
+    \State $\{K'_i\} \gets \{K_i\}$
     \For {$i = 1,\,\ldots,\,n_\gamma$ \textbf{parallel}} \label{line:par-spread-v} \Comment{Loop over IB points}
         \State $p \gets P_i$
         \State $\x \gets h(\idx{\X_p}+\stag)$\Comment{$\X_p\in\interface_h$, $\x\in\domain_h$}
@@ -50,10 +51,10 @@ writing for each shift completes the calculation.
         \State $w \gets \Dirac_h(\Delta\x+h\shift_j)$
         \State $V_i \gets w \cdot L_p$
     \EndFor \label{line:par-spread-vend}
-    \State \textbf{reduce} $\{V_i\}$ \textbf{by} $\{K_i\}$ \label{line:par-spread-reduce} \Comment{segmented reduce}
+    \textbf{reduce} $\{V_i\}$ \textbf{by} $\{K'_i\}$ \label{line:par-spread-reduce} \Comment{Segmented reduce}
     \For {$i = 1,\,\ldots,\,q$ \textbf{parallel}} \label{line:par-spread-quse}\Comment{Loop over inhabited grid cells, $q \le n_\gamma$}
-        \State $\x \gets h(\key^{-1}(K_i) + \stag)$
-        \State $m \gets \#(\idx{\x} + \shift_j)$ \Comment{$\idx{\x}\equiv\key^{-1}(K_i)$}
+        \State $\x \gets h(\key^{-1}(K'_i) + \stag)$
+        \State $m \gets \#(\idx{\x} + \shift_j)$ \Comment{$\idx{\x}\equiv\key^{-1}(K'_i)$}
         \If {$m\neq\error$}
             \State $\ell_m \gets \ell_m + V_i$
         \EndIf
@@ -63,6 +64,8 @@ writing for each shift completes the calculation.
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
+
+\input{algo-figure}
 
 Lastly, we need suitable way to generate keys. A function $\key$ that generates keys
 should be 1-to-1 with grid cells, or alternatively, to points in $\bar{\domain}_h$. For
@@ -74,7 +77,8 @@ use the key to compute grid indices: the point in $\domain_h$ with key $k$ also 
 index $\#(\key^{-1}(k))$. Because $\key$ is injective, $\key^{-1}(k)$ is well-defined,
 and for shift $\shift$, $\#(\key^{-1}(k)+\shift)$ yields the appropriate target index for
 writing to the output vector. Putting these pieces together, we have a complete parallel
-spreading algorithm, listed in Algorithm \ref{algo:par-spread}.
+spreading algorithm, listed in Algorithm \ref{algo:par-spread} and illustrated in Figure
+\ref{fig:algo}.
 
 Lines \ref{line:par-spread-ps}--\ref{line:par-spread-sort} of Algorithm
 \ref{algo:par-spread} construct the permutation by constructing a list of keys and a list
@@ -110,11 +114,13 @@ the value of $q$, but is bounded above by $n_\gamma$. For up to $2^{32}$ grid po
 expect the overall runtime of the spreading algorithm to be $\bigo{n_\gamma/p}$.
 
 Finally, we remark that Algorithm \ref{algo:par-spread} must synchronize threads once per
-shift, which can hurt performance. This is written as a parallel loop (line
-\ref{line:par-spread-v}) within a serial loop (line \ref{line:par-spread-shifts}). To
-reduce the number of thread synchronizations required, we can modify the algorithm.
-These variants use more memory and have explicit dependence on the Eulerian grid in
-exchange for a reduced number of sweeps. We develop them below.
+shift. For choices of $\kernel$ where $s^d$ is large, this can hurt performance. This
+requirement is written as a parallel loop (line \ref{line:par-spread-v}) within a serial
+loop (line \ref{line:par-spread-shifts}). To reduce the number of synchronizations, we
+must be able to compute and store several values at once. However, attempting to write
+multiple values of once may lead to contentions. Below, we develop algorithms that
+require fewer synchronizations by using more memory to spread several values at once and
+avoid write contentions.
 
 \subsection{Buffered spreading variants}
 
@@ -123,8 +129,8 @@ of as a set of temporary output vectors, which we will combine at the end of the
 algorithm to finish the calculation. These vectors have $n_\omega$ entries, so adding
 them requires as many operations, but is quite easily parallelized, and is provided by
 any parallel \texttt{BLAS} implementation. In this regard, these buffered variants depend
-on the Eulerian grid. The only additional requirement is that there is enough memory to
-hold the buffer. 
+explicitly on the Eulerian grid. The only additional requirement is that there is enough
+memory to hold the buffer. 
 
 To develop these variants, we note that the sorted list of keys and the permutation
 are the same for all shifts. Since the permutation dictates the order of the values to
@@ -150,6 +156,7 @@ iteration. Summing the vectors in the buffer yields the desired result.
 \State \textbf{sort} $\{P_i\}$ \textbf{by} $\{K_i\}$
 \State $q \gets \text{\textbf{count unique} }\{K_i\}$
 \For {$j = 1,\,\ldots,\,\ceil{s^d/\bufsz}$} \Comment{Loop over shifts}
+    \State $\{K'_i\} \gets \{K_i\}$
     \For {$i = 1,\,\ldots,\,n_\gamma$ \textbf{parallel}} \Comment{Loop over IB points}
         \State $p \gets P_i$
         \State $\x \gets h(\idx{\X}+\stag)$\Comment{$\X_p\in\interface_h$, $\x\in\domain_h$}
@@ -159,9 +166,9 @@ iteration. Summing the vectors in the buffer yields the desired result.
             \State $V_{ik} \gets w \cdot L(\X_p)$ \Comment{$V\in\mathbb{R}^{n_\gamma\times\bufsz}$}
         \EndFor
     \EndFor
-    \State \textbf{reduce} $\{V_{i\cdot}\}$ \textbf{by} $\{K_i\}$
+    \State \textbf{reduce} $\{V_{i\cdot}\}$ \textbf{by} $\{K'_i\}$
     \For {$i = 1,\,\ldots,\,q$ \textbf{parallel}} \Comment{Loop over inhabited grid cells, $q\le n_\gamma$}
-        \State $\x \gets h(\key^{-1}(K_i) + \stag)$
+        \State $\x \gets h(\key^{-1}(K'_i) + \stag)$
         \For {$k=1,\,\ldots,\,\textbf{min}(\bufsz,\,s^d-\bufsz\cdot j)$}
             \State $m \gets \#(\x + \shift_{\bufsz\cdot j + k})$
             \If {$m\neq\error$}
