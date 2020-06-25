@@ -49,24 +49,30 @@ on $\interface$, $\f(\x,\,t)$ has units of force per unit \emph{volume} in $\dom
 force $\F(\params,\,t)\d\params$ over area $\d\params$ is ``spread'' to the force
 $\f(\x,\,t)\d\x$ over volume $\d\x$. 
 
-Each of the fluid equations \eqref{eq:ins-evol}--\eqref{eq:ins-incomp}
-is discretized on a regular grid of spacing $h$ so that $\domain$ is divided into square
-or cubic cells of side length $h$. Because of the checkerboard instability (see, e.g.,
+The fluid equations \eqref{eq:ins-evol}--\eqref{eq:ins-incomp} are spatially discretized
+on a regular grid of spacing $h$ so that $\domain$ is divided into square or cubic cells
+of side length $h$. Because of the checkerboard instability (see, e.g.,
 \cite{Wesseling:2001ci}) in solving the Navier-Stokes equations on collocated regular
 grids, we stagger the components of Eulerian vector quantities. As a result, different
 components are discretized at different locations, but corresponding components are
 discretized on the same grid. Grid cells for these staggered grids do not coincide. We
 therefore consider each of these grids individually. We use $\domain_h$ to denote the set
 of grid points for the grid under consideration, and $n_\omega$ to denote the number of
-grid points.
+grid points. The momentum equation \eqref{eq:ins-evol} is discretized in time using a
+second-order implicit-explicit Runge-Kutta method \cite{Peskin:2002go}, and the
+incompressibility condition \eqref{eq:ins-incomp} is satisfied using PmIII
+\cite{Brown:2001bq}.
 
 The Lagrangian force density \ref{eq:forces} is evaluated at a set of points, usually a
 \emph{fixed} set of points in material coordinates, referred to as IB points. The
 notation $\X_j=\X(\params_j,\,t)$ refers to an individual IB point on $\interface$ in
-Cartesian coordinates. The typical heuristic for distributing the points $\X_j$ on the
-interface places neighboring IB points at most $h$ apart from one another, and often at
-most $h/2$ apart. We therefore denote the set of IB points by $\interface_h$ and the
-number of IB points by $n_\gamma$.
+Cartesian coordinates. The typical heuristic for distributing the points $\X_j$ on a
+connected interface places neighboring IB points at most $h$ apart from one another, and
+often at most $h/2$ apart. We therefore denote the set of IB points by $\interface_h$ and
+the number of IB points by $n_\gamma$. From these points, we construct a smooth
+approximation to the interface using radial basis functions \cite{Shankar:2015km}. This
+allows us to calculate geometric properties using well-known formulas, and evaluate the
+forces \eqref{eq:forces} analytically \cite{Maxian:2018ek}.
 
 The singular integrals \eqref{eq:interpolation} and \eqref{eq:spreading} do not lend
 themselves easily to evaluation. In particular, it is unlikely that IB points and grid
@@ -83,7 +89,7 @@ $\interface_h$, respectively, yields
     \label{eq:disc-interp}
     \dot{X}^n_j &= \sum_i \delta_h(\x_i-\X^n_j)u^n_i h^d \quad \text{and} \\
     \label{eq:disc-spread}
-    f^n_i &= -\sum_j \delta_h(\x_i-\X^n_j)F^n_j \d\theta_j,
+    f^n_i &= \sum_j \delta_h(\x_i-\X^n_j)F^n_j \d\theta_j,
 \end{align}
 where $u^n_i$ and $f^n_i$ are discrete approximations to the components of $\u$ and $\f$
 at $\x_i\in\domain_h$ and time $t=t_n$, and $\dot{X}^n_{\smash j}$ and $F^n_{\smash j}$

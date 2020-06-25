@@ -24,12 +24,13 @@ non-periodic boundary, the region may be smaller, and may not contain a grid poi
 extend the grid so that each of these regions has side length $h$ in each dimension and
 contains a single grid point.  We call this extension $\bar{\domain}_h$. Collectively,
 these regions cover $\domain$, so we consider them to be the \emph{de facto} grid cells,
-and henceforth refer to them as such. We can now identify any $\X\in\domain$ with a grid
-point $\x\in\bar{\domain}_h$ if they are in the same grid cell, and since
-$\x=h(\vec{i}+\stag)$ is the only grid point in the grid cell, we identify the cell by
-the integers $\vec{i}$. We adopt the notation $\idx{\X}=\vec{i}$ for the function that
-maps points in $\domain$ to the vector of integers identifying the grid cell containing
-$\X$.
+and henceforth refer to them as such. Figure \ref{fig:grid} illustrates these grid cells,
+and the effect different choices of $\kernel$ has on their location. We can now identify
+any $\X\in\domain$ with a grid point $\x\in\bar{\domain}_h$ if they are in the same grid
+cell, and since $\x=h(\vec{i}+\stag)$ is the only grid point in the grid cell, we
+identify the cell by the integers $\vec{i}$. We adopt the notation $\idx{\X}=\vec{i}$ for
+the function that maps points in $\domain$ to the vector of integers identifying the grid
+cell containing $\X$.
 
 We now turn our attention to the evaluation of $\Dirac_h(\x-\X)$. We assume
 $\x\in\domain_h$ and write
