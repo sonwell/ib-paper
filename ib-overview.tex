@@ -70,9 +70,9 @@ Cartesian coordinates. The typical heuristic for distributing the points $\X_j$ 
 connected interface places neighboring IB points at most $h$ apart from one another, and
 often at most $h/2$ apart. We therefore denote the set of IB points by $\interface_h$ and
 the number of IB points by $n_\gamma$. From these points, we construct a smooth
-approximation to the interface using radial basis functions \cite{Shankar:2015km}. This
-allows us to calculate geometric properties using well-known formulas, and evaluate the
-forces \eqref{eq:forces} analytically \cite{Maxian:2018ek}.
+approximation to the interface using radial basis functions (RBFs) \cite{Shankar:2015km}.
+This allows us to calculate geometric properties using well-known formulas, and evaluate
+the forces \eqref{eq:forces} in analytic form \cite{Maxian:2018ek}.
 
 The singular integrals \eqref{eq:interpolation} and \eqref{eq:spreading} do not lend
 themselves easily to evaluation. In particular, it is unlikely that IB points and grid
@@ -94,13 +94,15 @@ $\interface_h$, respectively, yields
 where $u^n_i$ and $f^n_i$ are discrete approximations to the components of $\u$ and $\f$
 at $\x_i\in\domain_h$ and time $t=t_n$, and $\dot{X}^n_{\smash j}$ and $F^n_{\smash j}$
 are their Lagrangian counterparts at $\X_{\smash j}$, respectively. The terms $h^d$ and
-$\d\theta_{\smash j}$ are integration weights analogous to $\d\x$ and $\d\params$. Each
-of the above equations look like a matrix-vector multiplication, so we define the
-\emph{spreading matrix} $\spread=(\delta_h(\x_i-\X^n_{\smash j}))$ with row $i$ and
-column $j$. We call its transpose, $\interp$, the \emph{interpolation matrix}. Collecting
-values $u^n_ih^d$ as $\u^n$ at each grid point and $F^n_{\smash j}\d\theta_{\smash j}$ as
-$\F^n$ at each IB point, we rewrite Equations \eqref{eq:disc-interp} and
-\eqref{eq:disc-spread} in matrix form as
+$\d\theta_{\smash j}$ are integration weights analogous to $\d\x$ and $\d\params$. For
+a connected interface, we compute weights on a sphere using RBFs \cite{Fuselier:2013coba}
+and use the geometry of the interface to obtain weights on it. Each of the above
+equations look like a matrix-vector multiplication, so we define the \emph{spreading
+matrix} $\spread=(\delta_h(\x_i-\X^n_{\smash j}))$ with row $i$ and column $j$. We call
+its transpose, $\interp$, the \emph{interpolation matrix}. Collecting values $u^n_ih^d$
+as $\u^n$ at each grid point and $F^n_{\smash j}\d\theta_{\smash j}$ as $\F^n$ at each IB
+point, we rewrite Equations \eqref{eq:disc-interp} and \eqref{eq:disc-spread} in matrix
+form as
 \begin{align}
     \label{eq:matrix-interp}
     \dot{\X}^n &= \interp\u^n \quad\text{and} \\
