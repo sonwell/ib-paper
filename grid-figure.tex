@@ -1,0 +1,75 @@
+\begin{figure}[tb]
+    \begin{center}
+    \begin{tikzpicture}[scale=1]
+        \draw[help lines] (-0.1, -0.1) grid (5.1, 5.1);
+        \draw[color=gray, fill=gray, opacity=0.2] (0.6, 0.6) rectangle (4.6, 4.6);
+        \draw[color=gray, fill=gray, opacity=0.4] (2, 2.5) rectangle (3, 3.5);
+        \node[circle, color=black, fill=black, inner sep=2pt] at (2.6, 2.6) {};
+
+        \foreach \x in {0,...,5}
+            \foreach \y in {0,...,4}
+            \draw[black, thick] (\x-0.1, \y+0.5) -- (\x+0.1, \y+0.5);
+        \node[diamond, color=black, fill=black, inner sep=2pt] at (2, 2.5) {};
+        \node[black] at (0.25, 4.75) {(a)};
+    \end{tikzpicture}
+    \hspace{1em}
+    \begin{tikzpicture}[scale=1]
+        \draw[help lines] (-0.1, -0.1) grid (5.1, 5.1);
+        \draw[color=gray, fill=gray, opacity=0.2] (0.6, 0.6) rectangle (4.6, 4.6);
+        \draw[color=gray, fill=gray, opacity=0.4] (2.5, 2) rectangle (3.5, 3);
+        \node[circle, color=black, fill=black, inner sep=2pt] at (2.6, 2.6) {};
+
+        \foreach \x in {0,...,4}
+            \foreach \y in {0,...,5}
+            \draw[black, thick] (\x+0.5, \y-0.1) -- (\x+0.5, \y+0.1);
+        \node[diamond, color=black, fill=black, inner sep=2pt] at (2.5, 2) {};
+        \node[black] at (0.25, 4.75) {(b)};
+    \end{tikzpicture}
+
+    \vspace{1em}
+
+    \begin{tikzpicture}[scale=1]
+        \draw[help lines] (-0.1, -0.1) grid (5.1, 5.1);
+        \draw[color=gray, fill=gray, opacity=0.2] (1.1, 1.1) rectangle (4.1, 4.1);
+        \draw[color=gray, fill=gray, opacity=0.4] (2.5, 2) rectangle (3.5, 3);
+        \node[circle, color=black, fill=black, inner sep=2pt] at (2.6, 2.6) {};
+
+        \foreach \x in {0,...,5}
+            \foreach \y in {0,...,4}
+            \draw[black, thick] (\x-0.1, \y+0.5) -- (\x+0.1, \y+0.5);
+        \node[diamond, color=black, fill=black, inner sep=2pt] at (3, 2.5) {};
+        \node[black] at (0.25, 4.75) {(c)};
+    \end{tikzpicture}
+    \hspace{1em}
+    \begin{tikzpicture}[scale=1]
+        \draw[help lines] (-0.1, -0.1) grid (5.1, 5.1);
+        \draw[color=gray, fill=gray, opacity=0.2] (1.1, 1.1) rectangle (4.1, 4.1);
+        \draw[color=gray, fill=gray, opacity=0.4] (2, 2.5) rectangle (3, 3.5);
+        \node[circle, color=black, fill=black, inner sep=2pt] at (2.6, 2.6) {};
+
+        \foreach \x in {0,...,4}
+            \foreach \y in {0,...,5}
+            \draw[black, thick] (\x+0.5, \y-0.1) -- (\x+0.5, \y+0.1);
+        \node[diamond, color=black, fill=black, inner sep=2pt] at (2.5, 3) {};
+        \node[black] at (0.25, 4.75) {(d)};
+    \end{tikzpicture}
+    \end{center}
+
+    \caption{%
+A region of a 2-dimensional domain $\domain$ containing point $\X$, indicated
+by a black circle. Light grey lines indicate physical units, and $\X$ has the
+same coordinates in each subfigure. Light grey boxes indicate the support of
+$\Dirac_h(\cdot-\X)$. Subfigures (a) and (b) have $s=4$ support points in each
+dimension, and (c) and (d) have $s=3$. The horizontal dashes in (a) and (c)
+intersect the unit lines at grid points on a grid with staggering
+$\stag=(0,\,0.5)$ for the horizontal component of a vector-valued quantity, and
+the intersection of vertical dashes and unit lines in (b) and (d) mark grid
+points on a grid with staggering $\stag=(0.5,\,0)$ for the vertical component.
+Those grid points within the grey boxes are also support points of $\X$. Dark
+grey boxes denote the grid cell containing $\X$, and black diamonds mark the
+grid point $\x=h(\idx{\X}+\stag)$, which corresponds to shift $\shift=(0,\,0)$.
+The position of the grid cell in (a) and (b) is typical of all even $s$, and
+the position of the grid cell in (c) and (d) is typical of all odd $s$.
+    }
+    \label{fig:grid}
+\end{figure}
