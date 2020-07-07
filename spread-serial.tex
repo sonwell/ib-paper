@@ -1,0 +1,45 @@
+\subsection{Serial spread}
+
+\begin{algorithm}
+\caption{Serial spread}
+\label{algo:serial-spread}
+\begin{algorithmic}[1]
+\Procedure{serial-spread}{$\interface_h,\,\domain_h,\,\vec{L}$}
+\State $\triangleright\ $\textbf{generate}: Values of $\ell$ sampled at each point in $\domain_h$
+\For {$i = 1,\,\ldots,\,n_\gamma$}\Comment{Loop over IB points}
+    \State $\x \gets h(\idx{\X_i}+\stag)$\Comment{$\X_i\in\interface_h$, $\x\in\domain_h$}\label{line:serial-spread-x}
+    \State $\Delta\x \gets \x-\X_i$
+    \For {$j = 1,\,\ldots,\,s^d$}\Comment{Loop over shifts}
+        \State $w \gets \Dirac_h(\Delta\x+h\shift_j)$
+        \State $k \gets \#(\idx{\x} + \shift_j)$ \label{line:serial-spread-k}
+        \If {$k\neq\error$}
+            \State $\ell_k \gets \ell_k + w \cdot L_i$ \label{line:serial-spread-write}
+        \EndIf
+    \EndFor
+\EndFor
+\State \Return $\vec{\ell}$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+Algorithm \ref{algo:serial-spread} lists an example serial implementation of spreading in
+pseudocode. The overall structure consists of two loops: a loop over the (indices of)
+IB points, and a loop over the (indices of) shifts. From this, we see that for a fixed
+choice of $\kernel$, and therefore $s$, the amount of work is $\bigo{n_\gamma}$, i.e.,
+independent of the Eulerian grid. The spread values are accumulated into a vector
+$\vec{\ell}$ (line \ref{line:serial-spread-write}). The target index, $k$ (line
+\ref{line:serial-spread-k}), is computed using the grid indexing function, introduced in
+the previous section. Of note is that $k$ depends on $\shift_j$, and $\x$, which in turn
+depends on $\X_i$, as seen on line \ref{line:serial-spread-x}. This means that $k$
+depends on both loop indices. There is no guarantee that unique pairs of the loop
+variables $i$ and $j$ will yield unique target indices. As a result, simply parallelizing
+one or both of the loops may lead to write contentions.
+
+The property that runtime be independent of the Eulerian grid is desirable, as the
+number of IB points is often much fewer than the number of grid points. In other words,
+many grid cells will be empty of IB points, and unless they have nearby IB points, there
+is no useful work to be done for that grid cell. An algorithm that depends on the
+Eulerian grid will invariably involve wasted computational resources. We therefore aim to
+preserve the independence property. This is achieved straightforwardly for interpolation.
+
+% vim: cc=90 tw=89
