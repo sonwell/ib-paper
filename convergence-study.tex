@@ -25,16 +25,16 @@ first order convergence for the fluid velocity and data site positions.
         \begin{tabular}{cc|cc|cc}
                                                                                                                  \\ \toprule
             $h$       & $k$       & $\|\u_h-\u_{0.5h}\|_2$ & order    & $\|\u_h-\u_{0.5h}\|_{\infty}$ & order    \\ \midrule
-            $1.00\um$ & $0.16\us$ & $1.50087\times10^{-2}$ &          & $7.24736\times10^{-2}$        &          \\
-            $0.50\um$ & $0.04\us$ & $1.15790\times10^{-2}$ & 0.374281 & $7.22384\times10^{-2}$        & 0.004690 \\
-            $0.25\um$ & $0.01\us$ & $6.53645\times10^{-3}$ & 0.824936 & $4.25249\times10^{-2}$        & 0.764456 \\ \bottomrule
+            $1.00\um$ & $1.6\us$ & $2.22736\times10^{-2}$ &          & $7.41870\times10^{-2}$        &          \\
+            $0.50\um$ & $0.4\us$ & $4.32802\times10^{-4}$ & 5.715132 & $1.90832\times10^{-3}$        & 5.280787 \\
+            $0.25\um$ & $0.1\us$ & $1.46835\times10^{-4}$ & 1.559507 & $1.08472\times10^{-3}$        & 0.814971 \\ \bottomrule
         \end{tabular}
         \endgroup
     \end{center}
     \caption{%
 Convergence of the fluid velocity for a deformed sphere returning to its rest
 configuration in a $16\um\times16\um\times16\um$ triply periodic domain at
-$t=16\us$. The finest grid, with $h=0.125\um$ uses timestep $k=0.0025\us$.
+$t=160\us$. The finest grid, with $h=0.125\um$ uses timestep $k=0.025\us$.
     }
     \label{tab:u-convergence}
 \end{table}
@@ -47,9 +47,9 @@ $t=16\us$. The finest grid, with $h=0.125\um$ uses timestep $k=0.0025\us$.
         \begin{tabular}{cc|cc|cc}
                                                                                                              \\ \toprule
             $h$       & $n_s$ & $\|\X_h-\X_{0.5h}\|_2$ & order    & $\|\X_h-\X_{0.5h}\|_{\infty}$ & order    \\ \midrule
-            $1.00\um$ & 220   & $1.46785\times10^{-3}$ &          & $2.22467\times10^{-3}$        &          \\
-            $0.50\um$ & 880   & $8.56819\times10^{-4}$ & 0.776638 & $1.40677\times10^{-3}$        & 0.685707 \\
-            $0.25\um$ & 3520  & $4.44894\times10^{-4}$ & 0.945527 & $7.13192\times10^{-4}$        & 0.969737 \\ \bottomrule
+            $1.00\um$ & 220   & $2.96106\times10^{-3}$ &          & $4.78122\times10^{-3}$        &          \\
+            $0.50\um$ & 880   & $7.29973\times10^{-4}$ & 2.020201 & $1.16865\times10^{-3}$        & 2.032531 \\
+            $0.25\um$ & 3520  & $3.59088\times10^{-4}$ & 1.023507 & $6.09555\times10^{-4}$        & 0.939021 \\ \bottomrule
         \end{tabular}
         \endgroup
     \end{center}

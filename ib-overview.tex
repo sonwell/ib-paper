@@ -95,13 +95,14 @@ where $u^n_i$ and $f^n_i$ are discrete approximations to the components of $\u$ 
 at $\x_i\in\domain_h$ and time $t=t_n$, and $\dot{X}^n_{\smash j}$ and $F^n_{\smash j}$
 are their Lagrangian counterparts at $\X_{\smash j}$, respectively. The terms $h^d$ and
 $\d\theta_{\smash j}$ are integration weights analogous to $\d\x$ and $\d\params$. For
-a connected interface, we compute weights on a sphere using RBFs \cite{Fuselier:2013coba}
-and use the geometry of the interface to obtain weights on it. Each of the above
-equations look like a matrix-vector multiplication, so we define the \emph{spreading
-matrix} $\spread=(\delta_h(\x_i-\X^n_{\smash j}))$ with row $i$ and column $j$. We call
-its transpose, $\interp$, the \emph{interpolation matrix}. Collecting values $u^n_ih^d$
-as $\u^n$ at each grid point and $F^n_{\smash j}\d\theta_{\smash j}$ as $\F^n$ at each IB
-point, we rewrite Equations \eqref{eq:disc-interp} and \eqref{eq:disc-spread} in matrix
+a topologically spherical interface, we compute weights on the unit sphere using RBFs
+\cite{Fuselier:2013coba} and the Jacobian of the mapping between the sphere and interface
+to obtain $\d\theta_{\smash j}$. Both \eqref{eq:disc-interp} and \eqref{eq:disc-spread}
+look like a matrix-vector multiplication, so we define the \emph{spreading matrix}
+$\spread=(\delta_h(\x_i-\X^n_{\smash j}))$ with row $i$ and column $j$. We call its
+transpose, $\interp$, the \emph{interpolation matrix}. Collecting values $u^n_ih^d$ as
+$\u^n$ at each grid point and $F^n_{\smash j}\d\theta_{\smash j}$ as $\F^n$ at each IB
+point, we rewrite equations \eqref{eq:disc-interp} and \eqref{eq:disc-spread} in matrix
 form as
 \begin{align}
     \label{eq:matrix-interp}
