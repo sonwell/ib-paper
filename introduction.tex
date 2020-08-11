@@ -3,27 +3,30 @@
 Many problems in biophysics involve the interaction of an incompressible fluid and an
 immersed elastic interface. The solution to these problems can be approximated using the
 immersed boundary (IB) method, which was developed by Charles Peskin to simulate blood
-flow through the heart \cite{Peskin:1972wa}. This method couples the equations governing
-fluid velocity and pressure to those governing the interface movement and elastic forces
-via operations we will refer to as \term{interpolation} and \term{spreading}. Fluid
-properties are discretized on an Eulerian grid with fixed Cartesian locations. The
-interface is represented by a set of Lagrangian points whose Cartesian locations vary in
-time. This presents a problem for effective parallelization of interpolation and
-spreading, as these operators must be reconstructed at each timestep to account for the
-motion of the interface. The Eulerian and Lagrangian points, on the other hand, can be
-treated as fixed for several timesteps, if not for the entirety of a simulation. We may
-therefore treat solving the fluid equations and computing elastic forces as an
-implementation detail and focus primarily on the interpolation and spreading operations.
-The strength of the IB method is its ability to be incorporated into a Navier-Stokes
-solver with relative ease. This has led to its popularity in myriad applications (See,
-e.g. \cite{Iaccarino:2005ii,Griffith:2020hi} and references therein).
+flow through the heart \cite{Peskin:1972wa}. The relative ease by which the IB method can
+be incorporated into a Navier-Stokes solver has led to its popularity in myriad
+applications (see, e.g. \cite{Iaccarino:2005ii,Griffith:2020hi} and references therein).
+The IB method couples the equations governing fluid velocity and pressure to those
+governing the interface movement and elastic forces via operations we will refer to as
+\term{interpolation} and \term{spreading}. Fluid velocities are interpolated to points on
+the interface, and forces on the interface are spread to the fluid. Fluid properties are
+discretized on an Eulerian grid with fixed Cartesian locations. The interface is
+represented by a set of Lagrangian points whose Cartesian locations vary in time. This
+presents a problem for effective parallelization of interpolation and spreading, as these
+operators must be reconstructed at each timestep to account for the motion of the
+interface. The Eulerian and Lagrangian points, on the other hand, can be treated as fixed
+for several timesteps, if not for the entirety of a simulation. We may therefore treat
+solving the fluid equations and computing elastic forces as an implementation detail and
+focus primarily on the interpolation and spreading operations.
 
 We are interested primarily in the case of neutrally buoyant, elastic immersed structures
-that move at the local fluid velocity, but do not impose it. In particular, we are
-motivated by the desire to simulate whole blood, composed of red blood cells (RBCs) and
-platelets immersed in blood plasma, in a vessel lined by endothelial cells. Approximately
-40\% of the volume in healthy human blood is occupied by RBCs, and so even small domains
-may require tens or hundreds of thousands of IB points to discretize these cells.
+that move at the local fluid velocity, but do not impose it. In particular, we aim to
+simulate whole blood, which is composed of red blood cells (RBCs) and platelets immersed
+in blood plasma, within a vessel lined by endothelial cells. The cells are elastic, and
+as they deform with the flow of the enveloping fluid, impose a force on the fluid.
+Approximately 40\% of the volume in healthy human blood is occupied by RBCs, and so even
+small domains may require tens or hundreds of thousands of points to discretize these
+cells for use within the IB method.
 
 To take advantage of modern computing architectures, with ever-increasing numbers of
 processors, it is necessary to develop parallel algorithms for the IB method.
@@ -32,42 +35,42 @@ parallelize the interpolation and spreading operations on the Cray C-90 computer
 shared memory and a modest number of vector processors. Their results illustrate the need
 for a fast interpolation and spreading: even parallelized, they spend roughly half of the
 wall clock time spreading and interpolating. Fai, \textit{et al.} \cite{Fai:2013do}
-adapted, and successfully used, this domain decomposition scheme for use on a general
-purpose graphical processing unit (GPGPU).  An alternative is to distribute work among
-several devices, each with their own memory. This idea underpins the popular IBAMR
-library \cite{Griffith:2007uk}, which adaptively refines the mesh around the immersed
-structure. The cuIBM \cite{Layton:2011um} and PetIBM \cite{Chuang:2018ej} libraries
-implement the IB method for prescribed motion on single- and multi-GPU architectures,
-respectively.
+adapted this domain decomposition scheme for use on a general purpose graphical
+processing unit (GPGPU; GPU for short). Patel \cite{Patel:2012tc} parallelized spreading
+on a GPU by processing one Lagrangian point at a time. Because neither of these
+approaches can concurrently process any arbitrarily Lagrangian points, it is easy to find
+cases for which they perform poorly. An alternative is to distribute work among several
+devices, each with their own memory. This idea underpins the popular IBAMR library
+\cite{Griffith:2007uk,Griffith:2007do,Griffith:2009gg, Griffith:2011gi, Griffith:2017id},
+which also adaptively refines the mesh around the immersed structure. With proper
+load-balancing, this allows a serial algorithm to process a smaller portion of work.
+A cluster of multicore devices, however, will not be used effectively without a
+shared-memory parallel algorithm. The cuIBM \cite{Layton:2011um} and PetIBM
+\cite{Chuang:2018ej} libraries implement an adaptive IB method for prescribed motion on
+single- and multi-GPU architectures, respectively, by explicitly constructing the
+spreading and interpolation operators. These operators are sparse, but the sparsity
+pattern of the resulting spreading matrix does not always lend itself well to
+parallelization.
 
-GPGPUs have severe restrictions on their parallelization. Individual computational units
-(``threads'' or ``work-items'') are collected in groups (``warps'' or ``wavefronts'') of
-32 or 64 threads. Work is divided among coordinated thread arrays (CTAs, ``blocks'', or
-``workgroups''), which comprise several warps, whose threads may or may not contribute to
-the overall computation. GPUs run code using single instruction, multiple data
-parallelism, which means that each active thread in a CTA executes the same instruction
-on its own datum. Threads in the same warp which attempt to perform separate operations
-contribute to warp divergence, which instead of performing calculations in parallel,
-forces each thread to perform both operations serially, but keeps only the desired
-result. GPUs are equipped with their own memory hierarchies; the relevant portions of
-which are global, shared, and register memory, in increasing read/write speed. The global
-memory is accessible to all threads. While reading and writing to global memory is slow,
-reads and writes within a warp to sequential memory locations requires minimal
-round-trips. It is therefore desirable to minimize global memory use. Shared memory is
-accessible to all threads in a CTA, so a computation can be performed collaboratively
-within a CTA. It is the preferred method of sharing data among threads. Register memory
-is, with certain exceptions, limited to a single thread.  However, shared and register
-memory are limited, and exceeding those limits typically results in fewer CTAs operating
-in parallel. CPUs, on the other hand, do not have such restrictions on memory accesses,
-and multicore CPUs can perform vastly different tasks in parallel without issue. The
-restrictions on the GPU lead us to treat the GPU as the lowest common denominator; an
-effective algorithm for the GPU should translate well to other architectures.
+GPUs have severe restrictions on their parallelization. They use single instruction,
+multiple data (SIMD) parallelism, in which each computational unit, or thread, executes
+the same instruction on its own data. Threads attempting to perform different operations
+do so serially. On the other hand, multicore CPUs can perform different tasks in parallel
+without issue. Some CPUs even have support for certain SIMD operations or instruction
+pipelining. Concurrency on the GPU can be limited by exceeding the amount of shared
+memory, which is shared among a group of threads, or register memory, which is accessible
+only to a single thread. The alternative is to use global memory, which is slow in
+general, but faster when accesses are sequential (or ``coalesced''). The restrictions on
+the GPU lead us to treat the GPU as the lowest common denominator; an effective algorithm
+for the GPU should translate well to other shared-memory architectures.
 
 Here, we discuss the parallelization of interpolation and introduce a new parallelization
 for the spreading operation. We demonstrate that the concurrency of these algorithms
 scales with the number of IB points, independently of the Eulerian grid. The algorithms
-divide these operations into trivially parallelizable tasks and parallel primitives. They
-are therefore suitable for use on GPGPUs. We begin with an introduction to the IB method,
-and the role of the interpolation and spreading operations.
+eschew the explicit construction of spreading and interpolation operators, instead
+dividing the operations into trivially parallelizable tasks and parallel primitives. They
+are therefore suitable for use on GPGPUs and by extension, CPUs. We begin with an
+introduction to the IB method, and the role of the interpolation and spreading
+operations.
 
 % vim: cc=90 tw=89
