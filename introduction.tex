@@ -19,14 +19,14 @@ for several timesteps, if not for the entirety of a simulation. We may therefore
 solving the fluid equations and computing elastic forces as an implementation detail and
 focus primarily on the interpolation and spreading operations.
 
-We are interested primarily in the case of neutrally buoyant, elastic immersed structures
-that move at the local fluid velocity, but do not impose it. In particular, we aim to
-simulate whole blood, which is composed of red blood cells (RBCs) and platelets immersed
-in blood plasma, within a vessel lined by endothelial cells. The cells are elastic, and
-as they deform with the flow of the enveloping fluid, impose a force on the fluid.
-Approximately 40\% of the volume in healthy human blood is occupied by RBCs, and so even
-small domains may require tens or hundreds of thousands of points to discretize these
-cells for use within the IB method.
+We are interested in the case of neutrally buoyant, elastic immersed structures that move
+at the local fluid velocity, but do not impose it. In particular, we aim to simulate
+whole blood, which is composed of red blood cells (RBCs) and platelets immersed in blood
+plasma, within a vessel lined by endothelial cells. The cells are elastic, and as they
+deform with the flow of the enveloping fluid, impose a force on the fluid.  Approximately
+40\% of the volume in healthy human blood is occupied by RBCs, and so even small domains
+may require tens or hundreds of thousands of points to discretize these cells for use
+within the IB method.
 
 To take advantage of modern computing architectures, with ever-increasing numbers of
 processors, it is necessary to develop parallel algorithms for the IB method.
@@ -38,18 +38,19 @@ wall clock time spreading and interpolating. Fai, \textit{et al.} \cite{Fai:2013
 adapted this domain decomposition scheme for use on a general purpose graphical
 processing unit (GPGPU; GPU for short). Patel \cite{Patel:2012tc} parallelized spreading
 on a GPU by processing one Lagrangian point at a time. Because neither of these
-approaches can concurrently process any arbitrarily Lagrangian points, it is easy to find
-cases for which they perform poorly. An alternative is to distribute work among several
-devices, each with their own memory. This idea underpins the popular IBAMR library
+approaches can concurrently process arbitrary Lagrangian points, it is easy to find cases
+for which they perform poorly. An alternative is to distribute work among several
+devices, each with its own memory. This idea underpins the popular IBAMR library
 \cite{Griffith:2007uk,Griffith:2007do,Griffith:2009gg, Griffith:2011gi, Griffith:2017id},
 which also adaptively refines the mesh around the immersed structure. With proper
 load-balancing, this allows a serial algorithm to process a smaller portion of work.
 A cluster of multicore devices, however, will not be used effectively without a
 shared-memory parallel algorithm. The cuIBM \cite{Layton:2011um} and PetIBM
-\cite{Chuang:2018ej} libraries implement an adaptive IB method for prescribed motion on
-single- and multi-GPU architectures, respectively, by explicitly constructing the
-spreading and interpolation operators. These operators are sparse, but the sparsity
-pattern of the resulting spreading matrix does not always lend itself well to
+\cite{Mesnard:2017te,Chuang:2018ej} libraries implement an adaptive IB method for
+prescribed motion on single- and multi-GPU architectures, respectively. The authors
+demonstrate their method on a few two-dimensional test problems. Their implementation
+explicitly construct the spreading and interpolation operators, which are sparse, but the
+sparsity pattern of the spreading matrix does not always lend itself well to
 parallelization.
 
 GPUs have severe restrictions on their parallelization. They use single instruction,
