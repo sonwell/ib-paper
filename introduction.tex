@@ -65,13 +65,15 @@ general, but faster when accesses are sequential (or ``coalesced''). The restric
 the GPU lead us to treat the GPU as the lowest common denominator; an effective algorithm
 for the GPU should translate well to other shared-memory architectures.
 
-Here, we discuss the parallelization of interpolation and introduce a new parallelization
-for the spreading operation. We demonstrate that the concurrency of these algorithms
-scales with the number of IB points, independently of the Eulerian grid. The algorithms
-eschew the explicit construction of spreading and interpolation operators, instead
-dividing the operations into trivially parallelizable tasks and parallel primitives. They
-are therefore suitable for use on GPGPUs and by extension, CPUs. We begin with an
-introduction to the IB method, and the role of the interpolation and spreading
-operations.
+The remainder of this paper is organized into four sections. Section \ref{sec:ib} gives
+an overview of the IB method, and describes the role of the interpolation and spread
+operations. In Section \ref{sec:parallel}, we discuss the parallelization of
+interpolation and introduce a new parallelization for the spreading operation. In Section
+\ref{sec:results}, we demonstrate that the concurrency of these algorithms scales with
+the number of IB points, independently of the Eulerian grid. We confirm the convergence
+of the IB method with these new algorithms. The algorithms divide the operations into
+trivially parallelizable tasks and parallel primitives, making them suitable for use on
+GPGPUs and multicore CPUs. We illustrate this with weak and strong scaling tests.
+Finally, we summarize our findings in Section \ref{sec:summary}.
 
 % vim: cc=90 tw=89
