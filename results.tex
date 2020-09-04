@@ -8,8 +8,7 @@ a $16\um\times16\um\times16\um$ triply periodic domain with an initially shear-l
 $\u=(0,\,0,\,\shear(y-8\um))$, with shear rate $\shear$. Tests use a shear rate of
 $1000\si{\per\second}$ unless otherwise noted. This flow has a sharp transition at the
 periodic boundary $y=0\um$, so a background force is added to maintain this transition
-and so that the initial flow is also the steady flow in the absence of other forces, as
-in \cite{Fai:2013do}.
+and so that the initial flow is also the steady flow in the absence of other forces.
 
 Serial and multicore CPU tests were performed on a single node with 48 Intel{\reg}
 Xeon{\reg} CPU E5-2697 v2 2.70\si{\giga\hertz} processors and 256 GB of RAM running
@@ -58,12 +57,12 @@ are initially within approximately $0.5h$ of each other. We spread forces from t
 sites. It is generally the case that $n_s > n_d$, so that we interpolate to fewer points
 than we spread from. In the parlance of Section \ref{sec:parallel}, $n_\gamma=n_d$ in the
 context of interpolation, and $n_\gamma=n_s$ in the context of spreading. These point
-sets are generated using the method described in \cite{Shankar:2018ur}. In this case, we
-invoke the fluid solver, so that as the object deforms, the force it imparts on the fluid
-will affect the fluid velocity. The sphere and RBC are elastic, obeying the Skalak
-constitutive law \cite{Skalak:1973tp} with shear modulus $2.5\times10^{-3}\dynpercm$ and
-bulk modulus $2.5\times10^{-1}\dynpercm$. The RBC has rest configuration given in
-\cite{Omori:2012hw}:
+sets are generated using the method described in a previous work \cite{Shankar:2018ur}.
+In this case, we invoke the fluid solver, so that as the object deforms, the force it
+imparts on the fluid will affect the fluid velocity. The sphere and RBC are elastic,
+obeying the Skalak constitutive law \cite{Skalak:1973tp} with shear modulus
+$2.5\times10^{-3}\dynpercm$ and bulk modulus $2.5\times10^{-1}\dynpercm$. The RBC has
+reference configuration \cite{Omori:2012hw}:
 \begin{equation}
     \begin{aligned}
         x(\theta,\,\varphi) &= R_0\cos\theta\cos\varphi, \\

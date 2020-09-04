@@ -6,10 +6,10 @@ nonzero entries per row. This property is beneficial for parallelization. Consid
 $i\th$ row of $\interp$, which corresponds to interpolating to IB point $\X_i$ using the
 values at its support points. There are at most $s^d$ values in that row, which
 correspond to the shifts that give a potentially nonzero value for $\Dirac_h$. Compute
-$\x=h(\idx{\X_i}+\stag)$. Then $\Delta\x=\X_i-\x$. Since the shifts $\{\shift_j\}$ are
-known beforehand, we can compute $\Dirac_h(\shift_j-\Delta\x)$ and accumulate products
+$\x=h(\idx{\X_i}+\stag)$. Then $\Delta\x=\x-\X_i$. Since the shifts $\{\shift_j\}$ are
+known beforehand, we can compute $\Dirac_h(h\shift_j+\Delta\x)$ and accumulate products
 \begin{equation*}
-    E_i = \sum_{\substack{j=1\\\#(\shift_j+\idx{\x})\neq\error}}^{s^d}\Dirac_h(\shift_j+\Delta\x)e_{\#(\shift_j+\idx{\x})},
+    E_i = \sum_{\substack{j=1\\\#(\shift_j+\idx{\x})\neq\error}}^{s^d}\Dirac_h(h\shift_j+\Delta\x)e_{\#(\shift_j+\idx{\x})},
 \end{equation*}
 where $\#(\vec{i})$ is defined in Equation \ref{eq:grid-index-fn}. This is done for each
 IB point, for a total work proportional to the number of IB points.

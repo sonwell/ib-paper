@@ -72,8 +72,8 @@ grestore
 \usepackage{xspace}
 \usepackage{manfnt}
 \usepackage{siunitx}
-\usepackage{float}
 \usepackage{fmtcount}
+\usepackage[nomarkers,nolists]{endfloat}
 
 \usetikzlibrary{matrix}
 \usetikzlibrary{shapes}
@@ -181,6 +181,7 @@ grestore
 % The correct dates will be entered by the editor
 
 
+
 \maketitle
 
 \begin{abstract}
@@ -208,20 +209,29 @@ multicore CPU and GPU\@.
 \input{results}
 \input{conclusion}
 
-%\begin{acknowledgements}
-%\end{acknowledgements}
-
-
-% Authors must disclose all relationships or interests that 
-% could have direct or potential influence or impart bias on 
-% the work: 
-%
-
-%\section*{Conflict of interest}
-
+\begin{acknowledgements}
+The authors thank Aaron Barrett for scaling test suggestions.
+\end{acknowledgements}
 
 \bibliography{ib-paper}{}
 \bibliographystyle{spmpsci}      % mathematics and physical sciences
+
+\section*{Declarations}
+\subsection*{Funding}
+\subsection*{Conflicts of interest/Competing interests}
+The authors have no conflicts of interest to declare.
+\subsection*{Availability of data and material} Not applicable
+\subsection*{Code availability} Code is available at \url{https://github.com/sonwell/ib.cu}.
+\subsection*{Authors' contributions}
+Conceptualization: Andrew Kassen;
+Methodology: Andrew Kassen, Varun Shankar;
+Investigation: Andrew Kassen;
+Writing - original draft preparation: Andrew Kassen;
+Writing - review and editing: Andrew Kassen, Varun Shankar, Aaron Fogelson;
+Funding acquisition: Varun Shankar, Aaron Fogelson;
+Resources: Aaron Fogelson;
+Software: Andrew Kassen;
+Supervision: Varun Shankar, Aaron Fogelson.
 \end{document}
 % end of file template.tex
 
