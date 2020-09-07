@@ -10,14 +10,14 @@ The IB method couples the equations governing fluid velocity and pressure to tho
 governing the interface movement and elastic forces via operations we will refer to as
 \term{interpolation} and \term{spreading}. Fluid velocities are interpolated to points on
 the interface, and forces on the interface are spread to the fluid. Fluid properties are
-discretized on an Eulerian grid with fixed Cartesian locations. The interface is
-represented by a set of Lagrangian points whose Cartesian locations vary in time. This
-presents a problem for effective parallelization of interpolation and spreading, as these
-operators must be reconstructed at each timestep to account for the motion of the
-interface. The Eulerian and Lagrangian points, on the other hand, can be treated as fixed
-for several timesteps, if not for the entirety of a simulation. We may therefore treat
-solving the fluid equations and computing elastic forces as an implementation detail and
-focus primarily on the interpolation and spreading operations.
+discretized on a fixed Eulerian grid. The interface is represented by a set of mobile
+Lagrangian points. This presents a problem for effective parallelization of interpolation
+and spreading, as these operators must be reconstructed at each timestep to account for
+the motion of the Lagrangian points relative to the Eulerian grid. The Eulerian and
+Lagrangian points, on the other hand, can be treated as fixed in their respective
+coordinate spaces for several timesteps, if not for the entirety of a simulation. We may
+therefore treat solving the fluid equations and computing elastic forces as an
+implementation detail and focus primarily on the interpolation and spreading operations.
 
 We are interested in the case of neutrally buoyant, elastic immersed structures that move
 at the local fluid velocity, but do not impose it. In particular, we aim to simulate
@@ -53,17 +53,18 @@ explicitly construct the spreading and interpolation operators, which are sparse
 sparsity pattern of the spreading matrix does not always lend itself well to
 parallelization.
 
-GPUs have severe restrictions on their parallelization. They use single instruction,
+GPUs have restrictions on their parallelization. They use single instruction,
 multiple data (SIMD) parallelism, in which each computational unit, or thread, executes
-the same instruction on its own data. Threads attempting to perform different operations
-do so serially. On the other hand, multicore CPUs can perform different tasks in parallel
-without issue. Some CPUs even have support for certain SIMD operations or instruction
-pipelining. Concurrency on the GPU can be limited by exceeding the amount of shared
-memory, which is shared among a group of threads, or register memory, which is accessible
-only to a single thread. The alternative is to use global memory, which is slow in
-general, but faster when accesses are sequential (or ``coalesced''). The restrictions on
-the GPU lead us to treat the GPU as the lowest common denominator; an effective algorithm
-for the GPU should translate well to other shared-memory architectures.
+the same instruction on its own data. Concurrency on the GPU is limited by the amount of
+shared memory, which is shared among a group of threads, and register memory, which is
+accessible only to a single thread. The alternative is to use global memory, which is
+slow in general, but faster when accesses are sequential (or ``coalesced''). An effective
+algorithm for the GPU should translate well to other shared-memory architectures, such
+such as multicore CPUs, which support parallelism, SIMD instructions, advanced
+instruction pipelining, and out-of-order execution. We therefore develop parallel
+spreading and interpolation algorithms applicable to both GPUs and multicore CPUs. The
+success of our new algorithms relies in dividing these operations into trivially
+parallelizable tasks and parallel primitives.
 
 The remainder of this paper is organized into four sections. Section \ref{sec:ib} gives
 an overview of the IB method, and describes the role of the interpolation and spread
@@ -71,9 +72,7 @@ operations. In Section \ref{sec:parallel}, we discuss the parallelization of
 interpolation and introduce a new parallelization for the spreading operation. In Section
 \ref{sec:results}, we demonstrate that the concurrency of these algorithms scales with
 the number of IB points, independently of the Eulerian grid. We confirm the convergence
-of the IB method with these new algorithms. The algorithms divide the operations into
-trivially parallelizable tasks and parallel primitives, making them suitable for use on
-GPGPUs and multicore CPUs. We illustrate this with weak and strong scaling tests.
-Finally, we summarize our findings in Section \ref{sec:summary}.
+of the IB method with these new algorithms. We illustrate with weak and strong scaling
+tests. Finally, we summarize our findings in Section \ref{sec:summary}.
 
 % vim: cc=90 tw=89

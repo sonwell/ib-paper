@@ -73,7 +73,7 @@ grestore
 \usepackage{manfnt}
 \usepackage{siunitx}
 \usepackage{fmtcount}
-\usepackage[nomarkers,nolists]{endfloat}
+%\usepackage[nomarkers,nolists]{endfloat}
 
 \usetikzlibrary{matrix}
 \usetikzlibrary{shapes}
@@ -165,7 +165,7 @@ grestore
 %\subtitle{}
 %\titlerunning{}
 
-\author{Andrew Kassen \and Varun Shankar \and Aaron Fogelson}
+\author{Andrew Kassen \and Varun Shankar \and Aaron L. Fogelson}
 
 \authorrunning{}
 %\authorrunning{Short form of author list} % if too long for running head
@@ -173,7 +173,7 @@ grestore
 \institute{%
     A. Kassen \at Department of Mathematics \newline University of Utah \and
     V. Shankar \at School of Computing \newline University of Utah \and
-    A. Fogelson \at Departments of Mathematics and Biomedical Engineering \newline University of Utah \newline
+    A. L. Fogelson \at Departments of Mathematics and Biomedical Engineering \newline University of Utah \newline
     \email{fogelson@math.utah.edu}
 }
 
@@ -185,13 +185,13 @@ grestore
 \maketitle
 
 \begin{abstract}
-We introduce a parallel implementation of the immersed boundary method
-Euler\-ian-Lagrangian interaction operations which relies on the well-studied parallel
-primitives key-value sort and segmented reduce. This makes the algorithms feasible for
-use on general purpose graphical processing units (GPGPUs) in addition to most other
-shared-memory architectures. We test these algorithms on arbitrarily scattered points and
-elastic structures. The tests exhibit near-ideal scaling for the algorithms on both a
-multicore CPU and GPU\@.
+We present new algorithms for the parallelization of Eulerian-Lagrangian interaction
+operations in the immersed boundary method. Our algorithms rely on two well-studied
+parallel primitives: key-value sort and segmented reduce. The use of these parallel
+primitives allows us to implement our algorithms on both graphics processing units (GPUs)
+and on other shared memory architectures. We present strong and weak scaling tests on
+problems involving scattered points and elastic structures. Our tests show that our
+algorithms exhibit near-ideal scaling on both multicore CPUs and GPUs\@.
 
 \keywords{%
     CUDA \and
@@ -210,7 +210,9 @@ multicore CPU and GPU\@.
 \input{conclusion}
 
 \begin{acknowledgements}
-The authors thank Aaron Barrett for scaling test suggestions.
+A. K. and A. L. F. were supported, in part, by NSF grants DMS-1521748 and DMS-176898.
+V. S. was supported by NSF grants DMS-1521748 and CISE CCF-1714844. The authors
+acknowledge useful discussions with Dr. Aaron Barrett.
 \end{acknowledgements}
 
 \bibliography{ib-paper}{}
@@ -221,7 +223,8 @@ The authors thank Aaron Barrett for scaling test suggestions.
 \subsection*{Conflicts of interest/Competing interests}
 The authors have no conflicts of interest to declare.
 \subsection*{Availability of data and material} Not applicable
-\subsection*{Code availability} Code is available at \url{https://github.com/sonwell/ib.cu}.
+\subsection*{Code availability} Code is available at~%
+\url{https://github.com/sonwell/ib.cu}.
 \subsection*{Authors' contributions}
 Conceptualization: Andrew Kassen;
 Methodology: Andrew Kassen, Varun Shankar;

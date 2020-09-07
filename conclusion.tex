@@ -14,4 +14,14 @@ and number of threads.  We observed that on the GPU, larger problem sizes led to
 speedup plateaus, indicating that larger problems on more capable hardware will achieve
 even larger speedups than presented here.
 
+Our work does not consider how the algorithms will perform on multi-node systems, though
+we expect them to perform well, as the algorithms do not depend on partitioning the
+Eulerian or Lagrangian points. Because information about the Eulerian grid is encoded by
+the functions $\key$ and $\#$, a distributed-memory algorithm may use a different $\key$
+or $\#$ for each node. For other considerations on load-balancing for IB calculations on
+distributed-memory systems, we refer the reader to Griffith, \textit{et al.}
+\cite{Griffith:2007uk}. As simulations become more computationally intensive, such
+algorithms will become more necessary. To that end, we will adapt these algorithms for
+multi-node and multi-GPU systems.
+
 % vim: cc=90 tw=89
