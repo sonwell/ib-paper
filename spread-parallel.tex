@@ -6,16 +6,16 @@ for each IB point corresponding to $\shift_j$ is unique. In this case, we can sp
 those support points without concern for write contentions. This is unlikely to occur in
 practice. On the other hand, if every IB point were in the same grid cell, values could
 be accumulated in parallel before being spread. This too is unlikely to occur in
-practice. We employ the \emph{segmented reduce} algorithm, which, given a list of values
-and a corresponding list of keys, will sum (reduce) consecutive values as long as their
-keys match. The result is a potentially shorter list of reduced values and a list of
-non-repeating keys, though they may not be unique within the list. Suppose we were able
-to order the keys and values so that repeated keys are listed consecutively. The result
-is a list of unique keys and all values with the same key are combined. Assign each grid
-cell a unique index, and for each IB point, use the index for the grid cell it inhabits
-as its key. Then, segmented reduce accumulates values spread from IB points in the same
-grid cell for the given shift. Now, we have at most one value per grid cell, and can
-write without contentions.
+practice. We can instead employ the \emph{segmented reduce} algorithm, which, given a
+list of values and a corresponding list of keys, will sum (reduce) consecutive values as
+long as their keys match. The result is a potentially shorter list of reduced values and
+a list of non-repeating keys, though they may not be unique within the list. Suppose we
+were able to order the keys and values so that repeated keys are listed consecutively.
+The result is a list of unique keys and all values with the same key are combined. Assign
+each grid cell a unique index, and for each IB point, use the index for the grid cell it
+inhabits as its key. Then, segmented reduce accumulates values spread from IB points in
+the same grid cell for the given shift. Now, we have at most one value per grid cell, and
+can write without contentions.
 
 To ensure that repeated keys are listed consecutively, we use \emph{key-value sort},
 which, given a list of values and a corresponding list of keys, sorts values according to

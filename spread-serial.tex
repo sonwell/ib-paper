@@ -29,7 +29,7 @@ choice of $\kernel$, and therefore $s$, the amount of work is $\bigo{n_\gamma}$,
 independent of the Eulerian grid. The spread values are accumulated into a vector
 $\vec{\ell}$ (line \ref{line:serial-spread-write}). The target index, $k$ (line
 \ref{line:serial-spread-k}), is computed using the grid indexing function, introduced in
-the previous section. Of note is that $k$ depends on $\shift_j$, and $\x$, which in turn
+the previous section. Note that $k$ depends on $\shift_j$, and $\x$, which in turn
 depends on $\X_i$, as seen on line \ref{line:serial-spread-x}. This means that $k$
 depends on both loop indices. There is no guarantee that unique pairs of the loop
 variables $i$ and $j$ will yield unique target indices. As a result, simply parallelizing

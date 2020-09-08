@@ -1,12 +1,12 @@
 \section{Summary} \label{sec:summary}
 
-We have presented a parallel algorithm for interpolation and introduced a novel parallel
+We presented a parallel algorithm for interpolation and introduced a novel parallel
 algorithm for spreading forces from time-dependent interfaces in the immersed boundary
 method. These algorithms have a runtime that is independent of the Eulerian grid. This
 makes the parallelization useful for cases where IB points inhabit only a small
-percentage of the Eulerian grid cells. We have also introduced two variants for spread
-which trade off dependence on the Eulerian grid, in the form of a few vector adds and
-memory allocation, for improved runtimes for small enough grids.
+percentage of the Eulerian grid cells. We also introduced two variants for spread which
+trade off dependence on the Eulerian grid, in the form of a few vector adds and memory
+allocation, for improved runtimes for small enough grids.
 
 These algorithms exhibit nearly ideal scaling, on both the CPU and GPU, for problems of
 fixed size and increasing number of threads, as well as for problems of increasing size
@@ -14,14 +14,13 @@ and number of threads.  We observed that on the GPU, larger problem sizes led to
 speedup plateaus, indicating that larger problems on more capable hardware will achieve
 even larger speedups than presented here.
 
-Our work does not consider how the algorithms will perform on multi-node systems, though
-we expect them to perform well, as the algorithms do not depend on partitioning the
-Eulerian or Lagrangian points. Because information about the Eulerian grid is encoded by
-the functions $\key$ and $\#$, a distributed-memory algorithm may use a different $\key$
-or $\#$ for each node. For other considerations on load-balancing for IB calculations on
-distributed-memory systems, we refer the reader to Griffith, \textit{et al.}
-\cite{Griffith:2007uk}. As simulations become more computationally intensive, such
-algorithms will become more necessary. To that end, we will adapt these algorithms for
+This work does not consider how our algorithms will perform on multi-node systems, though
+we anticipate they will perform well as they do not rely on partitioning the Eulerian or
+Lagrangian points. Because information about the Eulerian grid is encoded by the
+functions $\key$ and $\#$, an optimized distributed-memory algorithm may need to use a
+different $\key$ or $\#$ function on each node, to account for Eulerian grid
+partitioning. As simulations become more computationally intensive, such algorithms will
+become more necessary. To that end, future work involves adapting our algorithms for
 multi-node and multi-GPU systems.
 
 % vim: cc=90 tw=89

@@ -55,16 +55,16 @@ parallelization.
 
 GPUs have restrictions on their parallelization. They use single instruction,
 multiple data (SIMD) parallelism, in which each computational unit, or thread, executes
-the same instruction on its own data. Concurrency on the GPU is limited by the amount of
-shared memory, which is shared among a group of threads, and register memory, which is
+the same instruction on its own data. Concurrency on the GPU is typically limited by the
+amount of shared memory, which is shared among a group of threads, and register memory, which is
 accessible only to a single thread. The alternative is to use global memory, which is
-slow in general, but faster when accesses are sequential (or ``coalesced''). An effective
-algorithm for the GPU should translate well to other shared-memory architectures, such
-such as multicore CPUs, which support parallelism, SIMD instructions, advanced
-instruction pipelining, and out-of-order execution. We therefore develop parallel
-spreading and interpolation algorithms applicable to both GPUs and multicore CPUs. The
-success of our new algorithms relies in dividing these operations into trivially
-parallelizable tasks and parallel primitives.
+slow in general, but faster when accesses are sequential (or ``coalesced''). These
+restrictions on the GPU imply that an effective algorithm for the GPU translates well to
+other shared-memory architectures, such such as multicore CPUs, which support
+parallelism, SIMD instructions, advanced instruction pipelining, and out-of-order
+execution. We therefore develop parallel spreading and interpolation algorithms
+applicable to both GPUs and multicore CPUs. The success of our new algorithms relies in
+dividing these operations into trivially parallelizable tasks and parallel primitives.
 
 The remainder of this paper is organized into four sections. Section \ref{sec:ib} gives
 an overview of the IB method, and describes the role of the interpolation and spread
@@ -72,7 +72,8 @@ operations. In Section \ref{sec:parallel}, we discuss the parallelization of
 interpolation and introduce a new parallelization for the spreading operation. In Section
 \ref{sec:results}, we demonstrate that the concurrency of these algorithms scales with
 the number of IB points, independently of the Eulerian grid. We confirm the convergence
-of the IB method with these new algorithms. We illustrate with weak and strong scaling
+of the IB method with these new algorithms. We illustrate the suitability of our
+algorithms to both GPUs and multicore CPU architectures with both weak and strong scaling
 tests. Finally, we summarize our findings in Section \ref{sec:summary}.
 
 % vim: cc=90 tw=89
