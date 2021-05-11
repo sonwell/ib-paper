@@ -2,10 +2,10 @@
 
 Many problems in biophysics involve the interaction of an incompressible fluid and an
 immersed elastic interface. The solution to these problems can be approximated using the
-immersed boundary (IB) method, which was developed by Charles Peskin to simulate blood
-flow through the heart \cite{Peskin:1972wa}. The relative ease by which the IB method can
-be incorporated into a Navier-Stokes solver has led to its popularity in myriad
-applications (see, e.g. \cite{Iaccarino:2005ii,Griffith:2020hi} and references therein).
+immersed boundary (IB) method, which was developed in~\cite{Peskin:1972wa} to simulate
+blood flow through the heart. The relative ease by which the IB method can be
+incorporated into a Navier-Stokes solver has led to its popularity in myriad applications
+(see, e.g.~\cite{Iaccarino:2005ii,Griffith:2020hi} and references therein).
 The IB method couples the equations governing fluid velocity and pressure to those
 governing the interface movement and elastic forces via operations we will refer to as
 \term{interpolation} and \term{spreading}. Fluid velocities are interpolated to points on
@@ -23,57 +23,56 @@ We are interested in the case of neutrally buoyant, elastic immersed structures 
 at the local fluid velocity, but do not impose it. In particular, we aim to simulate
 whole blood, which is composed of red blood cells (RBCs) and platelets immersed in blood
 plasma, within a vessel lined by endothelial cells. The cells are elastic, and as they
-deform with the flow of the enveloping fluid, impose a force on the fluid.  Approximately
+deform with the flow of the enveloping fluid, impose a force on the fluid. Approximately
 40\% of the volume in healthy human blood is occupied by RBCs, and so even small domains
 may require tens or hundreds of thousands of points to discretize these cells for use
 within the IB method.
 
 To take advantage of modern computing architectures, with ever-increasing numbers of
-processors, it is necessary to develop parallel algorithms for the IB method.
-McQueen and Peskin \cite{McQueen:1997kw} present a domain decomposition scheme to
-parallelize the interpolation and spreading operations on the Cray C-90 computer with
-shared memory and a modest number of vector processors. Their results illustrate the need
-for a fast interpolation and spreading: even parallelized, they spend roughly half of the
-wall clock time spreading and interpolating. Fai, \textit{et al.} \cite{Fai:2013do}
-adapted this domain decomposition scheme for use on a general purpose graphical
-processing unit (GPGPU; GPU for short). Patel \cite{Patel:2012tc} parallelized spreading
-on a GPU by processing one Lagrangian point at a time. Because neither of these
-approaches can concurrently process arbitrary Lagrangian points, it is easy to find cases
-for which they perform poorly. An alternative is to distribute work among several
-devices, each with its own memory. This idea underpins the popular IBAMR library
-\cite{Griffith:2007uk,Griffith:2007do,Griffith:2009gg, Griffith:2011gi, Griffith:2017id},
-which also adaptively refines the mesh around the immersed structure. With proper
-load-balancing, this allows a serial algorithm to process a smaller portion of work.
-A cluster of multicore devices, however, will not be used effectively without a
-shared-memory parallel algorithm. The cuIBM \cite{Layton:2011um} and PetIBM
-\cite{Mesnard:2017te,Chuang:2018ej} libraries implement an adaptive IB method for
-prescribed motion on single- and multi-GPU architectures, respectively. The authors
-demonstrate their method on a few two-dimensional test problems. Their implementation
-explicitly construct the spreading and interpolation operators, which are sparse, but the
-sparsity pattern of the spreading matrix does not always lend itself well to
-parallelization.
+processors, it is necessary to develop parallel algorithms for the IB method.~%
+\cite{McQueen:1997kw} present a domain decomposition scheme to parallelize the
+interpolation and spreading operations on the Cray C-90 computer with shared memory and a
+modest number of vector processors. Their results illustrate the need for a fast
+interpolation and spreading: even parallelized, they spend roughly half of the wall clock
+time spreading and interpolating.~\cite{Fai:2013do} adapted this domain decomposition
+scheme for use on a general purpose graphical processing unit (GPGPU; GPU for short).~%
+\cite{Patel:2012tc} parallelized spreading on a GPU by processing one Lagrangian point at
+a time. Because neither of these approaches can concurrently process arbitrary Lagrangian
+points, it is easy to find cases for which they perform poorly. An alternative is to
+distribute work among several devices, each with its own memory. This idea underpins the
+popular IBAMR library (see~\cite{Griffith:2007uk,Griffith:2007do,Griffith:2009gg,
+Griffith:2011gi,Griffith:2017id}), which also adaptively refines the mesh around the
+immersed structure. With proper load-balancing, this allows a serial algorithm to process
+a smaller portion of work. A cluster of multicore devices, however, will not be used
+effectively without a shared-memory parallel algorithm. The cuIBM (\cite{Layton:2011um})
+and PetIBM (\cite{Mesnard:2017te,Chuang:2018ej}) libraries implement an adaptive IB
+method for prescribed motion on single- and multi-GPU architectures, respectively. The
+authors demonstrate their method on a few two-dimensional test problems. Their
+implementation explicitly construct the spreading and interpolation operators,
+which are sparse, but the sparsity pattern of the spreading matrix does not always lend
+itself well to parallelization.
 
 GPUs have restrictions on their parallelization. They use single instruction,
 multiple data (SIMD) parallelism, in which each computational unit, or thread, executes
 the same instruction on its own data. Concurrency on the GPU is typically limited by the
-amount of shared memory, which is shared among a group of threads, and register memory, which is
-accessible only to a single thread. The alternative is to use global memory, which is
-slow in general, but faster when accesses are sequential (or ``coalesced''). These
-restrictions on the GPU imply that an effective algorithm for the GPU translates well to
-other shared-memory architectures, such such as multicore CPUs, which support
+amount of shared memory, which is shared among a group of threads, and register memory,
+which is accessible only to a single thread. The alternative is to use global memory,
+which is slow in general, but faster when accesses are sequential (or ``coalesced'').
+These restrictions on the GPU imply that an effective algorithm for the GPU translates
+well to other shared-memory architectures, such such as multicore CPUs, which support
 parallelism, SIMD instructions, advanced instruction pipelining, and out-of-order
 execution. We therefore develop parallel spreading and interpolation algorithms
 applicable to both GPUs and multicore CPUs. The success of our new algorithms relies in
 dividing these operations into trivially parallelizable tasks and parallel primitives.
 
-The remainder of this paper is organized into four sections. Section \ref{sec:ib} gives
+The remainder of this paper is organized into four sections. Section~\ref{sec:ib} gives
 an overview of the IB method, and describes the role of the interpolation and spread
-operations. In Section \ref{sec:parallel}, we discuss the parallelization of
-interpolation and introduce a new parallelization for the spreading operation. In Section
-\ref{sec:results}, we demonstrate that the concurrency of these algorithms scales with
-the number of IB points, independently of the Eulerian grid. We confirm the convergence
-of the IB method with these new algorithms. We illustrate the suitability of our
-algorithms to both GPUs and multicore CPU architectures with both weak and strong scaling
-tests. Finally, we summarize our findings in Section \ref{sec:summary}.
+operations. In Section~\ref{sec:parallel}, we discuss the parallelization of
+interpolation and introduce a new parallelization for the spreading operation. In
+Section~\ref{sec:results}, we demonstrate that the concurrency of these algorithms scales
+with the number of IB points, independently of the Eulerian grid. We confirm the
+convergence of the IB method with these new algorithms. We illustrate the suitability of
+our algorithms to both GPUs and multicore CPU architectures with both weak and strong
+scaling tests. Finally, we summarize our findings in Section~\ref{sec:summary}.
 
 % vim: cc=90 tw=89

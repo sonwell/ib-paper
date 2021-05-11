@@ -34,25 +34,28 @@ and writing for each shift completes the calculation.
 \caption{Parallel spread}
 \label{algo:par-spread}
 \begin{algorithmic}[1]
-\Procedure{parallel-spread}{$\interface_h,\,\domain_h,\,\vec{L}$}
+\Procedure{par-spread}{$\interface_h,\,\domain_h,\,\vec{L}$}
 \State $\triangleright\ $\textbf{generate}: Values of $\ell$ sampled at each point in $\domain_h$
-\For {$i = 1,\,\ldots,\,n_\gamma$ \textbf{parallel}} \label{line:par-spread-ps} \Comment{Loop over IB points}
+\For {$i = 1,\,\ldots,\,n_\gamma$ \textbf{parallel}} \label{line:par-spread-ps}
+    \Statex \Comment{Loop over IB points}
     \State $K_i \gets \key(\idx{\X_i})$ \Comment{Sort key}
     \State $P_i \gets i$ \Comment{Initial ordering}
 \EndFor
-\State \textbf{sort} $\{P_i\}$ \textbf{by} $\{K_i\}$ \Comment{$\{P_i\}$ now defines a permutation} \label{line:par-spread-sort}
+\State \textbf{sort} $\{P_i\}$ \textbf{by} $\{K_i\}$ \label{line:par-spread-sort} \Comment{$i\to P_i$ is a permutation} 
 \State $q \gets \text{\textbf{count unique} }\{K_i\}$ \label{line:par-spread-q}
 \For  {$j = 1,\,\ldots,\,s^d$} \label{line:par-spread-shifts} \Comment{Loop over shifts}
     \State $\{K'_i\} \gets \{K_i\}$
-    \For {$i = 1,\,\ldots,\,n_\gamma$ \textbf{parallel}} \label{line:par-spread-v} \Comment{Loop over IB points}
+    \For {$i = 1,\,\ldots,\,n_\gamma$ \textbf{parallel}} \label{line:par-spread-v}
+        \Statex \Comment{Loop over IB points}
         \State $p \gets P_i$
         \State $\x \gets h(\idx{\X_p}+\stag)$\Comment{$\X_p\in\interface_h$, $\x\in\domain_h$}
         \State $\Delta\x \gets \x-\X_i$
         \State $w \gets \Dirac_h(\Delta\x+h\shift_j)$
         \State $V_i \gets w \cdot L_p$
     \EndFor \label{line:par-spread-vend}
-    \textbf{reduce} $\{V_i\}$ \textbf{by} $\{K'_i\}$ \label{line:par-spread-reduce} \Comment{Segmented reduce}
-    \For {$i = 1,\,\ldots,\,q$ \textbf{parallel}} \label{line:par-spread-quse}\Comment{Loop over inhabited grid cells, $q \le n_\gamma$}
+    \State \textbf{reduce} $\{V_i\}$ \textbf{by} $\{K'_i\}$ \label{line:par-spread-reduce} \Comment{Segmented reduce}
+    \For {$i = 1,\,\ldots,\,q$ \textbf{parallel}} \label{line:par-spread-quse}
+        \Statex\Comment{Loop over inhabited grid cells, $q \le n_\gamma$}
         \State $\x \gets h(\key^{-1}(K'_i) + \stag)$
         \State $m \gets \#(\idx{\x} + \shift_j)$ \Comment{$\idx{\x}\equiv\key^{-1}(K'_i)$}
         \If {$m\neq\error$}
@@ -143,21 +146,23 @@ output vector of the buffer. We choose $\bufsz\approx 10$ values to compute each
 iteration. Summing the vectors in the buffer yields the desired result.
 
 \begin{algorithm}
-\caption{Buffered parallel spreading (pre-allocated buffer)}
+\caption{Pre-allocated buffer parallel spreading}
 \label{algo:pa-spread}
 \begin{algorithmic}[1]
-\Procedure{pa-buffer-parallel-spread}{$\interface_h,\,\domain_h,\,\vec{L}, \vec{\ell}_1,\,\ldots,\,\vec{\ell}_\bufsz$}
+\Procedure{pa-par-spread}{$\interface_h,\,\domain_h,\,\vec{L}, \vec{\ell}_1,\,\ldots,\,\vec{\ell}_\bufsz$}
 \State $\triangleright\ $\textbf{require}: $\bufsz \ge 1$
 \State $\triangleright\ $\textbf{generate}: Values of $\ell$ sampled at each point in $\domain_h$
-\For {$i = 1,\,\ldots,\,n_\gamma$ \textbf{parallel}} \Comment{Loop over IB points}
+\For {$i = 1,\,\ldots,\,n_\gamma$ \textbf{parallel}}
+    \Statex \Comment{Loop over IB points}
     \State $K_i \gets \key(\idx{\X_i})$ \Comment{Sort key}
     \State $P_i \gets i$ \Comment{Initial ordering}
 \EndFor
-\State \textbf{sort} $\{P_i\}$ \textbf{by} $\{K_i\}$
+\State \textbf{sort} $\{P_i\}$ \textbf{by} $\{K_i\}$ \Comment{$i\to P_i$ is a permutation}
 \State $q \gets \text{\textbf{count unique} }\{K_i\}$
 \For {$j = 1,\,\ldots,\,\ceil{s^d/\bufsz}$} \Comment{Loop over shifts}
     \State $\{K'_i\} \gets \{K_i\}$
-    \For {$i = 1,\,\ldots,\,n_\gamma$ \textbf{parallel}} \Comment{Loop over IB points}
+    \For {$i = 1,\,\ldots,\,n_\gamma$ \textbf{parallel}}
+        \Statex \Comment{Loop over IB points}
         \State $p \gets P_i$
         \State $\x \gets h(\idx{\X}+\stag)$\Comment{$\X_p\in\interface_h$, $\x\in\domain_h$}
         \State $\Delta\x \gets \x-\X_i$
@@ -167,10 +172,11 @@ iteration. Summing the vectors in the buffer yields the desired result.
         \EndFor
     \EndFor
     \State \textbf{reduce} $\{V_{i\cdot}\}$ \textbf{by} $\{K'_i\}$
-    \For {$i = 1,\,\ldots,\,q$ \textbf{parallel}} \Comment{Loop over inhabited grid cells, $q\le n_\gamma$}
+    \For {$i = 1,\,\ldots,\,q$ \textbf{parallel}}
+        \Statex \Comment{Loop over inhabited grid cells, $q\le n_\gamma$}
         \State $\x \gets h(\key^{-1}(K'_i) + \stag)$
         \For {$k=1,\,\ldots,\,\textbf{min}(\bufsz,\,s^d-\bufsz\cdot j)$}
-            \State $m \gets \#(\x + \shift_{\bufsz\cdot j + k})$
+            \State $m \gets \#(\idx{\x} + \shift_{\bufsz\cdot j + k})$
             \If {$m\neq\error$}
                 \State $\ell_{mk} \gets \ell_{mk} + V_{ik}$
             \EndIf
@@ -183,16 +189,17 @@ iteration. Summing the vectors in the buffer yields the desired result.
 \end{algorithm}
 
 \begin{algorithm}
-\caption{Buffered parallel spreading (on-the-fly buffer allocation)}
+\caption{On-the-fly buffer parallel spreading}
 \label{algo:otf-spread}
 \begin{algorithmic}[1]
-\Procedure{otf-buffer-parallel-spread}{$\interface_h,\,\domain_h,\,\vec{L}$}
+\Procedure{otf-par-spread}{$\interface_h,\,\domain_h,\,\vec{L}$}
 \State $\triangleright\ $\textbf{require}: $\bufsz \ge 1$
 \State $\triangleright\ $\textbf{generate}: Values of $\ell$ sampled at each point in $\interface_h$
 \For {$i = k,\,\ldots,\,\bufsz$}
     \State $\vec{\ell}_k \gets \vec{0}$
 \EndFor
-\State \Return \Call{pa-buffer-parallel-spread}{$\interface_h,\,\domain_h,\,\vec{L},\,\vec{\ell}_1,\,\ldots,\,\vec{\ell}_\bufsz$} \Comment{Algorithm \ref{algo:pa-spread}}
+\State \Return \Call{pa-par-spread}{$\interface_h,\,\domain_h,\,\vec{L},\,\vec{\ell}_1,\,\ldots,\,\vec{\ell}_\bufsz$}
+\Statex \Comment{Algorithm \ref{algo:pa-spread}}
 \EndProcedure \Comment{Lifetime of $\vec{\ell}_k$ ends here}
 \end{algorithmic}
 \end{algorithm}

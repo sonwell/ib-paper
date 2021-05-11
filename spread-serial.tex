@@ -4,7 +4,7 @@
 \caption{Serial spread}
 \label{algo:serial-spread}
 \begin{algorithmic}[1]
-\Procedure{serial-spread}{$\interface_h,\,\domain_h,\,\vec{L}$}
+\Procedure{seq-spread}{$\interface_h,\,\domain_h,\,\vec{L}$}
 \State $\triangleright\ $\textbf{generate}: Values of $\ell$ sampled at each point in $\domain_h$
 \For {$i = 1,\,\ldots,\,n_\gamma$}\Comment{Loop over IB points}
     \State $\x \gets h(\idx{\X_i}+\stag)$\Comment{$\X_i\in\interface_h$, $\x\in\domain_h$}\label{line:serial-spread-x}

@@ -22,7 +22,7 @@ variables. Throughout, we write Eulerian quantities in the lowercase Latin alpha
 Let $\X=\X(\params,\,t)$ represent a parametrization of the Cartesian coordinates of the
 immersed interface with material coordinates $\params$ at time $t$. Let $\L[\X]$ be the
 energy density functional for the elastic interface material. The elastic force density
-is computed by evaluating the Fréchet derivative of $\L$,
+is computed by evaluating% the Fréchet derivative of $\L$,
 \begin{equation}
     \label{eq:forces}
     \F = -\delta \L[\X],
@@ -41,46 +41,47 @@ to the elastic force. Analytically, the fluid-interface interactions can be writ
 \end{gather}
 where $\U(\params,\,t)$ represents the derivative of $\X(\params,\,t)$ with respect to
 $t$, and $\Dirac(\x-\X(\params,\,t))$ is the Dirac $\Dirac$-function centered at
-$\X(\params,\,t)$.  Equation \eqref{eq:interpolation} is called \term{interpolation}, and
+$\X(\params,\,t)$. Equation~\eqref{eq:interpolation} is called \term{interpolation}, and
 the result of the right-hand side is the fluid velocity at $\X(\params,\,t)$; namely,
-$\U(\params,\,t) = \u(\X(\params,\,t),\,t)$.  Equation \eqref{eq:spreading} is called
+$\U(\params,\,t) = \u(\X(\params,\,t),\,t)$. Equation~\eqref{eq:spreading} is called
 \term{spreading}, because while $\F(\params,\,t)$ has units of force per unit \emph{area}
 on $\interface$, $\f(\x,\,t)$ has units of force per unit \emph{volume} in $\domain$. The
 force $\F(\params,\,t)\d\params$ over area $\d\params$ is ``spread'' to the force
 $\f(\x,\,t)\d\x$ over volume $\d\x$. 
 
-The fluid equations \eqref{eq:ins-evol}--\eqref{eq:ins-incomp} are spatially discretized
+The fluid equations~\eqref{eq:ins-evol}--\eqref{eq:ins-incomp} are spatially discretized
 on a regular grid of spacing $h$ so that $\domain$ is divided into square or cubic cells
-of side length $h$. Because of the checkerboard instability (see, e.g.,
+of side length $h$. Because of the checkerboard instability (see, e.g.,~%
 \cite{Wesseling:2001ci}) in solving the Navier-Stokes equations on collocated regular
 grids, we stagger the components of Eulerian vector quantities. As a result, different
 components are discretized at different locations, but corresponding components are
 discretized on the same grid. Grid cells for these staggered grids do not coincide. We
 therefore consider each of these grids individually. We use $\domain_h$ to denote the set
 of grid points for the grid under consideration, and $n_\omega$ to denote the number of
-grid points. The momentum equation \eqref{eq:ins-evol} is discretized in time using a
-second-order implicit-explicit Runge-Kutta method \cite{Peskin:2002go}, and the
-incompressibility condition \eqref{eq:ins-incomp} is satisfied using PmIII
+grid points. The momentum equation~\eqref{eq:ins-evol} is discretized in time using a
+second-order implicit-explicit Runge-Kutta method as described in~\cite{Peskin:2002go},
+and the incompressibility condition~\eqref{eq:ins-incomp} is satisfied using PmIII of~%
 \cite{Brown:2001bq}.
 
-The Lagrangian force density \eqref{eq:forces} is evaluated at a set of points, usually a
+The Lagrangian force density~\eqref{eq:forces} is evaluated at a set of points, usually a
 \emph{fixed} set of points in material coordinates, referred to as IB points. The
 notation $\X_j=\X(\params_j,\,t)$ refers to an individual IB point on $\interface$ in
 Cartesian coordinates. The typical heuristic for distributing the points $\X_j$ on a
 connected interface places neighboring IB points at most $h$ apart from one another, and
 often at most $h/2$ apart. We therefore denote the set of IB points by $\interface_h$ and
 the number of IB points by $n_\gamma$. From these points, we construct a smooth
-approximation to the interface using radial basis functions (RBFs) \cite{Shankar:2015km}.
-This allows us to calculate geometric properties using well-known formulas, and evaluate
-the forces \eqref{eq:forces} in analytic form \cite{Maxian:2018ek}.
+approximation to the interface using radial basis functions (RBFs), as in~%
+\cite{Shankar:2015km}. This allows us to calculate geometric properties using well-known
+formulas, and evaluate the forces~\eqref{eq:forces} in analytic form, similar to that of%
+~\cite{Maxian:2018ek}.
 
-The singular integrals \eqref{eq:interpolation} and \eqref{eq:spreading} do not lend
+The singular integrals~\eqref{eq:interpolation} and~\eqref{eq:spreading} do not lend
 themselves easily to evaluation. In particular, it is unlikely that IB points and grid
 points will coincide. For a regular grid with spacing $h$, we replace the Dirac
 $\Dirac$-function with a regularized kernel, $\Dirac_h$, which is a product of
-one-dimensional kernels, $h^{-1}\kernel(h^{-1}x)$. There are several options for
-$\kernel$ \cite{Griffith:2020hi}, but we will restrict ourselves to the simple cosine
-kernel \cite{Peskin:2002go}.
+one-dimensional kernels, $h^{-1}\kernel(h^{-1}x)$.~\cite{Griffith:2020hi} gives several
+options for $\kernel$, but we will restrict ourselves to the simple cosine kernel from~%
+\cite{Peskin:2002go}.
 
 Let $\domain_h$ be one of the Eulerian grids for vector-valued quantities. Discretizing
 equations \eqref{eq:scalar-interp} and \eqref{eq:scalar-spread} on $\domain_h$ and
@@ -95,10 +96,11 @@ where $u^n_i$ and $f^n_i$ are discrete approximations to the components of $\u$ 
 at $\x_i\in\domain_h$ and time $t=t_n$, and $\dot{X}^n_{\smash j}$ and $F^n_{\smash j}$
 are their Lagrangian counterparts at $\X_{\smash j}$, respectively. The terms $h^d$ and
 $\d\theta_{\smash j}$ are integration weights analogous to $\d\x$ and $\d\params$. For
-a topologically spherical interface, we compute weights on the unit sphere using RBFs
-\cite{Fuselier:2013coba} and the Jacobian of the mapping between the sphere and interface
-to obtain $\d\theta_{\smash j}$. Both \eqref{eq:disc-interp} and \eqref{eq:disc-spread}
-look like a matrix-vector multiplication, so we define the \emph{spreading matrix}
+a topologically spherical interface, we compute weights on the unit sphere using RBFs,
+using a simplified version of the method described in \cite{Fuselier:2013coba}, and use
+the Jacobian of the mapping between the sphere and interface to obtain
+$\d\theta_{\smash j}$. Both \eqref{eq:disc-interp} and \eqref{eq:disc-spread} look like a
+matrix-vector multiplication, so we define the \emph{spreading matrix}
 $\spread=(\delta_h(\x_i-\X^n_{\smash j}))$ with row $i$ and column $j$. We call its
 transpose, $\interp$, the \emph{interpolation matrix}. Collecting values $u^n_ih^d$ as
 $\u^n$ at each grid point and $F^n_{\smash j}\d\theta_{\smash j}$ as $\F^n$ at each IB
@@ -129,59 +131,7 @@ proceeds with timestep $k$ roughly as follows:
 We group these steps into 3 categories: the purely Eulerian (\texttt{e}) and
 (\texttt{f}); the purely Lagrangian (\texttt{b}), (\texttt{c}), and (\texttt{h}); and the
 Eulerian-Lagrangian coupling (\texttt{a}), (\texttt{d}), and (\texttt{g}). We discuss the
-%parallelization of the
-first two categories in a forthcoming paper.
-%
-%briefly before tackling the third.
-%
-%\section{Parallelization in the Eulerian and Lagrangian frames}
-%
-%Given an Eulerian force density $\f$ and Lagrangian fluid velocity $\U$ it is
-%a straightforward matter to parallelize the evolution of the fluid velocity and interface
-%forces, as they are otherwise independent of one another. Assuming fixed sets of grid
-%points and material coordinates for IB points, any interdependence of points within a
-%frame can be accounted for at the outset to ease parallelization during the course of a
-%simulation.
-%
-%To solve for the fluid velocity, we use the 2nd-order Runge-Kutta method described in
-%\cite{Peskin:2002go}.  We compute the advection term in conservation form. For, e.g., the
-%quantity $(uv)_y$, we average $u$ in the $y$ direction and $v$ in the $x$ direction. The
-%product of these averages is then differentiated in the $y$ direction. We correct near
-%boundaries to ensure exact recovery of parabolic flows. This involves scaling certain
-%terms by a constant factor to account for errors in discretizing the Laplacian near the
-%boundary. To take advantage of the GPU, the solver must be highly parallel. To that end,
-%the Helmholtz equations that arise from discretizing equation \eqref{eq:ins-evol} are
-%solved using conjugate gradients preconditioned with Chebyshev iteration. Chebyshev
-%iteration is an attractive method because, other than parallel vector addition and
-%scaling, it requires only the ability to perform sparse matrix-vector multiplication.
-%This can be achieved with the appropriate sparse storage formate and a linear algebra
-%library such as Intel's \texttt{MKL} or NVIDIA's \texttt{cuSPARSE}. Incompressibility is
-%enforced using PmIII of \cite{Brown:2001bq}.  Satisfying the incompressibility condition
-%\eqref{eq:ins-incomp} requires a Poisson solve, which is done using conjugate gradients
-%preconditioned with full-weighting multigrid. The multigrid routine also uses Chebyshev
-%iteration, restricted to high-frequency modes, for relaxation. The resulting solver is
-%highly parallel and is suitable for any combination of boundary conditions.
-%
-%Elastic structures are modeled using radial basis functions (RBFs) to construct the
-%surface, as in \cite{Shankar:2015km}. The Fr\'echet derivative in equation
-%\eqref{eq:forces} is computed analytically, following \cite{Maxian:2018ek}, and evaluated
-%by computing tangents and higher-order surface derivatives on the structure. These
-%differential operators are dense, but computed only once and used throughout the course
-%of a simulation. The forces are used in equation \eqref{eq:spreading}, for which we
-%require integration weights. As the structures of interest are topologically spheres, we
-%follow \cite{Fuselier:2013coba} to compute weights on the sphere, and geometric
-%information about both the sphere and the structure to obtain appropriate weights for the
-%structure \cite{Maxian:2018ek}. The construction of the operators and their application
-%requires a way to solve linear systems and perform dense matrix-matrix and matrix-vector
-%multiplications. The \texttt{LAPACK} and \texttt{BLAS} libraries are the standard. There
-%are numerous parallel implementations of these libraries; for the GPU, we employ NVIDIA's
-%implementations, \texttt{cuSOLVER} and \texttt{cuBLAS}.
-%
-%The interaction operations, however, must take into account the motion of the Eulerian
-%and Lagrangian frames relative to one another, and must therefore be recomputed every
-%timestep. The remainder of this paper discusses the implementation and parallelization
-%of these operations.
-The remainder of this paper discusses the implementation and parallelization of the
-third.
+first two categories in a forthcoming paper. The remainder of this paper discusses the
+implementation and parallelization of the third.
 
 % vim: cc=90 tw=89

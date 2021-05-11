@@ -18,12 +18,12 @@ IB point, for a total work proportional to the number of IB points.
 \caption{Parallel interpolation}
 \label{algo:par-interp}
 \begin{algorithmic}[1]
-\Procedure{parallel-interpolate}{$\interface_h,\,\domain_h,\,\vec{e}$}
+\Procedure{par-interpolate}{$\interface_h,\,\domain_h,\,\vec{e}$}
 \State $\triangleright\ $\textbf{generate}: Values of $E$ sampled at each point in $\interface_h$
 \For {$i = 1,\,\ldots,\,n_\gamma$ \textbf{parallel}}
     \State $\x \gets h(\idx{\X_i}+\stag)$\Comment{$\X_i\in\interface_h$, $\x\in\domain_h$}
     \State $\Delta\x \gets \x-\X_i$
-    \State $v \gets 0$\Comment{Temporary accumulation variable}
+    \State $v \gets 0$\Comment{Accumulator}
     \For {$j = 1,\,\ldots,\,s^d$}
         \State $w \gets \Dirac_h(\Delta\x+h\shift_j)$
         \State $k \gets \#(\idx{\x}+\shift_j)$

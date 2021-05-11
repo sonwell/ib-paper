@@ -1,55 +1,6 @@
-%%%%%%%%%%%%%%%%%%%%%%% file template.tex %%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% This is a general template file for the LaTeX package SVJour3
-% for Springer journals.          Springer Heidelberg 2010/09/16
-%
-% Copy it to a new file with a new name and use it as the basis
-% for your article. Delete % signs as needed.
-%
-% This template includes a few options for different layouts and
-% content for various journals. Please consult a previous issue of
-% your journal as needed.
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% First comes an example EPS file -- just ignore it and
-% proceed on the \documentclass line
-% your LaTeX will extract the file if required
-\begin{filecontents*}{example.eps}
-%!PS-Adobe-3.0 EPSF-3.0
-%%BoundingBox: 19 19 221 221
-%%CreationDate: Mon Sep 29 1997
-%%Creator: programmed by hand (JK)
-%%EndComments
-gsave
-newpath
-  20 20 moveto
-  20 220 lineto
-  220 220 lineto
-  220 20 lineto
-closepath
-2 setlinewidth
-gsave
-  .4 setgray fill
-grestore
-stroke
-grestore
-\end{filecontents*}
-%
 \RequirePackage{fix-cm}
 %
-%\documentclass{svjour3}                     % onecolumn (standard format)
-\documentclass[smallcondensed]{svjour3}     % onecolumn (ditto)
-%\documentclass[smallextended]{svjour3}       % onecolumn (second format)
-%\documentclass[twocolumn]{svjour3}          % twocolumn
-%
-\smartqed  % flush right qed marks, e.g. at end of proof
-%
-%\usepackage{mathptmx}      % use Times fonts if available on your TeX system
-\usepackage{newtxtext,newtxmath}      % use Times fonts if available on your TeX system
-%
-% insert here the call for the packages your document requires
-%\usepackage{latexsym}
+\documentclass[Afour,sageh,times]{sagej}
 %
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -64,7 +15,6 @@ grestore
 \usepackage{subfigure}
 \usepackage{tikz}
 \usepackage{xfrac}
-\usepackage{cite}
 \usepackage[hidelinks]{hyperref}
 \usepackage{algpseudocode}
 \usepackage{longtable}
@@ -73,6 +23,8 @@ grestore
 \usepackage{manfnt}
 \usepackage{siunitx}
 \usepackage{fmtcount}
+\usepackage[normalem]{ulem}
+
 %\usepackage[nomarkers,nolists]{endfloat}
 
 \usetikzlibrary{matrix}
@@ -80,7 +32,25 @@ grestore
 \usetikzlibrary{positioning}
 \usetikzlibrary{calc}
 \usetikzlibrary{snakes}
+\usetikzlibrary{patterns}
 \usepgfplotslibrary{groupplots}
+
+\pgfdeclarepatternformonly{thick horizontal lines}{\pgfpointorigin}{\pgfqpoint{100pt}{1pt}}{\pgfqpoint{100pt}{3pt}}%
+{
+  \pgfsetlinewidth{2pt}
+  \pgfpathmoveto{\pgfqpoint{0pt}{0.5pt}}
+  \pgfpathlineto{\pgfqpoint{100pt}{0.5pt}}
+  \pgfusepath{stroke}
+}
+
+\pgfdeclarepatternformonly{thick vertical lines}{\pgfpointorigin}{\pgfqpoint{1pt}{100pt}}{\pgfqpoint{3pt}{100pt}}%
+{
+  \pgfsetlinewidth{2pt}
+  \pgfpathmoveto{\pgfqpoint{0.5pt}{0pt}}
+  \pgfpathlineto{\pgfqpoint{0.5pt}{100pt}}
+  \pgfusepath{stroke}
+}
+
 \newfloat{algorithm}{t}{lop}
 
 \definecolor{tol/contrast/blue}{RGB}{0,68,136}
@@ -100,8 +70,6 @@ grestore
 \definecolor{tol/rainbow/15}{RGB}{78,178,101}
 \definecolor{tol/rainbow/10}{RGB}{25,101,176}
 
-% please place your own definitions here and don't use \def but
-% \newcommand{}{}
 
 \newcommand{\titletable}[2]{\bgroup\renewcommand{\arraystretch}{1.0}\begin{tabular}{@{}c@{}}{#1}\\\scalebox{0.75}{$N={#2}$}\end{tabular}\egroup}
 \renewcommand{\vec}[1]{\boldsymbol{#1}}
@@ -142,7 +110,7 @@ grestore
 \newcommand{\shift}{\vec{\sigma}}
 \newcommand{\error}{\varnothing}
 \newcommand{\bigo}[1]{\mathcal{O}({#1})}
-\newcommand{\supp}{\mathrm{supp}\mskip\thinmuskip}
+\newcommand{\supp}{\operatorname{supp}}
 \newcommand{\bufsz}{\texttt{sz}}
 \newcommand{\shear}{\dot{\gamma}}
 \newcommand{\nth}[2][m]{\ordinalnum{#2}[#1]}
@@ -151,38 +119,29 @@ grestore
 \newcommand{\thrust}{\texttt{thrust}}
 \newcommand{\term}[1]{\textit{#1}}
 
-% Insert the name of "your journal" with
-% \journalname{myjournal}
-\journalname{Journal of Scientific Computing}
-%
+\allowdisplaybreaks
+
+\setcounter{secnumdepth}{3}
 \begin{document}
 
 \title{%
-    A fine-grained parallelization of the immersed boundary method
-    %\thanks{$thanks$}
+A fine-grained parallelization of the immersed boundary method
 }
 
-%\subtitle{}
-%\titlerunning{}
-
-\author{Andrew Kassen \and Varun Shankar \and Aaron L. Fogelson}
-
-\authorrunning{}
-%\authorrunning{Short form of author list} % if too long for running head
-
-\institute{%
-    A. Kassen \at Department of Mathematics \newline University of Utah \and
-    V. Shankar \at School of Computing \newline University of Utah \and
-    A. L. Fogelson \at Departments of Mathematics and Biomedical Engineering \newline University of Utah \newline
-    \email{fogelson@math.utah.edu}
+\author{%
+Andrew Kassen\affilnum{1},
+Varun Shankar\affilnum{2} and
+Aaron L. Fogelson\affilnum{1,3}
 }
 
-\date{Received: date / Accepted: date}
-% The correct dates will be entered by the editor
+\affiliation{%
+\affilnum{1}Department of Mathematics, University of Utah, Salt Lake City, UT, USA\\
+\affilnum{2}School of Computing, University of Utah, Salt Lake City, UT, USA\\
+\affilnum{3}Department of Biomedical Engineering, University of Utah, Salt Lake City, UT, USA
+}
 
-
-
-\maketitle
+\corrauth{Aaron L. Fogelson, 155 S 1400 E, JWB 233, Salt Lake City, UT 84112, USA}
+\email{fogelson@math.utah.edu}
 
 \begin{abstract}
 We present new algorithms for the parallelization of Eulerian-Lagrangian interaction
@@ -192,16 +151,14 @@ primitives allows us to implement our algorithms on both graphics processing uni
 and on other shared memory architectures. We present strong and weak scaling tests on
 problems involving scattered points and elastic structures. Our tests show that our
 algorithms exhibit near-ideal scaling on both multicore CPUs and GPUs\@.
+\end{abstract}
 
 \keywords{%
-    CUDA \and
-    high performance computing \and
-    computational fluid dynamics \and
-    immersed boundary method \and
-    geometric modeling \and
-    red blood cell
+CUDA, computational fluid dynamics,
+immersed boundary method, geometric modeling, red blood cell
 }
-\end{abstract}
+
+\maketitle
 
 \input{introduction}
 \input{ib-overview}
@@ -209,32 +166,21 @@ algorithms exhibit near-ideal scaling on both multicore CPUs and GPUs\@.
 \input{results}
 \input{conclusion}
 
-\begin{acknowledgements}
-A. K. and A. L. F. were supported, in part, by NSF grants DMS-1521748 and DMS-176898.
-V. S. was supported by NSF grants DMS-1521748 and CISE CCF-1714844. The authors
-acknowledge useful discussions with Dr. Aaron Barrett.
-\end{acknowledgements}
+\begin{acks}
+The authors acknowledge useful discussions with Dr. Aaron Barrett.
+\end{acks}
 
-\bibliography{ib-paper}{}
-\bibliographystyle{spmpsci}      % mathematics and physical sciences
-
-\section*{Declarations}
-\subsection*{Funding}
-\subsection*{Conflicts of interest/Competing interests}
+\begin{dci}
 The authors have no conflicts of interest to declare.
-\subsection*{Availability of data and material} Not applicable
-\subsection*{Code availability} Code is available at~%
-\url{https://github.com/sonwell/ib.cu}.
-\subsection*{Authors' contributions}
-Conceptualization: Andrew Kassen;
-Methodology: Andrew Kassen, Varun Shankar;
-Investigation: Andrew Kassen;
-Writing - original draft preparation: Andrew Kassen;
-Writing - review and editing: Andrew Kassen, Varun Shankar, Aaron Fogelson;
-Funding acquisition: Varun Shankar, Aaron Fogelson;
-Resources: Aaron Fogelson;
-Software: Andrew Kassen;
-Supervision: Varun Shankar, Aaron Fogelson.
+\end{dci}
+
+\begin{funding}
+A. K. and A. L. F. were supported, in part, by NSF grants DMS-1521748 and DMS-176898.
+V. S. was supported by NSF grants DMS-1521748 and CISE CCF-1714844.
+\end{funding}
+
+\bibliography{ib-paper}
+\bibliographystyle{SageH}
 \end{document}
 % end of file template.tex
 

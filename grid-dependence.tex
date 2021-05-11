@@ -1,18 +1,18 @@
 \subsubsection{Dependence on background grid}\label{sec:grid-dependence}
 
-The serial Algorithms \ref{algo:par-interp} and \ref{algo:serial-spread} do not
+The serial Algorithms~\ref{algo:serial-spread} and~\ref{algo:par-interp} do not
 explicitly depend on the size of the fluid grid. With perhaps the exception of the
-sorting and reducing steps, Algorithm \ref{algo:par-spread} also does not depend on the
-size of the grid. Algorithms \ref{algo:pa-spread} and \ref{algo:otf-spread}, on the other
-hand, ultimately sum their buffer vectors, which have one entry per grid point. Algorithm
-\ref{algo:otf-spread} also incorporates the allocation of these buffers. Using a few
-different fluid grids, we investigate whether Algorithms \ref{algo:par-interp} and
-\ref{algo:par-spread} are independent of the grid in practice, and how the grid
-dependence affects the runtime of Algorithms \ref{algo:pa-spread} and
+sorting and reducing steps, Algorithm~\ref{algo:par-spread} also does not depend on the
+size of the grid. Algorithms~\ref{algo:pa-spread} and~\ref{algo:otf-spread}, on the other
+hand, ultimately sum their buffer vectors, which have one entry per grid point.
+Algorithm~\ref{algo:otf-spread} also incorporates the allocation of these buffers. Using
+a few different fluid grids, we investigate whether Algorithms~\ref{algo:par-interp} and%
+~\ref{algo:par-spread} are independent of the grid in practice, and how the grid
+dependence affects the runtime of Algorithms~\ref{algo:pa-spread} and~%
 \ref{algo:otf-spread}.
 %
 
-\begin{table}[ht]
+\begin{table*}[ht]
     \begin{center}
     \bgroup
     \renewcommand{\arraystretch}{1.7}
@@ -42,7 +42,7 @@ timestep. Grid refinement is the number of grid points per $16\um$ in each dimen
 Times per call to the listed algorithm are reported in seconds.
     }
     \label{tab:grid-timing}
-\end{table}
+\end{table*}
 
 Table \ref{tab:grid-timing} lists timing results for $n=2^{16}$ IB points and 16, 32, 64,
 and 128 grid points per $16\um$. The rows with device listed as $1\times\text{CPU}$
@@ -68,10 +68,11 @@ in runtime for different grid refinements.
 %density reaches one point per grid cell, we do not expect segmented reduce
 %to vary under refinement of the background grid.
 
-\begin{figure}[ht]
+\begin{figure}[t]
 \begin{tikzpicture}
 \begin{groupplot}[
-    group style={group name=dep, group size=2 by 1},
+    group style={group name=dep, group size=1 by 2},
+    width=0.45\textwidth
 ]
 \nextgroupplot[
         xmin=12,
@@ -84,40 +85,39 @@ in runtime for different grid refinements.
         log basis y=2,
         log origin=infty,
         ytick={2, 4, 8, 16},
-        width=0.5\textwidth,
-        height=0.5\textwidth,
+        width=0.45\textwidth,
+        height=0.45\textwidth,
         axis lines=center,
-        xlabel={grid refinement},
         ylabel={speedup},
         xlabel near ticks,
         ylabel near ticks
     ]
     
-    \addplot+[only marks, mark=diamond*, color=tol/vibrant/magenta, mark options={fill=tol/vibrant/magenta}] coordinates {%
+    \addplot+[only marks, mark=diamond*, color=tol/vibrant/magenta, mark options={scale=2, fill=tol/vibrant/magenta}] coordinates {%
         (16 , {1.44570/0.09890})
         (32 , {1.45665/0.09928})
         (64 , {1.46783/0.09974})
         (128, {1.51988/0.10624})
     }; \label{plot:grid-dep-interp};
-    \addplot+[only marks, mark=square*, color=tol/vibrant/teal, mark options={fill=tol/vibrant/teal}] coordinates {%
+    \addplot+[only marks, mark=square*, color=tol/vibrant/teal, mark options={scale=2, fill=tol/vibrant/teal}] coordinates {%
         (16 , {1.47196/0.23282})
         (32 , {1.48014/0.26431})
         (64 , {1.48519/0.25783})
         (128, {1.53801/0.26590})
     }; \label{plot:grid-dep-spread};
-    \addplot+[only marks, mark=*, color=tol/vibrant/orange, mark options={fill=tol/vibrant/orange}] coordinates {%
+    \addplot+[only marks, mark=*, color=tol/vibrant/orange, mark options={scale=2, fill=tol/vibrant/orange}] coordinates {%
         (16 , {1.47196/0.12803})
         (32 , {1.48014/0.14213})
         (64 , {1.48519/0.15215})
         (128, {1.53801/0.20107})
     }; \label{plot:grid-dep-pa};
-    \addplot+[only marks, mark=triangle*, color=tol/vibrant/blue, mark options={fill=tol/vibrant/blue}] coordinates {%
+    \addplot+[only marks, mark=triangle*, color=tol/vibrant/blue, mark options={scale=2, fill=tol/vibrant/blue}] coordinates {%
         (16 , {1.47196/0.12965})
         (32 , {1.48014/0.14242})
         (64 , {1.48519/0.14766})
         (128, {1.53801/0.21874})
     }; \label{plot:grid-dep-otf};
-    \node [fill=white] at (rel axis cs: 0.075, 0.95) {(a)};
+    \node [fill=white] at (rel axis cs: 0.075, 0.95) {\sffamily(a)};
 \nextgroupplot[
     xmin=12,
     xmax=192,
@@ -129,41 +129,42 @@ in runtime for different grid refinements.
     log basis y=2,
     log origin=infty,
     ytick={16, 32, 64, 128},
-    width=0.5\textwidth,
-    height=0.5\textwidth,
+    width=0.45\textwidth,
+    height=0.45\textwidth,
     axis lines=center,
     xlabel={grid refinement},
+    ylabel={speedup},
     xlabel near ticks,
     ylabel near ticks
 ]
-    \addplot+[only marks, mark=diamond*, color=tol/vibrant/magenta, mark options={fill=tol/vibrant/magenta}] coordinates {%
+    \addplot+[only marks, mark=diamond*, color=tol/vibrant/magenta, mark options={scale=2, fill=tol/vibrant/magenta}] coordinates {%
         (16 , {1.44570/0.01253})
         (32 , {1.45665/0.01317})
         (64 , {1.46783/0.01722})
         (128, {1.51988/0.01816})
     };
-    \addplot+[only marks, mark=square*, color=tol/vibrant/teal, mark options={fill=tol/vibrant/teal}] coordinates {%
+    \addplot+[only marks, mark=square*, color=tol/vibrant/teal, mark options={scale=2, fill=tol/vibrant/teal}] coordinates {%
         (16 , {1.47196/0.03930})
         (32 , {1.48014/0.04020})
         (64 , {1.48519/0.04215})
         (128, {1.53801/0.04755})
     };
-    \addplot+[only marks, mark=*, color=tol/vibrant/orange, mark options={fill=tol/vibrant/orange}] coordinates {%
+    \addplot+[only marks, mark=*, color=tol/vibrant/orange, mark options={scale=2, fill=tol/vibrant/orange}] coordinates {%
         (16 , {1.47196/0.01715})
         (32 , {1.48014/0.02049})
         (64 , {1.48519/0.02370})
         (128, {1.53801/0.03656})
     };
-    \addplot+[only marks, mark=triangle*, color=tol/vibrant/blue, mark options={fill=tol/vibrant/blue}] coordinates {%
+    \addplot+[only marks, mark=triangle*, color=tol/vibrant/blue, mark options={scale=2, fill=tol/vibrant/blue}] coordinates {%
         (16 , {1.47196/0.01804})
         (32 , {1.48014/0.02198})
         (64 , {1.48519/0.02873})
         (128, {1.53801/0.07288})
     };
-    \node [fill=white] at (rel axis cs: 0.075, 0.95) {(b)};
+    \node [fill=white] at (rel axis cs: 0.075, 0.95) {\sffamily(b)};
 \end{groupplot}
-\path (dep c1r1.south west|-current bounding box.south)--
-coordinate(legendpos) (dep c2r1.south east|-current bounding box.south);
+\path (dep c1r2.south west|-current bounding box.south)--
+coordinate(legendpos) (dep c1r2.south east|-current bounding box.south);
 \matrix[
     matrix of nodes,
     anchor=north,
@@ -172,7 +173,7 @@ coordinate(legendpos) (dep c2r1.south east|-current bounding box.south);
   ]at([yshift=-1ex]legendpos)
   {
     \ref{plot:grid-dep-interp}& Algorithm \ref{algo:par-interp}&[5pt]
-    \ref{plot:grid-dep-spread}& Algorithm \ref{algo:par-spread}&[5pt]
+    \ref{plot:grid-dep-spread}& Algorithm \ref{algo:par-spread}&[5pt] \\
     \ref{plot:grid-dep-pa}& Algorithm \ref{algo:pa-spread}&[5pt]
     \ref{plot:grid-dep-otf}& Algorithm \ref{algo:otf-spread}\\};
 \end{tikzpicture}

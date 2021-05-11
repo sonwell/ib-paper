@@ -17,17 +17,17 @@ interface which generates a force will cause a jump in the normal stress across
 the interface, which the IB method may not recover. We therefore anticipate
 first order convergence for the fluid velocity and data site positions.
 
-\begin{table}
+\begin{table*}[ht]
     \begin{center}
         \begingroup
         \setlength{\tabcolsep}{9pt}
         \renewcommand{\arraystretch}{1.5}
         \begin{tabular}{cc|cc|cc}
-                                                                                                                 \\ \toprule
-            $h$       & $k$       & $\|\u_h-\u_{0.5h}\|_2$ & order    & $\|\u_h-\u_{0.5h}\|_{\infty}$ & order    \\ \midrule
-            $1.00\um$ & $1.6\us$ & $2.22736\times10^{-2}$ &          & $7.41870\times10^{-2}$        &          \\
-            $0.50\um$ & $0.4\us$ & $4.32802\times10^{-4}$ & 5.715132 & $1.90832\times10^{-3}$        & 5.280787 \\
-            $0.25\um$ & $0.1\us$ & $1.46835\times10^{-4}$ & 1.559507 & $1.08472\times10^{-3}$        & 0.814971 \\ \bottomrule
+                                                                                                                    \\ \toprule
+            $h$ ($\um$) & $k$ ($\us$) & $\|\u_h-\u_{0.5h}\|_2$ & order   & $\|\u_h-\u_{0.5h}\|_{\infty}$ & order    \\ \midrule
+            $1.00$      & $1.6$       & $2.2274\times10^{-2}$  &         & $7.4187\times10^{-2}$         &          \\
+            $0.50$      & $0.4$       & $4.3280\times10^{-4}$  & 5.71513 & $1.9083\times10^{-3}$         & 5.28079  \\
+            $0.25$      & $0.1$       & $1.4684\times10^{-4}$  & 1.55951 & $1.0847\times10^{-3}$         & 0.81497  \\ \bottomrule
         \end{tabular}
         \endgroup
     \end{center}
@@ -37,19 +37,19 @@ configuration in a $16\um\times16\um\times16\um$ triply periodic domain at
 $t=160\us$. The finest grid, with $h=0.125\um$ uses timestep $k=0.025\us$.
     }
     \label{tab:u-convergence}
-\end{table}
+\end{table*}
 
-\begin{table}
+\begin{table*}[ht]
     \begin{center}
         \begingroup
         \setlength{\tabcolsep}{9pt}
         \renewcommand{\arraystretch}{1.5}
         \begin{tabular}{cc|cc|cc}
                                                                                                              \\ \toprule
-            $h$       & $n_s$ & $\|\X_h-\X_{0.5h}\|_2$ & order    & $\|\X_h-\X_{0.5h}\|_{\infty}$ & order    \\ \midrule
-            $1.00\um$ & 220   & $2.96106\times10^{-3}$ &          & $4.78122\times10^{-3}$        &          \\
-            $0.50\um$ & 880   & $7.29973\times10^{-4}$ & 2.020201 & $1.16865\times10^{-3}$        & 2.032531 \\
-            $0.25\um$ & 3520  & $3.59088\times10^{-4}$ & 1.023507 & $6.09555\times10^{-4}$        & 0.939021 \\ \bottomrule
+            $h$ ($\um$) & $n_s$ & $\|\X_h-\X_{0.5h}\|_2$ & order   & $\|\X_h-\X_{0.5h}\|_{\infty}$ & order   \\ \midrule
+            $1.00$      & 220   & $2.9611\times10^{-3}$  &         & $4.7812\times10^{-3}$         &         \\
+            $0.50$      & 880   & $7.2997\times10^{-4}$  & 2.02020 & $1.1687\times10^{-3}$         & 2.03253 \\
+            $0.25$      & 3520  & $3.5909\times10^{-4}$  & 1.02351 & $6.0956\times10^{-4}$         & 0.93902 \\ \bottomrule
         \end{tabular}
         \endgroup
     \end{center}
@@ -60,7 +60,7 @@ $t=16\us$. For each grid, we track 625 data sites on the sphere. The finest
 grid, with $h = 0.125\um$ used $n_s=14080$ sample sites.
     }
     \label{tab:x-convergence}
-\end{table}
+\end{table*}
 
 Tables \ref{tab:u-convergence} and \ref{tab:x-convergence} show the convergence
 of fluid velocity and data sites, respectively. To compute errors in the fluid

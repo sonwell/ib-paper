@@ -37,12 +37,13 @@ $k=0.1\us$ to simulate the motion of the cells for $1\ms$.
 %    }
 %\end{table}
 
-\begin{figure}[ht]
+\begin{figure}[htbp]
+\centering
 \begin{tikzpicture}
 \begin{groupplot}[
-    group style={group name=rbc-strong, group size=2 by 1},
-    height=0.5\textwidth,
-    width=0.5\textwidth
+    group style={group name=rbc-strong, group size=1 by 2},
+    height=0.45\textwidth,
+    width=0.45\textwidth
 ]
 \nextgroupplot[
         xmode=log,
@@ -53,17 +54,17 @@ $k=0.1\us$ to simulate the motion of the cells for $1\ms$.
         ymax=64,
         log basis y=2,
         log origin=infty,
-        width=0.5\textwidth,
-        height=0.5\textwidth,
+        width=0.45\textwidth,
+        height=0.45\textwidth,
         axis lines=center,
-        xlabel={threads},
+        %xlabel={threads},
         ylabel={speedup},
         xlabel near ticks,
         ylabel near ticks,
         legend style={at={(0.8, 0.2)}, anchor=center},
         legend cell align={left}
 ]
-    \addplot+[only marks, mark=diamond*, color=tol/vibrant/magenta, mark options={fill=tol/vibrant/magenta}] coordinates {%
+    \addplot+[only marks, mark=diamond*, color=tol/vibrant/magenta, mark options={scale=2, fill=tol/vibrant/magenta}] coordinates {%
         (64  , {0.01080/0.01080})
         (128 , {0.01080/0.00586})
         (256 , {0.01080/0.00341})
@@ -72,7 +73,7 @@ $k=0.1\us$ to simulate the motion of the cells for $1\ms$.
         (2048, {0.01080/0.00094})
         (4096, {0.01080/0.00093})
     }; \label{plot:rbc-interp}
-    \addplot+[only marks, mark=triangle*, color=tol/vibrant/blue, mark options={fill=tol/vibrant/blue}] coordinates {%
+    \addplot+[only marks, mark=triangle*, color=tol/vibrant/blue, mark options={scale=2, fill=tol/vibrant/blue}] coordinates {%
         (64  , {0.11888/0.11888})
         (128 , {0.11888/0.06535})
         (256 , {0.11888/0.03912})
@@ -83,7 +84,7 @@ $k=0.1\us$ to simulate the motion of the cells for $1\ms$.
     }; \label{plot:rbc-spread}
     \addplot+[no marks, dashed, black, domain=64:4096] {(x/64)^0.9};
     \addplot+[no marks, black, domain=64:4096] {(x/64)};
-    \node [fill=white] at (rel axis cs: 0.075, 0.95) {(a)};
+    \node [fill=white] at (rel axis cs: 0.075, 0.95) {\sffamily(a)};
 \nextgroupplot[
         xmode=log,
         xmin=45.2548339959,
@@ -93,16 +94,17 @@ $k=0.1\us$ to simulate the motion of the cells for $1\ms$.
         ymax=64,
         log basis y=2,
         log origin=infty,
-        width=0.5\textwidth,
-        height=0.5\textwidth,
+        width=0.45\textwidth,
+        height=0.45\textwidth,
         axis lines=center,
         xlabel={threads},
+        ylabel={speedup},
         xlabel near ticks,
         ylabel near ticks,
         legend style={at={(0.8, 0.2)}, anchor=center},
         legend cell align={left}
     ]
-    \addplot+[only marks, mark=diamond*, color=tol/vibrant/magenta, mark options={fill=tol/vibrant/magenta}] coordinates {%
+    \addplot+[only marks, mark=diamond*, color=tol/vibrant/magenta, mark options={scale=2, fill=tol/vibrant/magenta}] coordinates {%
         (64  , {0.04150/0.04150})
         (128 , {0.04150/0.02251})
         (256 , {0.04150/0.01172})
@@ -111,7 +113,7 @@ $k=0.1\us$ to simulate the motion of the cells for $1\ms$.
         (2048, {0.04150/0.00181})
         (4096, {0.04150/0.00103})
     };
-    \addplot+[only marks, mark=triangle*, color=tol/vibrant/blue, mark options={fill=tol/vibrant/blue}] coordinates {%
+    \addplot+[only marks, mark=triangle*, color=tol/vibrant/blue, mark options={scale=2, fill=tol/vibrant/blue}] coordinates {%
         (64  , {0.40148/0.40148})
         (128 , {0.40148/0.20628})
         (256 , {0.40148/0.11208})
@@ -122,10 +124,10 @@ $k=0.1\us$ to simulate the motion of the cells for $1\ms$.
     };
     \addplot+[no marks, dashed, black, domain=64:4096] {(x/64)^0.9};
     \addplot+[no marks, black, domain=64:4096] {(x/64)};
-    \node [fill=white] at (rel axis cs: 0.075, 0.95) {(b)};
+    \node [fill=white] at (rel axis cs: 0.075, 0.95) {\sffamily(b)};
 \end{groupplot}
-\path (rbc-strong c1r1.south west|-current bounding box.south)--
-coordinate(legendpos) (rbc-strong c2r1.south east|-current bounding box.south);
+\path (rbc-strong c1r2.south west|-current bounding box.south)--
+coordinate(legendpos) (rbc-strong c1r2.south east|-current bounding box.south);
 \matrix[
     matrix of nodes,
     anchor=north,

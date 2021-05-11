@@ -65,10 +65,10 @@ The value $\error$ indicates an Eulerian point outside of $\domain$, does not ha
 corresponding row in $\spread$, and therefore does not contribute to spreading or
 interpolation. We are now ready to construct $\spread$. Let $\X_j$ be an IB
 point. The $j\th$ column of $\mathcal{S}$ is zero except for up to $s^d$ values where,
-for $i=1,\,\ldots,\,s^d$, if $\#(\idx{\X_j}+\shift_i)\neq\error$,
+for $i=1,\,\ldots,\,s^d$, if $\#(\idx{\X_j}+\shift_i)=k\neq\error$,
 \begin{equation}
     \label{eq:s-columnwise}
-    \spread_{\#\left(\idx{\X_j}+\shift_i\right),j} = \Dirac_h\left(h\left(\shift_i+\idx{\X_j}+\stag\right)-\X_j\right).
+    \spread_{kj} = \Dirac_h\left(h\left(\shift_i+\idx{\X_j}+\stag\right)-\X_j\right).
 \end{equation}
 From a practicality standpoint, it is unnecessary to explicitly construct $\spread$. We
 illustrate this with the serial spreading algorithm.
