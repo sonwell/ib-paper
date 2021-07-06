@@ -8,47 +8,6 @@ use up to 32 threads on the CPU and 64--4096 threads on the GPU. For a fixed pro
 ideally wish to see the runtime using $2p$ threads to be half of that using $p$ threads.
 In other words, using twice as many threads yield an ideal speedup of 2.
 
-
-%\begin{table}[h]
-%\begin{center}
-%\bgroup
-%\renewcommand{\arraystretch}{1.7}
-%\begin{tabular}{cccc}
-%                                                                                  \toprule
-%    $p$  & device & \titletable{interpolate}{2000} & \titletable{spread}{1000} \\ \midrule
-%         & CPU    & $1.30763 \pm 0.01795$          & $1.33840 \pm 0.01221$     \\
-%    1    & CPU    & $1.30437 \pm 0.00986$          & $1.51528 \pm 0.02790$     \\
-%    2    & CPU    & $0.67160 \pm 0.00605$          & $0.80398 \pm 0.02135$     \\
-%    4    & CPU    & $0.35833 \pm 0.00284$          & $0.44432 \pm 0.01592$     \\
-%    8    & CPU    & $0.21166 \pm 0.00773$          & $0.28799 \pm 0.04476$     \\
-%    16   & CPU    & $0.10044 \pm 0.00258$          & $0.15393 \pm 0.01553$     \\
-%    32   & CPU    & $0.07411 \pm 0.00068$          & $0.12394 \pm 0.01759$     \\
-%    64   & GPU    & $0.80977 \pm 0.00478$          & $0.96698 \pm 0.00047$     \\
-%    128  & GPU    & $0.43929 \pm 0.00352$          & $0.49359 \pm 0.00064$     \\
-%    256  & GPU    & $0.22434 \pm 0.00223$          & $0.26208 \pm 0.00145$     \\
-%    512  & GPU    & $0.11258 \pm 0.00150$          & $0.14286 \pm 0.00177$     \\
-%    1024 & GPU    & $0.05681 \pm 0.00097$          & $0.08252 \pm 0.00150$     \\
-%    2048 & GPU    & $0.03074 \pm 0.00071$          & $0.05351 \pm 0.00103$     \\
-%    4096 & GPU    & $0.01689 \pm 0.00047$          & $0.03905 \pm 0.00093$     \\ \bottomrule
-%\end{tabular}
-%\egroup
-%\caption{%
-%    Strong scaling results for OTF and grid spacing $h = 0.5\um$ (a grid
-%    refinement of 64) for $2^{16}$ randomly placed IB points in a
-%    $16\um\times16\um\times16\um$ triply periodic domain. The first row
-%    are reference values for serial Algorithms \ref{algo:par-interp} and
-%    \ref{algo:serial-spread}.
-%}
-%\end{center}
-%\end{table}
-
-%1  & CPU & $1.29442 \pm 0.00359$ & $1.50377 \pm 0.00234$
-%2  & CPU & $0.65481 \pm 0.00271$ & $0.92804 \pm 0.00147$
-%4  & CPU & $0.34712 \pm 0.00166$ & $0.44697 \pm 0.00148$
-%8  & CPU & $0.18004 \pm 0.00084$ & $0.24580 \pm 0.00082$
-%16 & CPU & $0.09969 \pm 0.00075$ & $0.14895 \pm 0.00136$
-%32 & CPU & $0.07371 \pm 0.00083$ & $0.12225 \pm 0.00143$
-
 \begin{figure}[htbp]
 \begin{tikzpicture}
 \begin{groupplot}[
@@ -219,18 +178,16 @@ points randomly in the domain. We increase the number of threads proportionally,
 128 and 1024.  
 
 \begin{table}[ht]
+    \caption{%
+Weak scaling results for interpolation and spreading for $p$ threads and $n$ randomly
+placed IB points in a $16\um\times16\um\times16\um$ triply periodic domain with
+$h=0.5\um$ on the GPU. Average time per call is reported in seconds. $N$ is the number of
+samples taken.
+    }\label{tab:unstructured-weak}
     \begin{center}
         \begingroup
         \setlength{\tabcolsep}{9pt}
         \renewcommand{\arraystretch}{1.5}
-%        \begin{tabular}{ccccc}
-%                                                                                               \toprule
-%            $p$  & $n$      & \titletable{interpolate}{20000}  & \titletable{spread}{10000} \\ \midrule
-%            128  & $2^{16}$ & $0.43930 \pm 0.00372 $           & $0.47632 \pm 0.00278 $     \\
-%            256  & $2^{17}$ & $0.44918 \pm 0.01097 $           & $0.46503 \pm 0.00050 $     \\
-%            512  & $2^{18}$ & $0.45072 \pm 0.01195 $           & $0.44533 \pm 0.00054 $     \\
-%            1024 & $2^{19}$ & $0.45442 \pm 0.00960 $           & $0.43561 \pm 0.00047 $     \\ \bottomrule
-%        \end{tabular}
         \begin{tabular}{ccccc}
                                                                                                \toprule
             $p$  & $n$      & \titletable{interpolate}{20000} & \titletable{spread}{10000} \\ \midrule
@@ -240,18 +197,9 @@ points randomly in the domain. We increase the number of threads proportionally,
             1024 & $2^{19}$ & $0.45442$                       & $0.43561$                  \\ \bottomrule
         \end{tabular}                                                                                             \endgroup
     \end{center}
-    \caption{%
-Weak scaling results for interpolation and spreading for $p$ threads and $n$ randomly
-placed IB points in a $16\um\times16\um\times16\um$ triply periodic domain with
-$h=0.5\um$ on the GPU. 
-%95\% confidence intervals for average time per call are reported
-Average time per call is reported
-in seconds. $N$ is the number of samples taken.
-    }
-    \label{tab:unstructured-weak}
 \end{table}
 
-Table \ref{tab:unstructured-weak} lists runtimes for increasing threads and
+Table~\ref{tab:unstructured-weak} lists runtimes for increasing threads and
 problem size on the GPU. Interpolate scales nearly perfectly with a difference
 of $15\ms$ (\textasciitilde3\%) increase between the problem with 128 threads
 and $2^{16}$ IB points and that with 1024 threads and $2^{19}$ points. Spread,

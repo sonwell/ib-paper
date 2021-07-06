@@ -12,7 +12,7 @@ points in $\domain$.
 The kernel $\Dirac_h$ is the tensor product of scaled, one-dimensional kernels,
 $h^{-1}\kernel(h^{-1}x)$. Let $\supp\kernel$ denote the support of $\kernel$ and define
 \begin{equation}
-    s[\kernel] = |\supp\kernel\cap\mathbb{Z}|-1
+    s[\kernel] = \max_{r\in[0,\,1)}|\supp\kernel(\cdot-r)\cap\mathbb{Z}|-1
 \end{equation}
 to be the size of the support in terms of unit intervals. For brevity, we write
 $s=s[\kernel]$. For any $\X\in\domain$, there are at most $s^d$ grid points

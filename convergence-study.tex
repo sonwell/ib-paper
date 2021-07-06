@@ -18,6 +18,11 @@ the interface, which the IB method may not recover. We therefore anticipate
 first order convergence for the fluid velocity and data site positions.
 
 \begin{table*}[ht]
+    \caption{%
+Convergence of the fluid velocity for a deformed sphere returning to its rest
+configuration in a $16\um\times16\um\times16\um$ triply periodic domain at
+$t=160\us$. The finest grid, with $h=0.125\um$ uses timestep $k=0.025\us$.
+    }\label{tab:u-convergence}
     \begin{center}
         \begingroup
         \setlength{\tabcolsep}{9pt}
@@ -31,15 +36,15 @@ first order convergence for the fluid velocity and data site positions.
         \end{tabular}
         \endgroup
     \end{center}
-    \caption{%
-Convergence of the fluid velocity for a deformed sphere returning to its rest
-configuration in a $16\um\times16\um\times16\um$ triply periodic domain at
-$t=160\us$. The finest grid, with $h=0.125\um$ uses timestep $k=0.025\us$.
-    }
-    \label{tab:u-convergence}
 \end{table*}
 
 \begin{table*}[ht]
+    \caption{%
+Convergence of data sites for a deformed sphere returning to its rest
+configuration in a $16\um\times16\um\times16\um$ triply periodic domain at
+$t=16\us$. For each grid, we track 625 data sites on the sphere. The finest
+grid, with $h = 0.125\um$ used $n_s=14080$ sample sites.
+    }\label{tab:x-convergence}
     \begin{center}
         \begingroup
         \setlength{\tabcolsep}{9pt}
@@ -53,13 +58,6 @@ $t=160\us$. The finest grid, with $h=0.125\um$ uses timestep $k=0.025\us$.
         \end{tabular}
         \endgroup
     \end{center}
-    \caption{%
-Convergence of data sites for a deformed sphere returning to its rest
-configuration in a $16\um\times16\um\times16\um$ triply periodic domain at
-$t=16\us$. For each grid, we track 625 data sites on the sphere. The finest
-grid, with $h = 0.125\um$ used $n_s=14080$ sample sites.
-    }
-    \label{tab:x-convergence}
 \end{table*}
 
 Tables \ref{tab:u-convergence} and \ref{tab:x-convergence} show the convergence

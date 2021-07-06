@@ -11,11 +11,11 @@ list of values and a corresponding list of keys, will sum (reduce) consecutive v
 long as their keys match. The result is a potentially shorter list of reduced values and
 a list of non-repeating keys, though they may not be unique within the list. Suppose we
 were able to order the keys and values so that repeated keys are listed consecutively.
-The result is a list of unique keys and all values with the same key are combined. Assign
-each grid cell a unique index, and for each IB point, use the index for the grid cell it
-inhabits as its key. Then, segmented reduce accumulates values spread from IB points in
-the same grid cell for the given shift. Now, we have at most one value per grid cell, and
-can write without contentions.
+The result of reducing this sorted data is a list of unique keys and a list where all
+values with the same key are combined. Assign each grid cell a unique index, and for each
+IB point, use the index for the grid cell it inhabits as its key. Then, segmented reduce
+accumulates values spread from IB points in the same grid cell for the given shift. Now,
+we have at most one value per grid cell, and can write without contentions.
 
 To ensure that repeated keys are listed consecutively, we use \emph{key-value sort},
 which, given a list of values and a corresponding list of keys, sorts values according to

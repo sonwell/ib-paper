@@ -2,7 +2,7 @@
 
 To see how the algorithms scale given more computing resources, we increase the
 number of cells in the domain and the number of threads proportionally. We
-construct each cell with $n_d=832$ data sites and $n_s=8832$ sample sites, as
+construct each cell with $n_d=864$ data sites and $n_s=8832$ sample sites, as
 before. We place between 1 and 8 cells in the domain, while threads increase
 from 64 to 512. Using a timestep of $k = 0.1\us$, we simulate the motion of
 these cells for $1\ms$.
@@ -15,18 +15,17 @@ cells may contain several IB points, average point density is still low, so we
 do not expect to see the same reduction in runtime as observed previously.
 
 \begin{table}[t]
+    \caption{%
+Weak scaling results for interpolate and spreading for increasing numbers of
+RBCs (cells column) and threads. Each RBC has $n_d = 864$ and $n_s = 8832$.
+Average time per call is reported in seconds. $N$ is the number of samples
+taken.}\label{tab:str-weak}
     \begin{center}
         \begingroup
         \setlength{\tabcolsep}{9pt}
         \renewcommand{\arraystretch}{1.5}
         \begin{tabular}{ccccc}
-%                                                                                           \toprule
-%            $p$ & cells & \titletable{interpolate}{20000}  & \titletable{spread}{10000} \\ \midrule
-%            64  & 1     & $0.01079 \pm 0.00007 $           & $0.11881 \pm 0.00107 $     \\
-%            128 & 2     & $0.01165 \pm 0.00005 $           & $0.11219 \pm 0.00099 $     \\
-%            256 & 4     & $0.01171 \pm 0.00005 $           & $0.11214 \pm 0.00070 $     \\
-%            512 & 8     & $0.01199 \pm 0.00005 $           & $0.11354 \pm 0.00092 $     \\ \bottomrule
-                                                                                           \toprule
+                                                                                          \toprule
             $p$ & cells & \titletable{interpolate}{20000} & \titletable{spread}{10000} \\ \midrule
             64  & 1     & $0.01079$                       & $0.11881$                  \\
             128 & 2     & $0.01165$                       & $0.11219$                  \\
@@ -35,14 +34,6 @@ do not expect to see the same reduction in runtime as observed previously.
         \end{tabular}
         \endgroup
     \end{center}
-    \caption{%
-Weak scaling results for interpolate and spreading for increasing numbers of
-RBCs (cells column) and threads. Each RBC has $n_d = 864$ and $n_s = 8832$.
-%95\% confidence intervals for average time per call are reported in seconds.
-Average time per call is reported in seconds.
-$N$ is the number of samples taken.
-    }
-    \label{tab:str-weak}
 \end{table}
 
 Table \ref{tab:str-weak} shows the runtimes for increasing number of RBCs and

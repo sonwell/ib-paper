@@ -13,6 +13,14 @@ dependence affects the runtime of Algorithms~\ref{algo:pa-spread} and~%
 %
 
 \begin{table*}[ht]
+    \caption{%
+Average timing results for interpolating to and spreading from $2^{16}$ IB points from
+1000 timesteps on different devices and grid configurations. Interpolation (Algorithm~%
+\ref{algo:par-interp}) happens twice per timestep and spreading (Algorithms~%
+\ref{algo:serial-spread},~\ref{algo:par-spread}--\ref{algo:otf-spread}) happens once per
+timestep. Grid refinement is the number of grid points per $16\um$ in each dimension.
+Times per call to the listed algorithm are reported in seconds.
+    }\label{tab:grid-timing}
     \begin{center}
     \bgroup
     \renewcommand{\arraystretch}{1.7}
@@ -33,15 +41,6 @@ dependence affects the runtime of Algorithms~\ref{algo:pa-spread} and~%
     \end{tabular}
     \egroup
     \end{center}
-    \caption{%
-Average timing results for interpolating to and spreading from $2^{16}$ IB points from
-1000 timesteps on different devices and grid configurations. Interpolation (Algorithm
-\ref{algo:par-interp}) happens twice per timestep and spreading (Algorithms
-\ref{algo:serial-spread}, \ref{algo:par-spread}--\ref{algo:otf-spread}) happens once per
-timestep. Grid refinement is the number of grid points per $16\um$ in each dimension.
-Times per call to the listed algorithm are reported in seconds.
-    }
-    \label{tab:grid-timing}
 \end{table*}
 
 Table \ref{tab:grid-timing} lists timing results for $n=2^{16}$ IB points and 16, 32, 64,
@@ -52,21 +51,6 @@ In fact, under close scrutiny, it seems that these deviations are due to hardwar
 differences in the integer multiplications and additions used in computing sort keys and
 grid indices. We can therefore expect each of the algorithms to exhibit a mild variation
 in runtime for different grid refinements.
-
-%The segmented reduce in Algorithms \ref{algo:par-spread}, \ref{algo:pa-spread},
-%and \ref{algo:otf-spread} each have an implicit dependence on the fluid grid.
-%For a fixed number of IB points, increasing the grid refinement from 16 to 128
-%reduces the density of the IB points from 16 points per grid cell to 1 point
-%per every 32 grid cell, on average. If each point inhabits its own grid cell,
-%the segmented reduce does not have any useful work to do, as the result is the
-%same as the input. On the other hand, if every IB point is in the same grid
-%cell, segmented reduce proceeds very similarly to a normal reduce operation,
-%which can effectively leverage the memory heirarchy (cache and/or shared
-%memory). This, in turn, makes the algorithm extremely fast. As a result, we
-%would expect that in those tests where point density is high, the algorithm
-%will perform better than those tests with low point density. Once the
-%density reaches one point per grid cell, we do not expect segmented reduce
-%to vary under refinement of the background grid.
 
 \begin{figure}[t]
 \begin{tikzpicture}

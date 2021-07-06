@@ -5,9 +5,9 @@ immersed elastic interface. The solution to these problems can be approximated u
 immersed boundary (IB) method, which was developed in~\cite{Peskin:1972wa} to simulate
 blood flow through the heart. The relative ease by which the IB method can be
 incorporated into a Navier-Stokes solver has led to its popularity in myriad applications
-(see, e.g.~\cite{Iaccarino:2005ii,Griffith:2020hi} and references therein).
-The IB method couples the equations governing fluid velocity and pressure to those
-governing the interface movement and elastic forces via operations we will refer to as
+(see, e.g.~\cite{Iaccarino:2005ii,Griffith:2020hi} and references therein). The IB method
+couples the equations governing fluid velocity and pressure to those governing the
+interface movement and elastic forces via operations we will refer to as
 \term{interpolation} and \term{spreading}. Fluid velocities are interpolated to points on
 the interface, and forces on the interface are spread to the fluid. Fluid properties are
 discretized on a fixed Eulerian grid. The interface is represented by a set of mobile
@@ -48,9 +48,9 @@ effectively without a shared-memory parallel algorithm. The cuIBM (\cite{Layton:
 and PetIBM (\cite{Mesnard:2017te,Chuang:2018ej}) libraries implement an adaptive IB
 method for prescribed motion on single- and multi-GPU architectures, respectively. The
 authors demonstrate their method on a few two-dimensional test problems. Their
-implementation explicitly construct the spreading and interpolation operators,
-which are sparse, but the sparsity pattern of the spreading matrix does not always lend
-itself well to parallelization.
+implementation explicitly constructs the spreading and interpolation operators, which are
+sparse, but the sparsity pattern of the spreading matrix does not always lend itself well
+to parallelization.
 
 GPUs have restrictions on their parallelization. They use single instruction,
 multiple data (SIMD) parallelism, in which each computational unit, or thread, executes

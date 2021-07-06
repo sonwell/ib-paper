@@ -4,7 +4,7 @@ Consider a $d$-dimensional ($d=2$ or 3) rectangular domain $\domain$, which is f
 with a viscous incompressible fluid with constant viscosity $\mu$ and density $\rho$, and
 contains an immersed elastic structure, $\interface$. The structure is impermeable to the
 fluid and moves at the local fluid velocity, is deformed by this motion, and imparts a
-force to the fluid. Otherwise, the interface is treated as part of the fluid. 
+force to the fluid. Otherwise, the interface is treated as part of the fluid.
 
 The fluid velocity, $\u = \u(\x,\,t)$, and pressure, $p = p(\x,\,t)$, are governed by the
 incompressible Navier-Stokes equations for a Newtonian fluid,
@@ -14,10 +14,10 @@ incompressible Navier-Stokes equations for a Newtonian fluid,
     \label{eq:ins-incomp}
     \div\u = 0,
 \end{gather}
-where $p$ is the pressure and $\f$ is the elastic force density. This is a set of $d+1$
-equations in $d+1$ unknowns: the $d$ components of $\u$, and $p$. The equations are
-written relative to the Eulerian frame, so that the coordinates $\x$ are independent
-variables. Throughout, we write Eulerian quantities in the lowercase Latin alphabet.
+where $\f$ is the elastic force density. This is a set of $d+1$ equations in $d+1$
+unknowns: the $d$ components of $\u$, and $p$. The equations are written relative to the
+Eulerian frame, so that the coordinates $\x$ are independent variables. Throughout, we
+write Eulerian quantities in the lowercase Latin alphabet.
 
 Let $\X=\X(\params,\,t)$ represent a parametrization of the Cartesian coordinates of the
 immersed interface with material coordinates $\params$ at time $t$. Let $\L[\X]$ be the
@@ -50,8 +50,8 @@ force $\F(\params,\,t)\d\params$ over area $\d\params$ is ``spread'' to the forc
 $\f(\x,\,t)\d\x$ over volume $\d\x$. 
 
 The fluid equations~\eqref{eq:ins-evol}--\eqref{eq:ins-incomp} are spatially discretized
-on a regular grid of spacing $h$ so that $\domain$ is divided into square or cubic cells
-of side length $h$. Because of the checkerboard instability (see, e.g.,~%
+on a regular background grid of spacing $h$ so that $\domain$ is divided into square or
+cubic cells of side length $h$. Because of the checkerboard instability (see, e.g.,~%
 \cite{Wesseling:2001ci}) in solving the Navier-Stokes equations on collocated regular
 grids, we stagger the components of Eulerian vector quantities. As a result, different
 components are discretized at different locations, but corresponding components are
@@ -97,24 +97,24 @@ at $\x_i\in\domain_h$ and time $t=t_n$, and $\dot{X}^n_{\smash j}$ and $F^n_{\sm
 are their Lagrangian counterparts at $\X_{\smash j}$, respectively. The terms $h^d$ and
 $\d\theta_{\smash j}$ are integration weights analogous to $\d\x$ and $\d\params$. For
 a topologically spherical interface, we compute weights on the unit sphere using RBFs,
-using a simplified version of the method described in \cite{Fuselier:2013coba}, and use
+using a simplified version of the method described in~\cite{Fuselier:2013coba}, and use
 the Jacobian of the mapping between the sphere and interface to obtain
-$\d\theta_{\smash j}$. Both \eqref{eq:disc-interp} and \eqref{eq:disc-spread} look like a
+$\d\theta_{\smash j}$. Both~\eqref{eq:disc-interp} and~\eqref{eq:disc-spread} look like a
 matrix-vector multiplication, so we define the \emph{spreading matrix}
 $\spread=(\delta_h(\x_i-\X^n_{\smash j}))$ with row $i$ and column $j$. We call its
-transpose, $\interp$, the \emph{interpolation matrix}. Collecting values $u^n_ih^d$ as
-$\u^n$ at each grid point and $F^n_{\smash j}\d\theta_{\smash j}$ as $\F^n$ at each IB
-point, we rewrite equations \eqref{eq:disc-interp} and \eqref{eq:disc-spread} in matrix
-form as
+transpose, $\interp$, the \emph{interpolation matrix}. Collecting values
+$\e\cdot\u^n_ih^d$ at each grid point as $\vec{v}^n$ and
+$\e\cdot\F^n_{\smash j}\d\theta_{\smash j}$ at each IB point as $\vec{G}^n$, we
+rewrite equations~\eqref{eq:disc-interp} and~\eqref{eq:disc-spread} in matrix form as
 \begin{align}
-    \label{eq:matrix-interp}
-    \dot{\X}^n &= \interp\u^n \quad\text{and} \\
-    \label{eq:matrix-spread}
-    \f^n &= \spread\F^n,
+    \label{eq:matrix-interp}%
+    \U^n &= \interp{\vec{v}}^n \quad\text{and} \\
+    \label{eq:matrix-spread}%
+    \f^n &= \spread{\vec{G}}^n,
 \end{align}
 respectively.
 
-Collectively, the equations \eqref{eq:ins-evol}--\eqref{eq:spreading} constitute the
+Collectively, the equations~\eqref{eq:ins-evol}--\eqref{eq:spreading} constitute the
 IB method, and while different implementations depend on myriad details, a single step
 proceeds with timestep $k$ roughly as follows:
 \begin{enumerate}[label=(\texttt{\alph*})]

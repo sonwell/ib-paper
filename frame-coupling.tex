@@ -10,7 +10,7 @@ Here, we describe a method for evaluating the discrete counterparts to
 where scalar-valued Eulerian function $e:\domain\to\mathbb{R}$ is interpolated to
 Lagrangian point $\X$ and Lagrangian function $L:\interface\to\mathbb{R}$ is spread to
 Eulerian point $\x$. For vector-valued functions, such as the Eulerian fluid velocity
-$\u$ and Lagrangian force $\F$, the algorithm can be applied to each component
+$\u$ and Lagrangian force density $\F$, the algorithm can be applied to each component
 individually. For a staggered grid, this is necessary, as the grid for each component has
 a different set of grid points, and may have a different number of grid points. In the
 following, we discuss parallelizing equation \eqref{eq:scalar-interp} and introduce a
